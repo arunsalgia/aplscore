@@ -111,20 +111,10 @@ function AppRouter() {
   function DispayTabs() {
     let isLogged = isUserLogged();
     // console.log("Login status", isLogged)
-    if (isLogged) {
-      // console.log("User is logged");
-      let timeoutvalue = parseInt(process.env.REACT_APP_IDLETIMEOUT) * 1000;
+    if (true) {
       return (
         <div>
           <CricDreamTabs/>
-          <IdleTimer
-            ref={ref => { idleTimer = ref }}
-            timeout={timeoutvalue}
-            // onAction={handleOnAction}
-            // onActive={handleOnActive}
-            onIdle={handleOnIdle}
-            debounce={250}
-          />
         </div>
       )  
     } else {
@@ -149,9 +139,6 @@ function AppRouter() {
     }
   }
 
-  // logic before displaying component
-  // window.onbeforeunload = () => Router.refresh();
-  //console.log("in before unload");
 
   initCdParams();
 
@@ -162,16 +149,7 @@ function AppRouter() {
     //history.push("/")
   } 
 
-  // return (
-  // <Router history={hist}> 
-  //     <UserContext.Provider value={value}>
-  //       {!user && <Redirect from="/" to="/signIn" />}
-  //       <Route path="/joingroup" component={JoinGroup} />
-  //       <Route path="/admin" component={value ? Admin : SignIn} />
-  //       <Redirect from="/" to="/signIn" />
-  //     </UserContext.Provider>
-  //   </Router>
-  // );
+
 
 if (process.env.REACT_APP_DEVICE === "WEB") {
 	const config ={

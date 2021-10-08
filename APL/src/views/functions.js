@@ -4,10 +4,19 @@ import LinearProgressWithLabel from '@material-ui/core/LinearProgress';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import CircularProgressWithLabel from '@material-ui/core/LinearProgress';
 import { func } from "prop-types";
+import moment from 'moment';
 
 var crypto = require("crypto");
 var ifscsystem = require('ifsc-finder');
 var aadhar = require('aadhaar-validator')
+
+// disable future dates
+const today = moment();
+const yesterday = moment().subtract(1, 'day');
+
+export function disablePastDt(current) {
+  return current.isAfter(yesterday);
+};
 
 export function cdRefresh() {
   window.location.reload();

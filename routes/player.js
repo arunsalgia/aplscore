@@ -88,8 +88,23 @@ router.get('/tteam/:tournamentName/:teamName', async function(req, res, next) {
   // PlayerRes = res;
   setHeader(res);
   var {tournamentName, teamName}=req.params;
+	tournamentName = tournamentName.toUpperCase();
+	teamName = teamName.toUpperCase();
   await publish_players(res, { tournament: tournamentName, Team: teamName } );
 });
+
+router.get('/team/count/:tournamentName/:teamName', async function(req, res, next) {
+  // PlayerRes = res;
+  setHeader(res);
+  var {tournamentName, teamName}=req.params;
+	tournamentName = tournamentName.toUpperCase();
+	teamName = teamName.toUpperCase();
+	console.log(tournamentName, teamName);
+	let tmp = await Player.find({ tournament: tournamentName, Team: teamName });
+	console.log(tmp);
+  sendok(res, {count: tmp.length});
+});
+
 
 router.get('/teamfilter/:tournamentName/:teamName/:partPlayerName', async function(req, res, next) {
   // PlayerRes = res;
@@ -119,7 +134,7 @@ router.get('/allfilter/:partPlayerName', async function(req, res, next) {
 });
  
 
-// delete all the players of the team (of given tournamenet)
+// delete all the players of the team (of given tournament)
 router.get('/add/:pid/:name/:tournamentName/:teamName/:role/:batStyle/:bowlStyle', async function(req, res, next) {
   // PlayerRes = res;
   setHeader(res);
@@ -135,13 +150,15 @@ router.get('/add/:pid/:name/:tournamentName/:teamName/:role/:batStyle/:bowlStyle
   tournamentName = tournamentName.toUpperCase();
   teamName = teamName.toUpperCase();
   let pRec = await Player.findOne({pid: pid, tournament: tournamentName, Team: teamName});
-  if (!pRec) {
-    console.log("New Player");
-    pRec = new Player();
-    pRec.pid = pid;
-    pRec.tournament = tournamentName;
-    pRec.Team = teamName;
-  }
+	if (pRec) return senderr(res, 601, "Duplicate player");
+	
+
+	console.log("New Player");
+	pRec = new Player();
+	pRec.pid = pid;
+	pRec.tournament = tournamentName;
+	pRec.Team = teamName;
+
   console.log(pRec);
   pRec.name = name;
   pRec.fullName = name;
@@ -149,10 +166,37 @@ router.get('/add/:pid/:name/:tournamentName/:teamName/:role/:batStyle/:bowlStyle
   pRec.battingStyle = batStyle;
   pRec.bowlingStyle = bowlStyle;
   pRec.save();
-  sendok(res, "OK");
+  sendok(res, pRec);
 });
 
-// delete all the players of the team (of given tournamenet)
+router.get('/update/:pid/:name/:tournamentName/:teamName/:role/:batStyle/:bowlStyle', async function(req, res, next) {
+  // PlayerRes = res;
+  setHeader(res);
+  var {pid, name, tournamentName, teamName, 
+      role, batStyle, bowlStyle
+    }=req.params;
+  console.log(name);
+  console.log(tournamentName);
+  console.log(teamName);
+  console.log(role);
+  console.log(batStyle);
+  console.log(bowlStyle);
+  tournamentName = tournamentName.toUpperCase();
+  teamName = teamName.toUpperCase();
+  let pRec = await Player.findOne({pid: pid, tournament: tournamentName, Team: teamName});
+	if (!pRec) return senderr(res, 601, "player not found");
+	
+	console.log("Update Player");
+  pRec.name = name;
+  pRec.fullName = name;
+  pRec.role = role;
+  pRec.battingStyle = batStyle;
+  pRec.bowlingStyle = bowlStyle;
+  pRec.save();
+  sendok(res, pRec);
+});
+
+// delete all the players of the team (of given tournament)
 router.get('/teamdelete/:tournamentName/:teamName', async function(req, res, next) {
   // PlayerRes = res;
   setHeader(res);
@@ -166,6 +210,26 @@ router.get('/teamdelete/:tournamentName/:teamName', async function(req, res, nex
   sendok(res, "delete players done");
 });
 
+router.get('/delete/:pid/:tournamentName/:teamName', async function(req, res, next) {
+  // PlayerRes = res;
+  setHeader(res);
+  var {pid, tournamentName, teamName}=req.params;
+  tournamentName = tournamentName.toUpperCase();
+  teamName = teamName.toUpperCase();
+  
+  await Player.deleteOne({pid: pid, tournament: tournamentName, Team: teamName});
+  sendok(res, "delete player done");
+});
+
+router.get('/uniquelist', async function(req, res, next) {
+  setHeader(res);
+
+  var allPlayer = await Player.find({}).sort({name: 1});
+	allPlayer = _.uniqBy(allPlayer, 'pid');
+	allPlayer = _.sortBy(allPlayer, 'name');
+	//console.log(allPlayer)
+	sendok(res, allPlayer);
+});
 
 // get list of purchased		 players
 router.get('/sold', async function(req, res, next) {
@@ -235,14 +299,28 @@ router.get('/available/:playerid', async function(req, res, next) {
 });
 
 
+router.get('/setkey/:myPid/:myKey', async function(req, res, next) {
+  // PlayerRes = res;
+  setHeader(res);
+  var {myPid, myKey}=req.params;
+  console.log(myPid);
+  var myRec = await IdMapping.findOne({key: myKey});
+  if (!myRec) {
+	  myRec = new IdMapping();
+  } 
+	myRec.id = myPid;
+	myRec.key = myKey;
+	myRec.save();
+	sendok(res, myRec); 
+});
 
 async function publish_players(res, filter_players)
 {
 	//console.log("About to publish");
   //console.log(filter_players);
-  var plist = await Player.find(filter_players);
+  var plist = await Player.find(filter_players).sort({'name': 1});
   //console.log(plist.length);
-  plist = _.sortBy(plist, 'name');
+  //plist = _.sortBy(plist, 'name');
   sendok(res, plist);
 }
 

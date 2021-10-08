@@ -52,6 +52,15 @@ router.get('/tournamentdelete/:tournamentName', async function (req, res, next) 
   sendok(res, `delete tournament ${tournamentName}`)
 });
 
+router.get('/count/tournament/:tournamentName', async function (req, res, next) {
+  // TeamRes = res;
+  setHeader(res);  
+  var {tournamentName} = req.params;
+	tournamentName = tournamentName.toUpperCase()
+  let tmp = await Team.find({tournament: tournamentName});  
+  sendok(res, {count: tmp.length})
+});
+
 router.get('/uniquelist', async function (req, res, next) {
   // TeamRes = res;
   setHeader(res);  
@@ -68,22 +77,59 @@ router.get('/add/:tournamentName/:teamName', async function (req, res, next) {
   tournamentName = tournamentName.toUpperCase();
   teamName = teamName.toUpperCase();
   let myTeam = await Team.findOne({name: teamName, tournament: tournamentName});
-  if (!myTeam) {
+	if (myTeam) return senderr(res, 601, "Duplicate team name");
+	
 	myrec = new Team();
 	myrec.name = teamName;
-    myrec.fullname = teamName;
-    myrec.tournament = tournamentName;
+	myrec.fullname = teamName;
+	myrec.tournament = tournamentName;
 	myrec.save();  
-  };
-  sendok(res, "Done");
+
+  sendok(res, myrec);
+});
+
+
+router.get('/delete/:tournamentName/:teamName', async function (req, res, next) {
+  // TeamRes = res;
+  setHeader(res);  
+  var {tournamentName, teamName} = req.params;
+  
+  tournamentName = tournamentName.toUpperCase();
+  teamName = teamName.toUpperCase();
+  await Team.deleteOne({name: teamName, tournament: tournamentName});
+  sendok(res, "deleted team");
+});
+
+
+router.get('/update/:tournamentName/:oldTeamName/:teamName', async function (req, res, next) {
+  // TeamRes = res;
+  setHeader(res);  
+  var {tournamentName, oldTeamName, teamName} = req.params;
+  
+  tournamentName = tournamentName.toUpperCase();
+  teamName = teamName.toUpperCase();
+	oldTeamName = oldTeamName.toUpperCase();
+	
+  let myTeam = await Team.findOne({name: teamName, tournament: tournamentName});
+	if (myTeam) return senderr(res, 601, "Duplicate team name");
+	
+	myTeam = await Team.findOne({name: oldTeamName, tournament: tournamentName});
+	if (!myTeam) return senderr(res, 602, "Original team not found");
+	
+	myTeam.name = teamName;
+	myTeam.fullname = teamName;
+	myTeam.tournament = tournamentName;
+	myTeam.save();  
+
+  sendok(res, myTeam);
 });
 
 async function publishTeam(res, filter_teams, setUnique) {
-  var ulist = await Team.find(filter_teams);
+  var ulist = await Team.find(filter_teams).sort({'name': 1});
   //ulist = _.map(ulist, o => _.pick(o, ['name']));
-  if (setUnique)
-	ulist = _.uniqBy(ulist, x => x.name);
-  ulist = _.sortBy(ulist, 'name');
+  //if (setUnique)
+	//ulist = _.uniqBy(ulist, x => x.name);
+  //ulist = _.sortBy(ulist, 'name');
   sendok(res, ulist);
 }
 

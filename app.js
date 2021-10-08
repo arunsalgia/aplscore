@@ -10,6 +10,7 @@ cron = require('node-cron');
 nodemailer = require('nodemailer');
 crypto = require('crypto');
 Razorpay = require("razorpay");
+axios = require('axios');
 
 
 app = express();
@@ -65,14 +66,15 @@ prizeRouter = require('./routes/prize');
 aplRouter = require('./routes/apl');
 kycRouter = require('./routes/kyc');
 razorRouter = require('./routes/razor');
+testRouter = require('./routes/test');
 
 // maintaing list of all active client connection
 connectionArray  = [];
 masterConnectionArray  = [];
 clientData = [];
 
-CLIENTUPDATEINTERVAL = 5;
-CRICUPDATEINTERVAL = 5;    // in seconds. Interval after seconds fetch cricket match data from cricapi
+CLIENTUPDATEINTERVAL = 30;
+CRICUPDATEINTERVAL = 30;    // in seconds. Interval after seconds fetch cricket match data from cricapi
 cricTimer = 0;
 clientUpdateCount=0;
 
@@ -165,6 +167,8 @@ app.use('/prize', prizeRouter);
 app.use('/apl', aplRouter);
 app.use('/kyc', kycRouter);
 app.use('/razor', razorRouter);
+app.use('/test', testRouter);
+
 
 // ---- start of globals
 // connection string for database
@@ -266,6 +270,7 @@ AuctionSchema = mongoose.Schema({
   playerName: String,
   bidAmount: Number
 });
+
 GroupMemberSchema = mongoose.Schema({
   gid: Number,
   uid: Number,
@@ -464,6 +469,13 @@ FirebaseSchema = mongoose.Schema({
 	enabled: Boolean
 });
 
+IdSchema = mongoose.Schema({
+		key: String,
+	  name: String,
+	  pid: Number,
+		type: String
+	});
+	
 // table name will be <tournament Name>_brief r.g. IPL2020_brief
 BRIEFSUFFIX = "_brief";
 RUNNINGMATCH=1;
@@ -495,6 +507,7 @@ UserKyc = mongoose.model('userkyc', UserKycSchema);
 Reference = mongoose.model('reference', ReferenceSchema);
 Firebase = mongoose.model('firebase', FirebaseSchema);
 Offer = mongoose.model('offer', OfferSchema);
+IdInfo = mongoose.model("idinfo", IdSchema);
 
 nextMatchFetchTime = new Date();
 router = express.Router();

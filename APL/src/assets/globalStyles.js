@@ -4,15 +4,108 @@ import {
   grayColor,
   hexToRgb
 } from "assets/jss/material-dashboard-react.js";
-import { red, blue, green, deepOrange, deepPurple } from '@material-ui/core/colors';
+import { red, blue, green, deepOrange, deepPurple, yellow } from '@material-ui/core/colors';
 import { makeStyles } from '@material-ui/core/styles';
 
 
 const globalStyles = makeStyles((theme) => ({
+	green: {
+		color: green[900],
+	},
+	deepOrange: {
+		color: deepOrange[900],
+	},
+	blue: {
+		color: 'blue',
+	},
+	bgRed: {
+		backgroundColor: 'red',
+	},
   root: {
     width: '100%',
-    // backgroundColor: '#FAF5E9',
+    backgroundColor: '#FAF5E9',
   },
+	drawerPaper: {
+    //position: 'relative',
+    whiteSpace: 'nowrap',
+    width: 300,
+    paddingTop: theme.spacing(4),
+    paddingBottom: theme.spacing(4),
+    //background: '#535454',
+    //color: '#fff',
+  },
+	title: {
+		fontSize: theme.typography.pxToRem(18),
+		fontWeight: theme.typography.fontWeightBold,	
+		color: 'blue',
+	},
+	vgSpacing: {
+		padding: "10px 10px", 
+		margin: "10px 10px", 
+	},
+	boxStyle: {
+		padding: "5px 10px", 
+		margin: "4px 2px", 
+		
+		//backgroundColor: blue[300] 
+	},
+	select: {
+		padding: "none", 
+		backgroundColor: '#B3E5FC',
+		margin: "none",
+	},
+	patientName: {
+		fontSize: theme.typography.pxToRem(18),
+		fontWeight: theme.typography.fontWeightBold,	
+		color: 'blue',
+	},
+	patientInfo: {
+		marginLeft: theme.spacing(3),
+		fontSize: theme.typography.pxToRem(14),
+	},
+	patientInfo2: {
+		fontSize: theme.typography.pxToRem(14),
+		fontWeight: theme.typography.fontWeightBold,
+	},
+		patientInfo999: {
+		fontSize: theme.typography.pxToRem(14),
+		fontWeight: theme.typography.fontWeightBold,
+		marginRight: theme.spacing(5),
+	},
+	selectForm: {
+    margin: theme.spacing(1),
+    minWidth: 120,
+  },
+  selectEmpty: {
+    marginTop: theme.spacing(2),
+  },
+	selectLabel: {
+		color: yellow[700],
+	},
+	link: {
+		backgroundColor: 'transparent',
+	},
+	webPage: {
+		width: '100%',
+		height: '100%',
+		backgroundColor: 'white',
+	},
+	signInWelcome: {
+		align: "center",
+		//position: "fixed",
+		//top: "40%",
+		//left: "35%",
+		color: blue[700],
+		backgroundColor: yellow[100],
+		fontSize: theme.typography.pxToRem(28),
+		fontWeight: theme.typography.fontWeightBold,
+		border: 5,
+		borderRadius: 7,
+		borderWidth: 2,
+		margin: 5,
+		borderColor: 'black',
+		borderStyle: 'solid',
+	},
   form: {
     width: '100%', // Fix IE 11 issue.
     marginTop: theme.spacing(1),
@@ -21,6 +114,20 @@ const globalStyles = makeStyles((theme) => ({
     margin: theme.spacing(3, 0, 2),
   },
   page: {
+  },
+	yesNoTitle: {
+    fontSize: theme.typography.pxToRem(16),
+    fontWeight: theme.typography.fontWeightBold,
+		color: blue[700],
+  },
+	yesNoNormalMessage: {
+    fontSize: theme.typography.pxToRem(12),
+    fontWeight: theme.typography.fontWeightBold,
+  },
+	yesNoErrorMessage: {
+    fontSize: theme.typography.pxToRem(16),
+    fontWeight: theme.typography.fontWeightBold,
+		color: red[700],
   },
   paper: {
     marginTop: theme.spacing(8),

@@ -1,4 +1,5 @@
 router = express.Router();
+const CRICAPIAVAILABLE=false;
 const { 
   akshuGetGroup, akshuUpdGroup, akshuGetGroupMembers, akshuUpdGroupMember,
   akshuGetAuction, akshuGetTournament,
@@ -89,6 +90,12 @@ var g_allusers;
 var g_auctionList;
 var g_statList;
 var g_tournamentStat;
+
+
+async function getPlayerPid(key) {
+	let rec =await IdInfo.findOne({key: key});
+	return (rec) ? rec.pid : 0;
+}
 
 /* GET all users listing. */
 router.use('/', async function(req, res, next) {
@@ -1555,7 +1562,7 @@ function get_cricApiMatchType(myTeam1, myTeam2, circType) {
 async function update_cricapi_data_r1(logToResponse)
 {
     let myindex;
-
+		console.log("S1");
     // 1st if time is up then get match details from cricapi
     if (timeToFetchMatches()) {
       //console.log("time to fetch match details");
@@ -1658,10 +1665,12 @@ async function update_cricapi_data_r1(logToResponse)
     //   console.log("Match details not to be fetched now");
 
     // match update job done. Now get all matches which have started before current time
+		console.log("S2");
     var currtime = new Date(); 
     let myfilter = { matchStartTime: {$lt: currtime }, matchEnded: false};
     var matchesFromDB = await CricapiMatch.find(myfilter);
-
+		//console.log(matchesFromDB);
+		
     // get stas of all these matches
     let aidx
     for(aidx=0; aidx < matchesFromDB.length; ++aidx) {
@@ -1671,10 +1680,10 @@ async function update_cricapi_data_r1(logToResponse)
       // const liveScore= await fetchMatchScoreFromCricapi(mmm.mid);
       // score[mmm.tournament]=liveScore.description;
       await updateTournamentStarted(mmm.tournament);   
-      const cricData = await fetchMatchStatsFromCricapi(mmm.mid);
-      if (cricData != null)
-      if (cricData.data != null) {
-        var manofthematchPID = await updateMatchStats_r1(mmm, cricData.data);
+      const cricData = await fetchMatchStatsFromRoanuz(mmm.mid);
+      //if (cricData != null)
+      if (cricData != null) {
+        var manofthematchPID = await updateMatchStats_roanuz(mmm, cricData);
         // match over if man of the match declared 
         // OR
         // current time > matchEndTime
@@ -2150,6 +2159,420 @@ async function updateMatchStats_r1(mmm, cricdata)
 }
 
 
+async function updateMatchStats_roanuz(mmm, cricdata)
+{
+  let briefIndex = -1;
+  var currMatch = mmm.mid;
+  let myType = mmm.type.toUpperCase();
+  if (myType.includes("ODI")) 
+    myType = "ODI";
+  else if (myType.includes("TEST"))
+    myType = "TEST";
+  else 
+  myType = "T20";
+
+  var manOfTheMatchPid = 0;  
+  console.log(`-------------Match: ${currMatch} data update. Tournamen; ${mmm.tournament}`)  
+	if (cricdata.play.result.pom.length > 0)
+		manOfTheMatchPid = await getPlayerPid(cricdata.play.result.pom[0])
+	console.log(manOfTheMatchPid);
+	
+	let myPlayers = Object.keys(cricdata.players);
+	//console.log(myPlayers);
+	let playerData = [];
+	for(let i=0; i<myPlayers.length; ++i)
+	{
+		let myData = cricdata[myPlayers[i]];
+		console.log(myData.player.name);
+		continue;
+		let myStats = myData.score["1"];
+		if ( 	(myStats.batting === null) &&
+					(myStats.bowling === null) &&
+					(myStats.fielding === null))
+			continue;
+			
+		//console.log(myStats.batting);
+		//console.log(myStats.bowling);
+		//console.log(myStats.fielding);
+		let myPlayer = myData.player.name;
+		
+		let myBatting = myStats.batting
+		let myBowling = myStats.bowling;
+		let myFielding = myStats.fielding;
+		
+		let myPid = await getPlayerPid(myPlayers[i]);
+		
+		let newData = {key: myPlayers[i], pid: myPid, name: myData.player.name,
+			runs: 0, fours: 0, sixes: 0, out: false,
+			catches: 0, stumpings: 0, runouts: 0,
+			wickets: 0, economy: 0.0, maiden_overs: 0
+		};
+		
+		if (myBatting !== null) {
+			newData.runs = myBatting.score.runs;
+			newData.fours = myBatting.score.fours;
+			newData.sixes = myBatting.score.sixes
+			//balls = myBatting.score.balls
+			out = (myBatting.dismissal !== null);
+		}
+		
+		if (myBowling !== null) {
+			//console.log(myBowling);
+			newData.wickets = myBowling.score.wickets;
+			newData.economy = myBowling.score.economy;
+			newData.maiden_overs = myBowling.score.maiden_overs;
+		}
+		
+		if (myFielding !== null) {
+			newData.catches = myFielding.catches;
+			newData.stumpings = myFielding.stumpings;
+			newData.runouts = myFielding.runouts;
+		}
+		//console.log("---------------------------------");
+		//console.log(newData);
+		//console.log("---------------------------------");
+		playerData.push(newData);
+	}
+	
+	console.log(playerData);
+	return;
+	
+  // from tournament name identify the name
+  var tournamentStat = mongoose.model(mmm.tournament, StatSchema);
+  var briefStat = mongoose.model(mmm.tournament+BRIEFSUFFIX, BriefStatSchema);
+  
+  var bowlingArray;
+  if (!(cricdata.bowling === undefined))
+    bowlingArray = cricdata.bowling;
+  else
+    bowlingArray = [];
+
+  var battingArray;
+  if (!(cricdata.batting === undefined))
+    battingArray = cricdata.batting;
+  else
+    battingArray = [];
+  // console.log(battingArray);
+
+  var fieldingArray;
+  if (!(cricdata.fielding === undefined))
+    fieldingArray = cricdata.fielding;
+  else
+    fieldingArray = [];
+
+  if (cricdata["man-of-the-match"] != undefined) 
+  if (cricdata["man-of-the-match"].pid != undefined)
+  if (cricdata["man-of-the-match"].pid.length > 0)
+    manOfTheMatchPid = parseInt(cricdata["man-of-the-match"].pid);
+  // console.log(`Man of the match is ${manOfTheMatchPid} as per cric api ${cricdata["man-of-the-match"]}`)
+  // console.log(cricdata["man-of-the-match"].pid)
+
+  var allplayerstats = await tournamentStat.find({mid: mmm.mid});
+  var allbriefstats = await briefStat.find({sid: mmm.mid});
+  let myInning = 1;
+  // console.log(allplayerstats);
+  // console.log(allbriefstats.length);
+  // update bowling details
+  //console.log("Bowlong Started");
+  // console.log(bowlingArray); 
+
+  let allInningsBowling = [];
+  let allInningsTitle = [];
+  // let totalOvers = 0;
+  let totalOvers;
+
+  bowlingArray.forEach( x => {
+    myInning = 1;
+    if (myType === "TEST") {
+      if (!x.title.toUpperCase().includes("1ST"))
+        myInning  = 2;
+    }
+
+    totalOvers = {overs: 0, balls: 0};    // 6.4 overs will be stored as {overs: 6, balls: 4}
+    x.scores.forEach (bowler => {
+      // ***********************  IMP IMP IMP ***********************
+      // some garbage records are sent by cricapi. Have found that in all these case Overs ("O") 
+      // was set as "Allrounder", "bowler" "batsman".
+      // ideally it should have #overs bowled i.e. numeric
+      if (isNaN(bowler.O)) {
+        //console.log(`Invalid Over ${bowler.O}. Skipping this recird`);
+        return;
+      }
+      //console.log(`Bowling of ${bowler.pid}, ${myInning}`)
+      myindex = _.findIndex(allplayerstats, {mid: currMatch, 
+        pid: parseInt(bowler.pid), 
+        inning: myInning});
+      //console.log(myindex);
+      if (myindex < 0) {
+        var tmp = getBlankStatRecord(tournamentStat);
+        tmp.mid = currMatch;
+        tmp.pid = bowler.pid;
+        tmp.playerName = bowler.bowler;
+        tmp.inning = myInning;
+        allplayerstats.push(tmp);
+        myindex = allplayerstats.length - 1;
+      }
+      briefIndex = _.findIndex(allbriefstats, {sid: currMatch, 
+        pid: parseInt(bowler.pid),
+        inning: myInning});
+      if (briefIndex < 0) {
+        var tmp = getBlankBriefRecord(briefStat);
+        // console.log(tmp);
+        tmp.sid = currMatch;
+        tmp.pid = bowler.pid;
+        tmp.playerName = bowler.bowler;
+        tmp.inning = myInning;
+        // console.log(`length is ${allbriefstats.length}`);
+        allbriefstats.push(tmp);
+        briefIndex = allbriefstats.length - 1;
+      }
+
+      // if minimum overs bowled then
+      // check for good or bad economy
+      let myEconomy = 0;
+      if ((bowler.Econ !== undefined) && (bowler.O !== undefined)) {
+        totalOvers = addBowling(totalOvers, bowler.O)
+        let myOvers = parseFloat(bowler.O);
+        //console.log(`Overs bowled ${myOvers}  ${MinOvers[myType]}`);
+        if (myOvers >= MinOvers[myType]) {
+          let xecon = parseFloat(bowler.Econ);
+          //console.log(`Econmoy bowled ${xecon}`);
+          if (xecon <= EconomyGood[myType]) {
+            myEconomy = 1;
+          } 
+          if (xecon >= EconomyBad[myType]) {
+            myEconomy = -1;
+          }
+        }
+      }
+      //console.log(`Economyu valye ${myEconomy}`);
+
+      allplayerstats[myindex].wicket = (bowler.W === undefined) ? 0 : bowler.W;
+      allplayerstats[myindex].wicket5 = (bowler.W >= Wicket5[mmm.type]) ? 1 : 0;
+      allplayerstats[myindex].wicket3 = ((bowler.W >= Wicket3[mmm.type]) && 
+      (bowler.W < Wicket5[mmm.type])) ? 1 : 0;
+      allplayerstats[myindex].hattrick = 0;
+      allplayerstats[myindex].maiden = (bowler.M === undefined) ? 0 : bowler.M
+      allplayerstats[myindex].maxTouramentRun = 0;
+      allplayerstats[myindex].maxTouramentWicket = 0;
+      allplayerstats[myindex].economy = myEconomy;
+
+      allbriefstats[briefIndex].wicket = (bowler.W === undefined) ? 0 : bowler.W;
+      allbriefstats[briefIndex].wicket5 = (bowler.W >= 5) ? 1 : 0;
+      allbriefstats[briefIndex].wicket3 = ((bowler.W >= 3) && (bowler.W < 5)) ? 1 : 0;
+      allbriefstats[briefIndex].hattrick = 0;
+      allbriefstats[briefIndex].maiden = (bowler.M === undefined) ? 0 : bowler.M
+      allbriefstats[briefIndex].maxTouramentRun = 0;
+      allbriefstats[briefIndex].maxTouramentWicket = 0;
+      allbriefstats[briefIndex].economy = myEconomy;
+
+      // console.log(`Wicket by ${allplayerstats[myindex].pid} : ${allplayerstats[myindex].wicket}`)
+      if (!(bowler.O === undefined)) {
+        var i = parseInt(bowler.O);
+        if (isNaN(i))
+          allplayerstats[myindex].oversBowled = 0;
+        else
+          allplayerstats[myindex].oversBowled = bowler.O;
+      }
+      allbriefstats[briefIndex].oversBowled = allplayerstats[myindex].oversBowled
+
+      if (allplayerstats[myindex].pid === manOfTheMatchPid) {
+        allplayerstats[myindex].manOfTheMatch = true;
+        allbriefstats[briefIndex].manOfTheMatch = 1;
+      }
+
+      var myscore = calculateScore(allplayerstats[myindex], myType);
+      allplayerstats[myindex].score = myscore;
+      allbriefstats[briefIndex].score = myscore;
+    });
+    allInningsBowling.push(totalOvers.overs + totalOvers.balls/10);
+    allInningsTitle.push(getTitle(mmm, x.title));
+  });
+
+  // update batting details
+  // console.log("Batting started");
+  // console.log(battingArray);
+  battingArray.forEach( x => {
+    myInning = 1;
+    if (myType === "TEST") {
+      if (!x.title.toUpperCase().includes("1ST"))
+        myInning  = 2;
+    }
+    x.scores.forEach(batsman => {
+      // console.log(`batting of ${batsman.pid}`)
+      myindex = _.findIndex(allplayerstats, {mid: currMatch, 
+        pid: parseInt(batsman.pid),
+        inning: myInning});
+      //console.log(`Batting index ${myindex}`);
+      if (myindex < 0) {
+        var tmp = getBlankStatRecord(tournamentStat);
+        tmp.mid = currMatch;
+        tmp.pid = batsman.pid;
+        tmp.playerName = batsman.batsman;
+        tmp.inning = myInning;
+        allplayerstats.push(tmp);
+        myindex = allplayerstats.length - 1;
+      }
+      briefIndex = _.findIndex(allbriefstats, {sid: currMatch, 
+        pid: parseInt(batsman.pid),
+        inning: myInning
+      });
+      if (briefIndex < 0) {
+        var tmp = getBlankBriefRecord(briefStat);
+        tmp.sid = currMatch;
+        tmp.pid = batsman.pid;
+        tmp.playerName = batsman.batsman;
+        tmp.inning = myInning;
+        allbriefstats.push(tmp);
+        briefIndex = allbriefstats.length - 1;
+      }
+
+      // check if out on 0. i.e Duck (i.e. played at least 1 ball)
+      // Note player can be run out with out playing a single ball.
+      // This is not to be considered as DUCK
+      let isDuck = false;
+      if ((batsman.R !== undefined) && 
+      (batsman.B !== undefined) && 
+      (batsman.dismissal !== undefined)) {
+        if ((parseInt(batsman.R) === 0) && 
+        (parseInt(batsman.B) > 0) &&
+        (batsman.dismissal.replace(" ", "").toUpperCase() !== "NOTOUT")) {
+            isDuck = true;    // player is out on 0
+        }
+      }
+
+      allplayerstats[myindex].run = (batsman.R === undefined) ? 0 : batsman.R;
+      allplayerstats[myindex].fifty = ((batsman.R >= 50) && (batsman.R < 100)) ? 1 : 0;
+      allplayerstats[myindex].hundred = (batsman.R >= 100) ? 1 : 0;
+      allplayerstats[myindex].four = (batsman["4s"] === undefined) ? 0 : batsman["4s"];
+      allplayerstats[myindex].six = (batsman["6s"] === undefined) ? 0 : batsman["6s"];
+      allplayerstats[myindex].maxTouramentRun = 0;
+      allplayerstats[myindex].maxTouramentWicket = 0;
+      allplayerstats[myindex].duck = (isDuck) ? 1 : 0;
+
+      allbriefstats[briefIndex].run = (batsman.R === undefined) ? 0 : batsman.R;
+      allbriefstats[briefIndex].fifty = ((batsman.R >= 50) && (batsman.R < 100)) ? 1 : 0;
+      allbriefstats[briefIndex].hundred = (batsman.R >= 100) ? 1 : 0;
+      allbriefstats[briefIndex].four = (batsman["4s"] === undefined) ? 0 : batsman["4s"];
+      allbriefstats[briefIndex].six = (batsman["6s"] === undefined) ? 0 : batsman["6s"];
+      allbriefstats[briefIndex].maxTouramentRun = 0;
+      allbriefstats[briefIndex].maxTouramentWicket = 0;
+      allbriefstats[briefIndex].duck = (isDuck) ? 1 : 0;
+      // console.log(`Runs by ${allplayerstats[myindex].pid} : ${allplayerstats[myindex].run}`)
+
+      if (!(batsman.B === undefined)) {
+        var i = parseInt(batsman.B);
+        if (isNaN(i))
+          allplayerstats[myindex].ballsPlayed = 0;
+        else
+        allplayerstats[myindex].ballsPlayed = i;
+      }
+      allbriefstats[briefIndex].ballsPlayed = allplayerstats[myindex].ballsPlayed;
+
+      if (allplayerstats[myindex].pid === manOfTheMatchPid) {
+        allplayerstats[myindex].manOfTheMatch = true;
+        allbriefstats[briefIndex].manOfTheMatch = 1;
+        //console.log(`Man of the match is ${allplayerstats[myindex].pid}`);
+      }
+
+      var myscore = calculateScore(allplayerstats[myindex], myType);
+      //console.log(`Arun score is ${myscore}`);
+      allplayerstats[myindex].score = myscore;
+      allbriefstats[briefIndex].score = myscore;
+      //console.log(`Score; ${myscore} `);
+    });
+  });
+
+  fieldingArray.forEach( x => {
+    myInning = 1;
+    if (myType === "TEST") {
+      if (!x.title.toUpperCase().includes("1ST"))
+        myInning  = 2;
+    }
+    x.scores.forEach(fielder => {
+      // console.log(`Fielding of ${fielder.pid}`)
+      myindex = _.findIndex(allplayerstats, {mid: currMatch, 
+        pid: parseInt(fielder.pid),
+        inning: myInning
+      });
+      if (myindex < 0) {
+        var tmp = getBlankStatRecord(tournamentStat);
+        tmp.mid = currMatch;
+        tmp.pid = fielder.pid;
+        tmp.playerName = fielder.name;
+        tmp.inning = myInning;
+        allplayerstats.push(tmp);
+        myindex = allplayerstats.length - 1;
+      }
+      briefIndex = _.findIndex(allbriefstats, {sid: currMatch, 
+        pid: parseInt(fielder.pid),
+        inning: myInning
+      });
+      if (briefIndex < 0) {
+        var tmp = getBlankBriefRecord(briefStat);
+        tmp.sid = currMatch;
+        tmp.pid = fielder.pid;
+        tmp.playerName = fielder.name;
+        tmp.inning = myInning;
+        // console.log(`length is ${allbriefstats.length}`);
+        allbriefstats.push(tmp);
+        briefIndex = allbriefstats.length - 1;
+      }
+
+      allplayerstats[myindex].runout = (fielder.runout === undefined) ? 0 : fielder.runout;
+      allplayerstats[myindex].stumped = (fielder.stumped === undefined) ? 0 : fielder.stumped;
+      allplayerstats[myindex].bowled = (fielder.bowled === undefined) ? 0 : fielder.bowled;
+      allplayerstats[myindex].lbw = (fielder.lbw === undefined) ? 0 : fielder.lbw;
+      allplayerstats[myindex].catch = (fielder.catch === undefined) ? 0 : fielder.catch;
+
+      allbriefstats[briefIndex].runout = (fielder.runout === undefined) ? 0 : fielder.runout;
+      allbriefstats[briefIndex].stumped = (fielder.stumped === undefined) ? 0 : fielder.stumped;
+      allbriefstats[briefIndex].bowled = (fielder.bowled === undefined) ? 0 : fielder.bowled;
+      allbriefstats[briefIndex].lbw = (fielder.lbw === undefined) ? 0 : fielder.lbw;
+      allbriefstats[briefIndex].catch = (fielder.catch === undefined) ? 0 : fielder.catch;
+
+      var myscore = calculateScore(allplayerstats[myindex], myType);
+      allplayerstats[myindex].score = myscore;
+      allbriefstats[briefIndex].score = myscore;
+    });
+  });
+
+  let myBowlingRec = _.find(runningScoreArray, x => x.tournament === mmm.tournament);
+  if (!myBowlingRec) {
+    let myBowlingRec = {
+      tournament: mmm.tournament, mid: mmm.mid,
+      team1: mmm.team1, team2: mmm.team2,
+      bowl1: 0, bowl2: 0, bowl3, bowl4: 0,
+      title1: "", title2: "", title3: "", title4: ""
+    }
+    runningScoreArray.push(myBowlingRec);
+  }
+  myBowlingRec.mid = mmm.mid;
+  myBowlingRec.team1 = mmm.team1;
+  myBowlingRec.team2 = mmm.team2;
+  myBowlingRec.bowl1 = (allInningsBowling.length >= 1) ? allInningsBowling[0] : 0;
+  myBowlingRec.bowl2 = (allInningsBowling.length >= 2) ? allInningsBowling[1] : 0;
+  myBowlingRec.bowl3 = (allInningsBowling.length >= 3) ? allInningsBowling[2] : 0;
+  myBowlingRec.bowl4 = (allInningsBowling.length >= 4) ? allInningsBowling[3] : 0;
+  myBowlingRec.title1 = (allInningsTitle.length >= 1) ? allInningsTitle[0] : "";
+  myBowlingRec.title2 = (allInningsTitle.length >= 2) ? allInningsTitle[1] : "";
+  myBowlingRec.title3 = (allInningsTitle.length >= 3) ? allInningsTitle[2] : "";
+  myBowlingRec.title4 = (allInningsTitle.length >= 4) ? allInningsTitle[3] : "";
+  // update statistics in mongoose
+  //console.log(allplayerstats.length);
+  //console.log("Saveing statsu");
+  allplayerstats.forEach(ps => {
+    ps.save();
+  })
+  allbriefstats.forEach(ps => {
+    // if (ps.pid === 288284) 
+    // console.log(ps);
+    ps.save();
+  })
+
+  return (manOfTheMatchPid);
+}
+
 function getMatchDetails(cricapiRec, mymatch, tournamentName, myMatchType) {
   var stime = getMatchStartTime(cricapiRec);
   var etime = getMatchEndTime(cricapiRec);
@@ -2240,6 +2663,81 @@ async function fetchMatchStatsFromCricapi(matchId) { // (1)
   }
   // console
   throw new Error(cricres.status);
+}
+
+const token="v5sRS_P_1439602356420481067s1440985143178303760";
+const project_key = 'RS_P_1439602356420481067'
+
+async function fetchMatchStatsFromRoanuz(matchId) { // (1)
+	//console.log("Match: ", matchId);
+	
+ let iRec = await IdInfo.findOne({pid: matchId});
+ if (!iRec) return;
+ console.log(iRec);
+ 
+ let url = `https://api.sports.roanuz.com/v5/cricket/${project_key}/match/${iRec.key}/`;
+ try {
+		let resp = await axios.get(url, {headers: {'rs-token': token } });
+		//console.log(resp.data.data);
+		return resp.data.data;
+		
+		// get player keys
+		//let myPlayers = Object.keys(resp.data.data.players);
+		console.log(myPlayers);
+		for(let i=0; i<myPlayers.length; ++i)
+		{
+			let myData = resp.data.data.players[myPlayers[i]];
+			//console.log(myData.player.name);
+			let myStats = myData.score["1"];
+			if ( 	(myStats.batting === null) &&
+						(myStats.bowling === null) &&
+						(myStats.fielding === null))
+				continue;
+				
+			//console.log(myStats.batting);
+			//console.log(myStats.bowling);
+			//console.log(myStats.fielding);
+			let myPlayer = myData.player.name;
+			
+			let myBatting = myStats.batting
+			let myBowling = myStats.bowling;
+			let myFielding = myStats.fielding;
+			
+			let newData = {key: myPlayers[i], name: myData.player.name,
+				runs: 0, fours: 0, sixes: 0, out: false,
+				catches: 0, stumpings: 0, runouts: 0,
+				wickets: 0, economy: 0.0, maiden_overs: 0
+			};
+			
+			if (myBatting !== null) {
+				newData.runs = myBatting.score.runs;
+				newData.fours = myBatting.score.fours;
+				newData.sixes = myBatting.score.sixes
+				//balls = myBatting.score.balls
+				out = (myBatting.dismissal !== null);
+			}
+			
+			if (myBowling !== null) {
+				//console.log(myBowling);
+				newData.wickets = myBowling.score.wickets;
+				newData.economy = myBowling.score.economy;
+				newData.maiden_overs = myBowling.score.maiden_overs;
+			}
+			
+			if (myFielding !== null) {
+				newData.catches = myFielding.catches;
+				newData.stumpings = myFielding.stumpings;
+				newData.runouts = myFielding.runouts;
+			}
+			//console.log("---------------------------------");
+			//console.log(newData);
+			//console.log("---------------------------------");
+		}
+		//sendok(res, myPlayers);
+	} catch (e) {
+		console.log(e);
+		return;
+	}
 }
 
 // get match details from cricapi
@@ -2489,13 +2987,14 @@ function clearRunningClientData() {
 if (WEB) {		// schedule not to be when part of APK. It will be only part of WEB
 // schedule task 
 let clientSemaphore = false;
-cron.schedule('*/1 * * * * *', async () => {	
+cron.schedule('0 0 1 * * *', async () => {	
+	return;
   ++cricTimer;
   ++clientUpdateCount;
   if (!db_connection) {
     return;
   }
-
+	
   if (clientSemaphore) return;       // previous execution in progress
   clientSemaphore = true;
 
@@ -2509,9 +3008,11 @@ cron.schedule('*/1 * * * * *', async () => {
         try {
 				clearRunningClientData();
         cricTimer = 0;
-        await update_cricapi_data_r1(false);
+				if (CRICAPIAVAILABLE) {
+					await update_cricapi_data_r1(false);
+				}
         await updateTournamentBrief();
-        console.log(runningScoreArray);
+        //console.log(runningScoreArray);
         //await checkallover();  ---- Confirm this is done when match ends
         } catch (e) {
           console.log(e);
@@ -2569,6 +3070,7 @@ function get_cricapi_PlayerInfo_URL(playerid)
 // time based functions:
 
 function timeToFetchMatches() {
+	return false; //--------------arun arun
   var currtime = new Date();
   //console.log(`Next FetchTime: ${nextMatchFetchTime}`);
   if (currtime >= nextMatchFetchTime)

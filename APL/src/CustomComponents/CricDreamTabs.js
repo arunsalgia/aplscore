@@ -23,34 +23,13 @@ import Menu from '@material-ui/core/Menu';
 import {red, blue, green, deepOrange} from '@material-ui/core/colors';
 import Divider from '@material-ui/core/Divider';
 /// cd items import
-import Dash from "views/Dashboard/Dashboard"
-import Stats from "views/Statistics/Statistics"
-import MyTeam from "views/MyTeam/MyTeam"
-import Auction from "views/Auction/Auction"
-import Captain from "views/Captain/Captain"
-import Match from "views/UpcomingMatch/UpcomingMatch"
-import Group from "views/Group/Group"
 
-import Wallet from "views/Wallet/Wallet.js"
-import AddWallet from "views/Wallet/AddWallet";
-import WithdrawWallet from "views/Wallet/WithdrawWallet";
-// import KycBank from "views/Wallet/KycBank";
-// import KycDocs from "views/Wallet/KycDocs";
-
-import PlayerInfo from "views/APL/PlayerInfo";
-// import Profile from "views/Profile/Profile.js"
-import Profile from "views/Profile/UserProfile"
-import ChangePassword from "views/Login/ChangePassword.js"
-import About from "views/APL/About.js";
-import Home from "views/APL/Home.js";
-import ContactUs from "views/APL/ContactUs.js";
-import PointSystem from "views/APL/PointSystem.js";
 import SU_Tournament from "views/SuperUser/Tournament.js" 
-import SU_Player from "views/SuperUser/Player.js" 
-import SU_Image from "views/SuperUser/Image.js" 
-import NewGroup from "views/Group/NewGroup.js"
-import JoinGroup from "views/Group/JoinGroup.js"
-import GroupDetails from "views/Group/GroupDetails.js"
+import Player from "views/SuperUser/Player.js"
+import Team from "views/SuperUser/Team.js" 
+import Match from "views/SuperUser/Match.js" 
+
+
 import Modal from 'react-modal';
 // import download from 'js-file-downloader';
 import { BlankArea } from './CustomComponents';
@@ -158,7 +137,7 @@ export function CricDreamTabs() {
   const [grpAnchorEl, setGrpAnchorEl] = React.useState(null);
   const grpOpen = Boolean(grpAnchorEl);
   const [arunGroup, setArunGroup] = React.useState(false);
-  const [value, setValue] = React.useState(0);
+  const [value, setValue] = React.useState(1);
   const [upgrade, setUpgrade] = React.useState(false);
   const [modalIsOpen,setIsOpen] = React.useState(true);
   const [userGroup, setUserGroup] = React.useState([]);
@@ -181,19 +160,7 @@ export function CricDreamTabs() {
       // check url
       let walletRouting = false;
       let x = location.pathname.split("/");
-      if (x.length >= 3)
-      if (x[1] === "apl")
-      if (x[2] === "walletdetails") {
-        walletRouting = true;
-        // const { payment_id, payment_status,  payment_request_id} = useParams();
-        //console.log("URLDATA", payment_id, payment_status, payment_request_id);
-        let param = (x.length >= 4) ? x[3] : "";
-        sessionStorage.setItem("payment_id", param)
-        param = (x.length >= 5) ? x[4] : "";
-        sessionStorage.setItem("payment_status", param)
-        param = (x.length >= 6) ? x[5] : "";
-        sessionStorage.setItem("payment_request_id", param)
-      }
+
       
       if (walletRouting) {
         localStorage.setItem("menuValue", process.env.REACT_APP_WALLET);
@@ -210,11 +177,7 @@ export function CricDreamTabs() {
     
     setMenuValue();
 
-    // console.log("Params",
-    //   sessionStorage.getItem("param1"),
-    //   sessionStorage.getItem("param2"),
-    //   sessionStorage.getItem("param3")
-    // );
+
 
 }, []);
 
@@ -229,60 +192,12 @@ export function CricDreamTabs() {
     setAnchorEl(event.currentTarget);
   };
 
-  function handleGrpMenu(event) {
-    setGrpAnchorEl(event.currentTarget);
-    // console.log(event.currentTarget);
-    var myUrl = `${process.env.REACT_APP_AXIOS_BASEPATH}/group/memberof/${localStorage.getItem("uid")}`;
-    axios.get(myUrl).then((response) => {
-      let allGroups = response.data[0].groups;
-      if (allGroups.length > 0) {
-        let tmp = allGroups.find(x => x.defaultGroup == true);
-        if (!tmp) {
-          tmp = allGroups[0];
-          tmp.defaultGroup = true;
-          localStorage.setItem("gid", tmp.gid.toString());
-          localStorage.setItem("groupName", tmp.groupName);
-          localStorage.setItem("tournament", tmp.tournament);
-          localStorage.setItem("admin", tmp.admin);
-          // clearBackupData();
-        }
-      }
-      setUserGroup(allGroups);
-      // console.log('Everything is awesome.');
-      setArunGroup(true);
-    }).catch((error) => {
-      console.log('Not good man :(');
-      console.log(error);
-      setUserGroup([]);
-      setArunGroup(true);
-    })
-  };
-
-  async function handleGroupSelect(index) {
-    setArunGroup(false);
-    let gRec = userGroup[index];
-    try {
-      await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/group/setdefaultgroup/${localStorage.getItem("uid")}/${gRec.gid}`);
-      localStorage.setItem("gid", gRec.gid);
-      localStorage.setItem("groupName", gRec.groupName);
-      localStorage.setItem("tournament", gRec.tournament);
-      localStorage.setItem("admin", gRec.admin);
-      clearBackupData();
-      cdRefresh();
-    } catch (e) {
-      console.log(e);
-      console.log("error setting default group");
-    }
-  }
-  
+ 
   const handleClose = () => {
     setAnchorEl(null);
   };
 
-  const handleGrpClose = () => {
-    setGrpAnchorEl(null);
-    setArunGroup(false);
-  };
+ 
 
   function setMenuValue(num) {
     setValue(num);
@@ -290,29 +205,11 @@ export function CricDreamTabs() {
     localStorage.setItem("menuValue", num);
   }
 
-  const handleDash = () => { setMenuValue(1);  }
-  const handleStat = () => { setMenuValue(2);  }
-  const handleTeam = () => { setMenuValue(3);  }
-  const handleHome = () => { setMenuValue(4);  }
-  const handleMatch = () => { handleClose(); setMenuValue(101);}
-  const handleAuction = () => { handleClose(); setMenuValue(102);}
-  const handleCaptain = () => { handleClose(); setMenuValue(103);}
-  const handleGroup = () => { handleGrpClose(); setMenuValue(104);}
-  const handleWallet = () => { handleClose(); setMenuValue(105);}
-  const handleProfile = () => { handleClose(); setMenuValue(106);}
-  const handlePassword = () => { handleClose(); setMenuValue(107);}
-  // 108 for add wallet
-  const handleHelpDesk = () => { handleClose(); setMenuValue(201);}
-  const handleContactUs = () => { handleClose(); setMenuValue(202);}
-  const handleSuTournament = () => { handleClose(); setMenuValue(301);}
-  const handleSuPlayer = () => { handleClose(); setMenuValue(302);}
-  const handleSuImage = () => { handleClose(); setMenuValue(303);}
-
-  const handleGroupNew = () => { handleGrpClose(); setMenuValue(1001);}
-  const handleGroupJoin = () => { handleGrpClose(); setMenuValue(1002);}
-  const handleGroupDetails = () => { handleGrpClose(); setMenuValue(1003);}
-  const handlePlayerInfo = () => { handleGrpClose(); setMenuValue(1004);}
-
+  const handleSuTournament = () => { setMenuValue(1);  }
+  const handleTeam = () => { setMenuValue(2);  }
+	const handlePlayer = () => { setMenuValue(3);  }
+	const handleMatch = () => { setMenuValue(4);  }
+  
   const handleLogout = () => {
     handleClose();
     localStorage.setItem("uid", "");
@@ -320,47 +217,12 @@ export function CricDreamTabs() {
     cdRefresh();  
   };
 
-  function Show_Supervisor_Options() {
-    if (localStorage.getItem("userPlan") == process.env.REACT_APP_SUPERUSER) {  
-      return (
-        <div>
-        <MenuItem onClick={handleSuTournament}>SU Tournament</MenuItem>
-        <MenuItem onClick={handleSuPlayer}>SU Player</MenuItem>
-        {/* <MenuItem onClick={handleSuImage}>SU Load Image</MenuItem> */}
-        <Divider />
-        </div>)
-    } else {
-      return null;
-    }
-  }
-
   function DisplayCdItems() {
     switch(value) {
-      case 1: return <Dash/>; 
-      case 2: return <Stats/>;
-      case 3: return <MyTeam />;
-      case 4: return <Home />;
-      case 101: return <Match />;
-      case 102: return <Auction />;
-      case 103: return <Captain />;
-      case 104: return <Group />;
-      case 105: return <Wallet />;
-      case 106: return <Profile />;
-      case 107: return <ChangePassword />;
-      case 108: return <AddWallet />
-      case 109: return <WithdrawWallet />
-      // case 110: return <KycBank />;
-      // case 111: return <KycDocs />
-      case 201: return <About />;
-      case 202: return <ContactUs />;
-      case 203: return <PointSystem />;
-      case 301: return <SU_Tournament />;
-      case 302: return <SU_Player />;
-      case 303: return <SU_Image />;
-      case 1001: return <NewGroup />;
-      case 1002: return <JoinGroup />;
-      case 1003: return <GroupDetails />;
-      case 1004: return <PlayerInfo />;
+			case 1: return <SU_Tournament />;
+      case 2: return <Team />;
+			case 3: return <Player />;
+			case 4: return <Match />;
       default: return  null;
     }
   }
@@ -381,62 +243,11 @@ export function CricDreamTabs() {
  
   function closeModal(){ setIsOpen(false); }
 
-  function DisplayUpgrade() {
-    //console.log(`Upgrate: ${upgrade} Menu Item:   ${value}`)
-    // console.log("Current",process.env.REACT_APP_VERSION);
-    if (upgrade)
-      return(
-        <Modal
-        isOpen={modalIsOpen}
-        onAfterOpen={afterOpenModal}
-        onRequestClose={closeModal}
-        style={customStyles}
-        contentLabel="Example Modal"
-        ariaHideApp={false}
-      >
-        {/* <Typography className={classes.new} align="center">
-          Current Version {process.env.REACT_APP_VERSION}
-        </Typography> */}
-        <Typography className={classes.new} align="center">
-          Latest Version {latestApk.version}
-        </Typography>
-        <BlankArea/>
-        <Typography className={classes.new} align="center">
-          What is new
-        </Typography>
-        <TextField variant="outlined" multiline fullWidth disabled
-          id="producttext"
-          // label="What is new" 
-          className={classes.whatIsNew}
-          defaultValue={latestApk.text} 
-        />
-        <BlankArea />
-        <Button align="center" key="upgrade" variant="contained" color="primary" size="medium"
-        className={classes.dashButton} onClick={handleUpgrade}>Update Now
-        </Button>
-      </Modal>
-      )
-    else
-      return(null);
-  }
 
-  function DisplayGroupMenu() {
-    // console.log("Group length", userGroup.length);
-    return (
-      <div key="usergroups">
-      {userGroup.map( (item, index) => {
-        return (
-        <MenuItem key={index} onClick={() => handleGroupSelect(index)}>{item.groupName}</MenuItem>
-        )
-      })}
-      </div>
-    );
-  }
     
   let mylogo = `${process.env.PUBLIC_URL}/APLLOGO1.ICO`;
   let groupCharacter="G";
   let currencyChar = '₹';
-  let myName = localStorage.getItem("userName");
   return (
     <div className={classes.root}>
       <AppBar position="static">
@@ -466,91 +277,12 @@ export function CricDreamTabs() {
                 }}
                 open={open}
                 onClose={handleClose}
-              >
-                <MenuItem onClick={handleProfile}>Profile</MenuItem>
-                <MenuItem onClick={handleWallet}>Wallet</MenuItem>
-                <Divider/>
-                {/* <MenuItem onClick={handleAuction}>Auction</MenuItem>
-                <MenuItem onClick={handleGroupDetails}>Group Details</MenuItem>
-                <MenuItem onClick={handleMatch}>Match</MenuItem>
-                <MenuItem onClick={handleGroup}>Group</MenuItem> */}
-                {/* <MenuItem onClick={handleGroupJoin}>Join Group</MenuItem>
-                <MenuItem onClick={handleGroupNew}>New Group</MenuItem>
-                <Divider /> */}
-                {/* <MenuItem onClick={handleCaptain}>Captain</MenuItem> */}
-                {/* <Divider /> */}
-                {/* <MenuItem onClick={handleGroup}>Group</MenuItem>
-                <Divider/> */}
-                {/* <MenuItem onClick={handlePassword}>Password</MenuItem> */}
-                <Show_Supervisor_Options/>
-                {/* <MenuItem onClick={handleHelpDesk}>How to play</MenuItem> */}
-                <MenuItem onClick={handleContactUs}>Contact Us</MenuItem>       
-                <Divider/>
+              >    
                 <MenuItem onClick={handleLogout}>Logout</MenuItem>
               </Menu>
             </div>
           )}
-          {/* <IconButton edge="start" className={classes.menuButton} color="inherit" aria-label="menu">
-            <MenuIcon />
-          </IconButton> */}
-          <IconButton
-            aria-label="account of current user"
-            aria-controls="menu-appbar"
-            aria-haspopup="true"
-            onClick={handleHome}
-            color="inherit"
-          >
-            <HomeIcon className={classes.icon}/>
-          </IconButton>
-          <Button color="inherit" className={classes.dashButton} onClick={handleDash}>DashBoard</Button>
-          <Button color="inherit" className={classes.statButton} onClick={handleStat}>Stats</Button>
-          {/* <Button color="inherit" className={classes.statButton} onClick={handleAuction}>Auction</Button> */}
-          <Button color="inherit" className={classes.teamButton} onClick={handleTeam}>Team</Button>
-            <Avatar 
-            aria-label="account of current user"
-            aria-controls="user-appbar"
-            aria-haspopup="true"
-            onClick={handleWallet}
-            color="inherit"
-            variant="circular" className={classes.avatar1}>{currencyChar}
-          </Avatar>
-
-         {/* <div> */}
-          {/* <IconButton
-            aria-label="account of current group"
-            aria-controls="group-appbar"
-            aria-haspopup="true"
-            onClick={handleGrpMenu}
-            color="inherit"
-          >
-            <GroupIcon className={classes.icon}/>
-          </IconButton> */}
-          {/* <Avatar 
-            aria-label="account of current user"
-            aria-controls="user-appbar"
-            aria-haspopup="true"
-            onClick={handleGrpMenu}
-            color="inherit"
-            variant="circular" className={classes.avatar1}>{groupCharacter}
-          </Avatar> */}
-          {/* <Menu
-            id="group-appbar"
-            anchorEl={grpAnchorEl}
-            anchorOrigin={{
-              vertical: 'top',
-              horizontal: 'right',
-            }}
-            // keepMounted
-            transformOrigin={{
-              vertical: 'top',
-              horizontal: 'right',
-            }}
-            open={arunGroup}
-            onClose={handleGrpClose}
-          >
-            <DisplayGroupMenu />
-          </Menu> */}
-        {/* </div> */}
+					<Button color="inherit" className={classes.dashButton} onClick={handleSuTournament}>Tournament</Button>
        </Toolbar>
       </AppBar>
       <DisplayCdItems/>

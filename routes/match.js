@@ -36,34 +36,10 @@ router.use('/', function(req, res, next) {
   setHeader(res);
   if (!db_connection) { senderr(res, DBERROR,  ERR_NODB); return; }
   
-  var tmp = req.url.split('/');
-  if (!["DATE"].includes(tmp[1].toUpperCase()))
-  if (!["MATCHINFO"].includes(tmp[1].toUpperCase()))
-  {
-    // console.log("Hello")
-    // take care of /list/csk  ,   /list/csk/rr,  /list
-    switch (tmp.length)
-    {
-      case 2:  
-        if (tmp[1].length == 0) tmp[1] = "all";
-        req.url = "/list/" + tmp[1] + "/none";
-        break;
-      case 3:
-        if (tmp[2].length == 0) 
-          tmp[2] = "none";
-        req.url = "/list/" + tmp[1] + "/" + tmp[2];
-        break;  
-      case 4: 
-        if (tmp[3].length == 0) 
-          req.url = "/list/" + tmp[1] + "/" + tmp[2];
-        break;
-    }
-  }
-  //console.log("Modified: " + req.url);
+	console.log(req.url);
+  
   next('route');
 });
-
-
 
 
 router.get('/matchinfo/:myGroup', async function(req, res, next) {
@@ -130,6 +106,146 @@ router.get('/matchinfo/:myGroup', async function(req, res, next) {
 //   let myfilter = { tournament: _tournament, matchStartTime: { $gte: startDate, $lt: endDate } };
 //   publish_matches(res, myfilter);
 // });
+
+router.get('/add/:tournamentName/:type/:mid/:team1/:team2/:matchTime', async function(req, res, next) {  
+  setHeader(res);
+	var {tournamentName, type, mid, team1, team2, matchTime} = req.params;
+	tournamentName = tournamentName.toUpperCase();
+	type = type.toUpperCase();
+	team1 = team1.toUpperCase();
+	team2 = team2.toUpperCase();
+	mid = Number(mid);
+	let myDateTime = new Date(Number(matchTime))
+	/*
+	CricapiMatchSchema = mongoose.Schema({
+  mid: Number,
+  tournament: String,
+  team1: String,
+  team2: String,
+  weekDay: String,
+  type: String,
+  matchStarted: Boolean,
+  matchEnded: Boolean,
+  matchStartTime: Date,
+  matchEndTime: Date,
+  squad: Boolean
+	*/
+  
+	
+	let matchRec = await CricapiMatch.findOne({mid : mid});
+	if (matchRec) return senderr(res, 601, "Duplicate Match");
+	
+	matchRec = new CricapiMatch();
+	matchRec.mid = mid;
+	matchRec.tournament = tournamentName;
+	matchRec.team1 = team1;
+	matchRec.team2 = team2;
+  matchRec.weekDay = weekDays[myDateTime.getDay()]
+	matchRec.squad = true;
+	matchRec.type = type;
+	matchRec.matchStarted = false;
+	matchRec.matchEnded = false;
+	matchRec.matchStartTime = myDateTime;
+	let endTime = _.cloneDeep(myDateTime);
+	switch (type) {
+		case "T20": endTime.setHours(endTime.getHours()+5); break;
+		case "ODI": endTime.setHours(endTime.getHours()+9); break;
+		case "TEST":
+			endTime.setDate(endTime.getDate()+5); 
+			endTime.setHours(endTime.getHours()+9);
+			break;
+	}
+	matchRec.matchEndTime = endTime;
+	matchRec.save();
+	sendok(res, matchRec);
+});
+
+router.get('/update/:tournamentName/:type/:mid/:team1/:team2/:matchTime', async function(req, res, next) {  
+  setHeader(res);
+	var {tournamentName, type, mid, team1, team2, matchTime} = req.params;
+	tournamentName = tournamentName.toUpperCase();
+	type = type.toUpperCase();
+	team1 = team1.toUpperCase();
+	team2 = team2.toUpperCase();
+	mid = Number(mid);
+	let myDateTime = new Date(Number(matchTime))
+	/*
+	CricapiMatchSchema = mongoose.Schema({
+  mid: Number,
+  tournament: String,
+  team1: String,
+  team2: String,
+  weekDay: String,
+  type: String,
+  matchStarted: Boolean,
+  matchEnded: Boolean,
+  matchStartTime: Date,
+  matchEndTime: Date,
+  squad: Boolean
+	*/
+  
+	
+	let matchRec = await CricapiMatch.findOne({mid : mid});
+	if (!matchRec) return senderr(res, 601, "Invalid Match ID");
+	
+	//matchRec.mid = mid;
+	matchRec.tournament = tournamentName;
+	matchRec.team1 = team1;
+	matchRec.team2 = team2;
+  matchRec.weekDay = weekDays[myDateTime.getDay()]
+	matchRec.squad = true;
+	matchRec.type = type;
+	matchRec.matchStarted = false;
+	matchRec.matchEnded = false;
+	matchRec.matchStartTime = myDateTime;
+	let endTime = _.cloneDeep(myDateTime);
+	switch (type) {
+		case "T20": endTime.setHours(endTime.getHours()+5); break;
+		case "ODI": endTime.setHours(endTime.getHours()+9); break;
+		case "TEST":
+			endTime.setDate(endTime.getDate()+5); 
+			endTime.setHours(endTime.getHours()+9);
+			break;
+	}
+	matchRec.matchEndTime = endTime;
+	matchRec.save();
+	sendok(res, matchRec);
+});
+
+router.get('/delete/:mid', async function(req, res, next) {  
+  setHeader(res);
+	var {mid} = req.params;
+
+	mid = Number(mid);
+	await CricapiMatch.deleteOne({mid: mid});
+	sendok(res, "delete match");
+});
+
+
+router.get('/list/tournament/:tournamentName', async function(req, res, next) {
+  // MatchRes = res;  
+  setHeader(res);
+	/*
+	CricapiMatchSchema = mongoose.Schema({
+  mid: Number,
+  tournament: String,
+  team1: String,
+  team2: String,
+  weekDay: String,
+  type: String,
+  matchStarted: Boolean,
+  matchEnded: Boolean,
+  matchStartTime: Date,
+  matchEndTime: Date,
+  squad: Boolean
+	*/
+  var {tournamentName} = req.params;
+	tournamentName = tournamentName.toUpperCase();
+	
+	
+	let matchRecs = await CricapiMatch.find({tournament : tournamentName});
+	sendok(res, matchRecs);
+});
 
 async function orgsendMatchInfoToClient(res, igroup, doSendWhat) {
   // var igroup = _group;

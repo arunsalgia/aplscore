@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import axios from "axios";
 import { makeStyles } from '@material-ui/core/styles';
-// import Switch from "@material-ui/core/Switch";
+import Switch from "@material-ui/core/Switch";
 import Container from '@material-ui/core/Container';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import { ValidatorForm, TextValidator} from 'react-material-ui-form-validator';
@@ -9,9 +9,16 @@ import Select from "@material-ui/core/Select";
 import MenuItem from '@material-ui/core/MenuItem';
 import Link from '@material-ui/core/Link';
 import Button from '@material-ui/core/Button';
-// import Table from "components/Table/Table.js";
-// import FormControlLabel from '@material-ui/core/FormControlLabel';
-// import Radio from '@material-ui/core/Radio';
+import Table from '@material-ui/core/Table';
+import TableBody from '@material-ui/core/TableBody';
+import TableCell from '@material-ui/core/TableCell';
+import TableContainer from '@material-ui/core/TableContainer';
+import TableHead from '@material-ui/core/TableHead';
+import TablePagination from '@material-ui/core/TablePagination';
+import TableRow from '@material-ui/core/TableRow';
+import TableSortLabel from '@material-ui/core/TableSortLabel';
+import Box from '@material-ui/core/Box';
+import Drawer from '@material-ui/core/Drawer';
 import Card from "components/Card/Card.js";
 import CardBody from "components/Card/CardBody.js";
 import Grid from "@material-ui/core/Grid";
@@ -21,22 +28,58 @@ import AccordionSummary from '@material-ui/core/AccordionSummary';
 import AccordionDetails from '@material-ui/core/AccordionDetails';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Avatar from "@material-ui/core/Avatar"
-//import CardAvatar from "components/Card/CardAvatar.js";
+import { useAlert } from 'react-alert'
+import VsButton from "CustomComponents/VsButton";
+import VsCancel from "CustomComponents/VsCancel"
+import globalStyles from "assets/globalStyles";
+import sortBy from "lodash/sortBy";
+import IconButton from '@material-ui/core/IconButton';
+import FileCopyIcon from '@material-ui/icons/FileCopy';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import DeleteIcon from '@material-ui/icons/Delete';
+import EditIcon from '@material-ui/icons/Edit';
+import CloseIcon from '@material-ui/icons/Close';
+
+// import CardAvatar from "components/Card/CardAvatar.js";
 // import { useHistory } from "react-router-dom";
 // import { UserContext } from "../../UserContext";
 import { getImageName } from "views/functions.js"
-import {DisplayPageHeader, ValidComp, BlankArea} from "CustomComponents/CustomComponents.js"
-import {red, blue } from '@material-ui/core/colors';
-import { cricTeamName } from 'views/functions';
-// import {setTab} from "CustomComponents/CricDreamTabs.js"
-// const rPrefix = "radio-";
-const specialChars = /[!@#$%^&*()+\=\[\]{};':"\\|<>\/?]+/;
-
-const playerRoles = ["Batsman", "Bowler", "AllRounder", "Wk"];
+import {DisplayPageHeader, ValidComp, BlankArea, NothingToDisplay, DisplayBalance} from "CustomComponents/CustomComponents.js"
+import {red, blue, deepOrange } from '@material-ui/core/colors';
+import { LeakRemoveTwoTone, LensTwoTone } from '@material-ui/icons';
+import {setTab} from "CustomComponents/CricDreamTabs.js"
 
 const useStyles = makeStyles((theme) => ({
+	title: {
+		fontSize: theme.typography.pxToRem(20),
+		fontWeight: theme.typography.fontWeightBold,
+		color: blue[700],
+	},
+	tdPending : {
+    border: 5,
+    align: "center",
+    padding: "none",
+		borderWidth: 1,
+		backgroundColor: blue[100],
+		borderColor: 'black',
+		borderStyle: 'solid',
+  },
+	allAppt: {
+		backgroundColor: blue[100],
+	},
+	th: { 
+		border: 5,
+    align: "center",
+    padding: "none",
+		fontSize: theme.typography.pxToRem(13),
+		fontWeight: theme.typography.fontWeightBold,
+		//backgroundColor: '#FFA726',
+		backgroundColor: deepOrange[200],
+		borderWidth: 1,
+		borderColor: 'black',
+		borderStyle: 'solid',
+	},
     root: {
       width: '100%',
     }, 
@@ -78,142 +121,82 @@ const useStyles = makeStyles((theme) => ({
   }));
 
 
-export default function SU_Player() {
-  const [tournamentName, setTournamentName] = useState("IPL2020");
-  const [tournamentList, setTournamentList] = useState([{name: "IPL2020"}]);
-  // const [tournamentType, setTournamentType] = useState("T20");
-  // const [tournamentDesc, setTournamentDesc] = useState("");
-  // const [tournamentTypeList, setTournamentTypeList] = useState(["T20", "ODI", "TEST"]);
-  // const [newTeamList, setNewTeamList] = useState([]);
-  const [masterTeamList, setMasterTeamList] = useState([]);
-  const [teamList, setTeamList] = useState([]);
-  const [currTeam, setCurrTeam] = useState("CHENNAI SUPER KINGS");
+export default function Team() {
+	const [isDrawerOpened, setIsDrawerOpened] = useState("");
+  const [tournamentName, setTournamentName] = useState("");
+  const [teamName, setTeamName] = useState("");
+
+	const [newPlayer, setNewPlayer] = useState(false);
   const [playerList, setPlayerList] = useState([]);
-  const [registerStatus, setRegisterStatus] = useState(0);
-  const [labelNumber, setLabelNumber] = useState(0);
-  const [filterPlayerList, setFilterPlayerList] = useState([]);
-  const [filterPlayerName, setFilterPlayerName] = useState("");
+	const [allPlayerList, setAllPlayerList] = useState([]);
+	const [selPlayerName, setSelPlayerName] = useState([]);
+	
+	const [pid, setPid] = useState(0);
+	const [playerName, setPlayerName] = useState("");
+	const [role, setRole] = useState("NA");
+	const [battingStyle, setBattingStyle] = useState("NA");
+	const [bowlingStyle, setBowlingStyle] = useState("NA");
+	
+	const [teamData, setTeamData] = useState({});
   const classes = useStyles();
-  const [playerCount, setPlayerCount] = useState(0);
-  const [updatePlayer, setUpdatePlayer] = useState("");
+	const gClasses = globalStyles();
+	
+  const alert = useAlert();
+	
   useEffect(() => {
-      const a = async () => {
-        var tourres = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/list/notstarted/`);
-        setTournamentList(tourres.data);
-        var teamres = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/team/list/`);
-        //console.log(teamres.data);  
-        setMasterTeamList(teamres.data);
-        let tmp = teamres.data.filter(x => x.tournament === tournamentName);
-        // console.log(tmp);
-        setTeamList(tmp);
-      }
-      a();
+			const tournament = async () => {
+				try {
+					let tRec = JSON.parse(sessionStorage.getItem("shareData"));
+					setTeamData(tRec);
+					setTournamentName(tRec.tournament);
+					setTeamName(tRec.name);
+					getTeamPlayers(tRec.tournament, tRec.name);
+					getAllPlayers();
+				} catch (e) {
+					alert.error("Team name not specified");
+				}
+			}
+      //a();
+			tournament();
   }, [])
 
-  function ShowResisterStatus() {
-    // console.log(`Status is ${registerStatus}`);
-    let myMsg;
-    let errmsg = true;
-    switch (registerStatus) {
-      case 1001:
-        myMsg = 'Team name cannot be blank';
-        break;
-      case 1002:
-        myMsg = 'Dupliacte Team name';
-        break;
-      case 9999:
-        myMsg = `Error updating players of team ${currTeam}.`;
-        break;
-      case 2000:
-        myMsg = `Updated ${playerList.length} players of ${currTeam}.`;
-        errmsg = false;
-        break;
-      case 2001:
-        myMsg = 'Tournament name cannot be blank';
-        break;
-      case 2002:
-        myMsg = 'Tournament Type cannot be blank';
-        break;
-      case 2003:
-        myMsg = 'Minimum 2 teams required for tournament';
-        break;
-      case 2004:
-        myMsg = 'Team name cannot be blank';
-        break;
-      case 2005:
-        myMsg = 'Duplicate Team name';
-        break;
-      case 2006:
-        myMsg = 'Duplicate Tournamenet name';
-        break;
-      case 2007:
-        myMsg = 'Error updating team name';
-        break;
-      case 2100:
-        myMsg = `Selected Tournament ${tournamentName}`;
-        errmsg = false;
-        break;
-      case 2101:
-        myMsg = `Selected Team ${currTeam}`;
-        errmsg = false;
-        break;
-      case 2102:
-        myMsg = `Fetched ${playerCount} players from database`;
-        errmsg = false;
-        break;
-      case 2103:
-        myMsg = `Details of ${updatePlayer} updated`;
-        errmsg = false;
-        break;
-      case 9001:
-        myMsg = 'Player ID cannnot be zero';
-        break;
-      case 9002:
-        myMsg = 'Player Name cannnot be blank';
-        break;
-      case 9003:
-        myMsg = 'Duplicate Player Id';
-        break;
-      case 9004:
-        myMsg = 'Duplicate Player Name';
-        break;
-      case 9005:
-        myMsg = 'Player ID has to be number';
-        break;
-      case 9006:
-        myMsg = 'Special characters found in player details';
-        break;
-      case 9007:
-        myMsg = 'Invalid role';
-        break;
-      case 0:
-        myMsg = ``;
-        errmsg = false;
-        break;      
-      default:
-        myMsg = `Unknown error code ${registerStatus}`;
-        break;
-    }
-    let myClass = (errmsg) ? classes.error : classes.root;
-    return(
-      <div>
-        <Typography className={myClass}>{myMsg}</Typography>
-      </div>
-    );
-  }
-
-  function ShowPlayerCount() {
-  return (
-    <Typography className={classes.root}>{`Player Count: ${playerCount}`}</Typography>
-  )}
-
-
-  function getPlayerLabel() {
+	async function getTeamPlayers(tournament, myTeam) {
+		try {
+			 let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/tteam/${tournament}/${myTeam}`);
+			 setPlayerList(resp.data);
+		} catch(e) {
+			console.log(e)
+			alert.error("error fetching team list of "+myTeam);
+			setPlayerList([]);
+		}
+	}
+	
+	async function getAllPlayers() {
+		try {
+			 let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/uniquelist`);
+			 setAllPlayerList(resp.data);
+		} catch(e) {
+			console.log(e)
+			alert.error("error fetching all player list");
+			setPlayerList([]);
+		}
+	}
+	
+	async function getTournamentTeams(myName) {
+		try {
+			 let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/team/tournament/${myName}`);
+			 setTournamentList(resp.data);
+			 alert.status("Fetched teams of tournament "+tournamentName);
+		} catch(e) {
+			console.log(e)
+			alert.error("error fetching tournament list");
+		}
+	}
+	
+  function getNewTeamLabel() {
     let newNum = labelNumber + 1;
     setLabelNumber(newNum);
-    let tmp = `PLAYER${newNum}`;
-    // console.log(tmp);
-    return tmp;
+    return `TEAM${newNum}`;
   }
   
   const [expandedPanel, setExpandedPanel] = useState(false);
@@ -222,471 +205,552 @@ export default function SU_Player() {
     setExpandedPanel(isExpanded ? panel : false);
   };
   
-  function ShowPlayerImage(props) {
-    // if (props.pid === 0)
-    // return(
-    // <Avatar variant="square" src={`${props.pid}.JPG`} className={classes.medium} />    
-    // )
-    // else
+  function ShowTeamImage(props) {
+    let myTeam = getImageName(props.teamName);
     return(
-      <Avatar variant="square" src={`https://www.cricapi.com/playerpic/${props.pid}.JPG`} className={classes.medium} />
+    <Avatar variant="square" src={getImageName(props.teamName)} className={classes.medium} />    
     )
   } 
-  
-  async function handleFilter(label) {
-    const chkstr = document.getElementById(label).value.toUpperCase();
-    //console.log(chkstr);
-    if (chkstr.length > 0) {
-      let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/allfilter/${chkstr}`);
-      //console.log(resp.data);
-      setFilterPlayerList(resp.data)
-      if (resp.data.length > 0) {
-        setFilterPlayerName(resp.data[0].name);
-      }
-    } else {
-      setFilterPlayerList([]);
-    }      
-  }
-  
-  function handleSelectPlayer(label) {
-    // console.log(label);
-    let newData = filterPlayerList.find(x => x.name ===filterPlayerName );
-    // console.log(newData);
-    document.getElementById(`PID_${label}`).value= newData.pid;
-    document.getElementById(`NAME_${label}`).value= newData.name;
-    document.getElementById(`ROLE_${label}`).value= newData.role;
-    document.getElementById(`BAT_${label}`).value= newData.battingStyle;
-    document.getElementById(`BOWL_${label}`).value= newData.bowlingStyle;
-    // let nameLabel = `${props.myPlayer.label}`;
-    // let roleLabel = `ROLE_${props.myPlayer.label}`;
-    // let batLabel = `BAT_${props.myPlayer.label}`;
-    // let bowlLabel = `BOWL_${props.myPlayer.label}`;
+
+  function handleSwitch(t) {
+    let clone  = [].concat(newTeamList);
+    // console.log(t);
+    let tmp = clone.find(x => x.label === t);
+    tmp.existingTeam = (tmp.existingTeam) ? false : true;
+    // console.log(clone);
+    setNewTeamList(clone);
   }
 
-  function ExistingPlayer(props) {
-    let filterLabel=`FILTER_${props.myPlayer.label}`;
-    let fPlayerLabel = `FPLAYER_${props.myPlayer.label}`;
-    return (    
-      <div key="existing">
-      <TextField className={classes.filter} 
+  function handlePlayerSelect(label, newName) {
+    // console.log(`${label}  ${newName}`)
+    if (newName === "") {
+      setRegisterStatus(1001);
+      return;
+    } 
+    let clone = [].concat(newTeamList);
+    let tmp = clone.find(x => x.name === newName);
+    if ((tmp) && (tmp.label !== label)) {
+      setRegisterStatus(1002);
+    } else {
+      setRegisterStatus(0);
+    }
+    tmp = clone.find(x => x.label === label);
+    tmp.name = newName;
+    setNewTeamList(clone);
+  }
+
+  function handlePlayerValidator(label, newName) {
+    // console.log(`${label}  ${newName}`)
+    let clone = [].concat(newTeamList);
+    let tmp = clone.find(x => x.label === label);
+    tmp.name = newName.toUpper();
+    setNewTeamList(clone);
+  }
+
+ 
+  function GetTeam(props) {
+    // console.log("Get Team");
+    let myLabel=`LABEL_${props.myTeam.label}`;
+    if (props.myTeam.existingTeam) {
+      // let tmp = playerList.find(x => x.name === props.myTeam.name)
+      // if (!tmp) props.myTeam.name = "";
+      return(
+        <Select labelId='team' id='team'
         variant="outlined"
-        id={filterLabel} margin="none" size="small" />        
-      <Button key="filterbtn" variant="contained" color="primary" size="small"
-        className={classes.button} onClick={(event) => handleFilter(filterLabel)}>Filter
-      </Button>
-      <BlankArea />
-      <Select labelId='pname' variant="outlined" required fullWidth
-        label="Player" name="pname"
-        id={fPlayerLabel}
-        value={filterPlayerName}
-        onChange={(event) => setFilterPlayerName(event.target.value)}
+        required
+        fullWidth
+        label="Team"
+        name="Team"
+        id="Team"
+        value={props.myTeam.name}
+        //displayEmpty 
+        onChange={(event) => handlePlayerSelect(props.myTeam.label, event.target.value)}
         >
-        {filterPlayerList.map(x =>
+        {playerList.map(x =>
         <MenuItem key={x.name} value={x.name}>{x.name}</MenuItem>)}
       </Select>
-      <Button variant="contained" color="primary" size="small"
-        onClick={() => { handleSelectPlayer(props.myPlayer.label) }}
-        className={classes.button}>Select
+      )      
+    } else {
+      return (
+      //   <TextValidator
+      //   key={props.myTeam.label}
+      //   variant="outlined"
+      //   required
+      //   fullWidth      
+      //   label="Team Name"
+      //   onChange={(event) => handlePlayerSelect(props.myTeam.label, event.target.value)}
+      //   name="teamname"
+      //   // type=""
+      //   value={props.myTeam.name}
+      // />
+      <div className={classes.filter} align="center">
+      <TextField className={classes.filter} 
+        variant="outlined"
+        id={myLabel} margin="none" size="small" defaultValue={props.myTeam.name}/>        
+      <Button key="filterbtn" variant="contained" color="primary" size="small"
+        className={classes.button} onClick={(event) => setTeamName(props.myTeam.label)}>Submit
       </Button>
-    </div>      
-    )
-  }
-  
-  
-      
-  async function handleSubmit() {
-    console.log("Submit Clicked");
-  
-    let tmp = playerList.filter(x => x.pid == "0" || x.pid == "" || x.pid == 0);
-    if (tmp.length > 0) {
-      setRegisterStatus(9001);
-      return;
-    }
-    tmp = playerList.filter(x => x.name === "");
-    if (tmp.length > 0) {
-      setRegisterStatus(9002);
-      return;
-    }
-    // let role, batting style and bowling style be blank
-    // check special chars special chars
-    // orig var format = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/;
-    
-    // check for duplicate pid
-    let i;
-    for(i=0; i < playerList.length; ++i) {
-      tmp = playerList.filter(x => x.pid === playerList[i].pid);
-      if (tmp.length > 1) {
-        setRegisterStatus(9003);
-        return;
-      }
-      tmp = playerList.filter(x => x.name.toUpperCase() === playerList[i].name.toUpperCase());
-      if (tmp.length > 1) {
-        setRegisterStatus(9004);
-        return;
-      }
-      // if([0-9].test(playerList[i].pid)){
-      //   setRegisterStatus(9005);
-      //   return;
-      // }
-      if(specialChars.test(playerList[i].tournamentName)){
-        setRegisterStatus(9006);
-        return;
-      }
-      if(specialChars.test(playerList[i].Team)){
-        setRegisterStatus(9006);
-        return;
-      }
-      if(specialChars.test(playerList[i].name)){
-        setRegisterStatus(9006);
-        return;
-      }
-      if(specialChars.test(playerList[i].role)){
-        setRegisterStatus(9006);
-        return;
-      }
-      if(!playerRoles.includes(playerList[i].role)){
-        setRegisterStatus(9007);
-        return;
-      }
-      if(specialChars.test(playerList[i].battingStyle)){
-        setRegisterStatus(9006);
-        return;
-      }
-      if(specialChars.test(playerList[i].bowlingStyle)){
-        setRegisterStatus(9006);
-        return;
-      }
-    }
-    // first check if pid
-    let errCode = 0;
-    try {
-      // add tournament
-      await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/teamdelete/${tournamentName}/${currTeam}`);
-      // add all players 1 by 1
-      //   var newPlayerData = {label: "", pid: 0, name: "", fullName: "", Team: "",  tournament: "",
-      // role: "NA", bowlingStyle:  "NA", battingStyle: "NA" 
-      // };
-      let i;
-      for(i=0; i<playerList.length; ++i) {
-        let pl = playerList[i];
-        //console.log(`Now setting team ${tm.name}`)
-        await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/add/${pl.pid}/${pl.name}/${tournamentName}/${currTeam}/${pl.role}/${pl.battingStyle}/${pl.bowlingStyle}`);
-        //console.log(`done player ${pl.name}`)
-      };
-      setRegisterStatus(2000);  
-    } catch {
-      setRegisterStatus(9999);  
-      return;
-    }
-
-    //console.log(playerList);
-    //setRegisterStatus(errCode);
-    console.log(`All done `)
-  }
-
-
-
- 
-
-
-  
-  //-----------------------
-  // CLEAR
- 
-
-
-  // select tournament and filters teams of the given tournament
-  function selectTournamentName(myTournament) {
-    console.log(`Selected ${myTournament}`)
-    let tmp = masterTeamList.filter(x => x.tournament === myTournament);
-    // console.log(tmp);
-    setTeamList(tmp);
-    let team1 = (tmp.length > 0) ? tmp[0].name : "";
-    // console.log(team1);
-    setCurrTeam(team1);
-    setTournamentName(myTournament);
-    setPlayerList([]);
-    setPlayerCount(0);
-    setRegisterStatus(2100);
-  }
-
-  async function handleFetchPlayers() {
-    // console.log("get Player List");
-    try {
-      let myURL = `${process.env.REACT_APP_AXIOS_BASEPATH}/player/tteam/${tournamentName}/${currTeam}`
-      let resp = await axios.get(myURL);
-      let tmp = resp.data;
-      let n  = labelNumber + 1;
-      tmp.forEach(ttt => {
-        ttt.label = `PLAYER${n}`;
-        ++n;
-      })
-      //console.log(n)
-      setLabelNumber(n);
-      // console.log(tmp);      
-      setPlayerList(tmp);
-      setPlayerCount(tmp.length);
-      setRegisterStatus(2102);
-    } catch(e) {
-      console.log("In error")
+      </div>
+      )
     }
   }
 
-  function selectCurrTeam(myTeam) {
-    setCurrTeam(myTeam)
-    setPlayerList([]);
-    setPlayerCount(0);
-    setRegisterStatus(2101);
+  function handleDelete(t) {
+    let clone = newTeamList.filter(x => x.label !== t);
+    setNewTeamList(clone);
   }
 
+  function TeamDetails(props) {
+  // console.log(props.myTeam.existingTeam);
+  return (
+      <div key="TeamInfo">
+        <Card profile>                    
+          <CardBody profile>
+          <Typography component="div">New Team
+          <Switch 
+            color="primary"
+            checked={props.myTeam.existingTeam} 
+            onClick={() => handleSwitch(props.myTeam.label)}
+          />
+          Existing Team
+          </Typography>
+          <GetTeam myTeam={props.myTeam} />
+          <ShowResisterStatus  />
+          <Button variant="contained" color="primary" size="small"
+            onClick={() => { handleDelete(props.myTeam.label) }}
+            className={classes.button}>Delete
+          </Button>
+          </CardBody>
+        </Card>
+      </div>
+  )}
 
-  function DisplayPlayer() {
-    return (playerList.map(ppp =>
-    <Accordion expanded={expandedPanel === ppp.label} onChange={handleAccordionChange(ppp.label)}>
+  function DisplayTeam() {
+    return (newTeamList.map(team =>
+    <Accordion expanded={expandedPanel === team.label} onChange={handleAccordionChange(team.label)}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content" id="panel1a-header">
         <Grid container justify="center" alignItems="center" >
             <GridItem xs={9} sm={9} md={9} lg={9} >
-            <Typography className={classes.heading}>{ppp.name} ({ppp.pid})</Typography>
+            <Typography className={classes.heading}>{team.name}</Typography>
             </GridItem>
             <GridItem xs={3} sm={3} md={3} lg={3} >
-              <ShowPlayerImage pid={ppp.pid} />
+              <ShowTeamImage teamName={team.name} />
             </GridItem>
         </Grid>
       </AccordionSummary>
       <AccordionDetails>
-        <PlayerDetails myPlayer={ppp} />
+        <TeamDetails myTeam={team} />
       </AccordionDetails>
     </Accordion>
     ));
   }
   
-  function PlayerDetails(props) {
-    // let myLabel=`FILTER_${props.myPlayer.label}`;
-    let pidLabel = `PID_${props.myPlayer.label}`;
-    let nameLabel = `NAME_${props.myPlayer.label}`;
-    let roleLabel = `ROLE_${props.myPlayer.label}`;
-    let batLabel = `BAT_${props.myPlayer.label}`;
-    let bowlLabel = `BOWL_${props.myPlayer.label}`;
-    return (    
-      <div key="existing" align="center">
-      <ExistingPlayer myPlayer={props.myPlayer}/>
-      <Card profile>                    
-      <CardBody profile>
-      <TextField className={classes.filter} 
-        color="primary"
-        variant="outlined"
-        label="Player ID"
-        id={pidLabel} margin="none" type="number"
-        defaultValue={props.myPlayer.pid}  
-      />        
-      <BlankArea/>
-      <TextField className={classes.filter} 
-        color="primary"
-        variant="outlined"
-        label="Player Name"
-        id={nameLabel} margin="none" 
-        defaultValue={props.myPlayer.name}  
-      />        
-      <BlankArea/>
-      <TextField className={classes.filter} 
-        color="primary"
-        variant="outlined"
-        label="Player Role"
-        id={roleLabel} margin="none" 
-        defaultValue={props.myPlayer.role}  
-      />        
-      <BlankArea/>
-      <TextField className={classes.filter} 
-        color="primary"
-        variant="outlined"
-        label="Batting Style"
-        id={batLabel} margin="none" 
-        defaultValue={props.myPlayer.battingStyle}  
-      />        
-      <BlankArea/>
-      <TextField className={classes.filter} 
-        color="primary"
-        variant="outlined"
-        label="Bowling Style"
-        id={bowlLabel} margin="none" 
-        defaultValue={props.myPlayer.bowlingStyle}  
-      /> 
-			<ShowResisterStatus/>			
-      <BlankArea/>
-      <Grid container justify="center" alignItems="center" >
-        <GridItem xs={6} sm={6} md={6} lg={6} >
-          <Button variant="contained" color="primary" 
-            onClick={() => { handleUpdatePlayer(props.myPlayer.label) }}
-            className={classes.button}>Update
-          </Button>
-        </GridItem>
-        <GridItem xs={6} sm={6} md={6} lg={6} >
-          <Button variant="contained" color="primary" 
-            onClick={() => { handleDeletePlayer(props.myPlayer.pid) }}
-            className={classes.button}>Remove
-          </Button>
-        </GridItem>
-        </Grid>
-        </CardBody>
-      </Card>
-    </div>      
-    )}
-
-  function handleUpdatePlayer(label) {
-    // console.log(label);
-    let tPid = document.getElementById("PID_"+label).value.trim();
-    if (isNaN(tPid)) {
-      setRegisterStatus(9005);
+      
+  async function handleSubmit() {
+    let tmp;
+    console.log("Submit Clicked");
+    let errCode = 0;
+    if (tournamentName.length === 0) {
+      setRegisterStatus(2001);
       return;
     }
-    let tName = document.getElementById("NAME_"+label).value.trim();
-    if(specialChars.test(tName)){
-      setRegisterStatus(9006);
+    if (tournamentType.length === 0) {
+      setRegisterStatus(2002);
+      return;
+    } 
+    if (newTeamList.length <= 1) {
+      setRegisterStatus(2003);
+      return;
+    } 
+    tmp = newTeamList.filter(x => x.name === "");
+    if (tmp.length > 0) {
+      setRegisterStatus(2004);
+      return;
+    } 
+    let i;
+    for (i=0; i<newTeamList.length; ++i) {
+      let  tmp = newTeamList.find(x => x.name === newTeamList[i].name);
+      if (tmp.length > 1) {
+        setRegisterStatus(2005);
+        return;
+      }
+    }
+    try {
+      // add tournament
+      await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/update/${tournamentName}/${tournamentDesc}/${tournamentType}`);
+    } catch {
+      setRegisterStatus(2006);  // duplicate tournament name
       return;
     }
-    let tRole = document.getElementById("ROLE_"+label).value.trim();
-    if(specialChars.test(tRole)){
-      setRegisterStatus(9006);
-      return;
+    try {
+      await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/team/tournamentdelete/${tournamentName}`);
+      // add all teams 1 by 1 
+      let i;
+      for(i=0; i<newTeamList.length; ++i) {
+        let tm = newTeamList[i];
+        //console.log(`Now setting team ${tm.name}`)
+        await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/team/add/${tournamentName}/${tm.name}`);
+        //console.log(`done team ${tm.name}`)
+      };
+      setRegisterStatus(2000);  
+    } catch {
+      setRegisterStatus(2007);
     }
-		// check if player role is correct
-		if(!playerRoles.includes(tRole)){
-      setRegisterStatus(9007);
-      return;
-    }
-    let tBat = document.getElementById("BAT_"+label).value.trim();
-    if(specialChars.test(tBat)){
-      setRegisterStatus(9006);
-      return;
-    }
-    let tBowl = document.getElementById("BOWL_"+label).value.trim();
-    if(specialChars.test(tBowl)){
-      setRegisterStatus(9006);
-      return;
-    }
-
-    let clone = [].concat(playerList);
-    let myPid = parseInt(tPid);
-    // check if duplicate entry
-    let tTmp = clone.filter(x => x.pid === myPid);
-    console.log(tTmp);
-    if (tTmp.length > 0) {
-      setRegisterStatus(9003);
-      return;
-    }
-    let ppp = clone.find(x => x.label === label);
-    ppp.pid = myPid; 
-    ppp.name = tName;
-    ppp.fullName = tName;
-    ppp.role = tRole;
-    ppp.battingStyle = tBat; 
-    ppp.bowlingStyle = tBowl;
-    //console.log(ppp);
-    setUpdatePlayer(tName)
-    setPlayerList(clone);
-    setPlayerCount(clone.length);
-    //handleAccordionChange("");
-    setExpandedPanel(false);
-    setRegisterStatus(2103)
-    // console.log("Update player details over");
+    console.log(`All done `)
   }
 
-  function handleDeletePlayer(pid) {
-    let clone = playerList.filter(x => x.pid !== pid);
-    setPlayerList(clone);
-    setPlayerCount(clone.length);
-    handleAccordionChange("");
-  }
-
-  var newPlayerData = {label: "", pid: 0, name: "", fullName: "", Team: "",  tournament: "",
-    role: "Batsman", bowlingStyle:  "NA", battingStyle: "NA" 
-  };
-
-
-  function handleAddNewPlayer() {
-    newPlayerData.pid = 0;
-    newPlayerData.name = "NA"
-    newPlayerData.fullName = "NA";
-    newPlayerData.tournament = tournamentName;
-    newPlayerData.Team = currTeam;
-    let clone = [].concat(playerList);  
-    newPlayerData.label = getPlayerLabel();
-    //console.log(newPlayerData);
-    clone.push(newPlayerData);
-    setPlayerList(clone);
-    setPlayerCount(clone.length);
-    handleAccordionChange(newPlayerData.name);
-    setExpandedPanel(true);
-  }
   
-  /// MAIN BLOCK 2 parts
-  /// 1) Get tournament, Team and fetch players
-  /// 2) Display Player list
+  function handleAddNewTeam() {
+    let clone = [].concat(newTeamList);  
+    let tmp = {label: "", existingTeam: true, name: ""}
+    tmp.label = getNewTeamLabel();
+    clone.push(tmp);
+    setNewTeamList(clone);
+  }
+
+  
+  async function handleTournament() {
+    console.log("get tournament");
+    if (tournamentName.length === 0) return;
+    try {
+      // let myURL = `${process.env.REACT_APP_AXIOS_BASEPATH}/player/tteam/${tournamentName}/${currTeam}`
+      let myURL = `${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/info/${tournamentName}`
+      let resp = await axios.get(myURL);
+      let tmp = resp.data;
+      if (tmp.length === 0) {
+        setTournamentName("");
+        setTournamentDesc("");
+        setTournamentType("");
+        setNewTeamList([]);
+        return;
+      }
+      setTournamentDesc(tmp[0].desc);
+      setTournamentType(tmp[0].type);
+
+      // not get all the teams
+      myURL = `${process.env.REACT_APP_AXIOS_BASEPATH}/team/tournament/${tournamentName}`
+      resp = await axios.get(myURL);
+      let clone = [];  
+      let newNum = labelNumber + 1;
+      var i;
+      for(i=0; i<resp.data.length; ++i) {
+        clone.push({label: `TEAM${newNum}`, existingTeam: true, name: resp.data[i].name});
+        ++newNum;
+      }
+      setLabelNumber(newNum);
+      setNewTeamList(clone);
+      //console.log(clone);
+    } catch(e) {
+      console.log("In error")
+    }
+  }
+
+  async function handleFilter(label) {
+    setNewTeamList([]);
+    let chkstr = document.getElementById(label).value.toUpperCase();
+    console.log(chkstr);
+    //if (chkstr.length > 0) {
+    if (chkstr.length === 0) {
+      chkstr = "ALL";
+    }
+    console.log(chkstr);
+    let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/allfilter/${chkstr}`);
+    console.log(resp.data);
+    setTournamentList(resp.data);
+    setTournamentName("");
+    setTournamentDesc("");
+      //setPlayerList([]);
+      // if (resp.data.length > 0) {
+      //   setFilterPlayerName(resp.data[0].name);
+      // }
+    // } else {
+    //   setFilterPlayerList([]);
+    // }      
+  }
+
+	async function addNewTournament() {
+		try {
+      // add tournament
+      await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/add/${tournamentName}/${tournamentName}/${tournamentType}`);
+			alert.show("Successfully added tournamenet "+tournamentName);
+    } catch {
+			alert.error("Error adding tournamenet "+tournamentName);
+    }
+		getAllTournament();
+		setTournamentName("");
+	}
+	
+	async function handleTournamentSelect(tName)
+	{
+		alert.show(tName);
+		setTournamentName(tName);
+		getTournamentTeams(tName)
+		
+	}
+
+	async function handleBack() {
+		sessionStorage.setItem("shareData", teamData);
+		setTab(2);
+	}
+	
+	async function handleAdd() {
+		setPid(0);
+		setPlayerName("");
+		setRole("NA");
+		setBowlingStyle("NA");
+		setBattingStyle("")
+		setIsDrawerOpened("ADD");
+	}
+	
+	async function handleEdit(t) {
+		setPid(t.pid);
+		setPlayerName(t.name);
+		setRole(t.role);
+		setBowlingStyle(t.bowlingStyle);
+		setBattingStyle(t.battingStyle)
+		setIsDrawerOpened("EDIT");
+	}
+	
+	async function addEditTeamSubmit() {
+		if (isDrawerOpened === "ADD") {
+			try {
+				// add tournament
+				let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/add/${pid}/${playerName}/${tournamentName}/${teamName}/${role}/${battingStyle}/${bowlingStyle}`);
+				alert.show("Successfully added Player "+playerName);
+				let tmpArray = [resp.data].concat(playerList);
+				tmpArray = sortBy(tmpArray, 'name');
+				setPlayerList(tmpArray);
+				setIsDrawerOpened("")
+			} catch {
+				alert.error("Error adding player "+playerName);
+			}
+		} else if (isDrawerOpened === "EDIT") {
+			try {
+				let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/update/${pid}/${playerName}/${tournamentName}/${teamName}/${role}/${battingStyle}/${bowlingStyle}`);
+				alert.show("Successfully update Player "+pid);
+				let tmpArray = playerList.filter(x => x.pid !== pid)
+				tmpArray = [resp.data].concat(tmpArray);
+				tmpArray = sortBy(tmpArray, 'name');
+				setPlayerList(tmpArray);
+				setIsDrawerOpened("")
+			} catch {
+				alert.error("Error updating details of tournament "+tournamentName);
+			}
+		}
+
+	}
+	
+
+	async function handleCancel(t) {
+		try {
+			// now delete
+			await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/delete/${t.pid}/${t.tournament}/${t.Team}`);
+			alert.success("Successfully removed player "+t.name);
+			let tmpArray = playerList.filter(x => x.name !== t.name);
+			setPlayerList(tmpArray);
+		} catch {
+			alert.error("Error removing player "+t.name);
+		}
+	}
+	
+	function DisplayPlayerList() {
+	let colCount = 9;
+	return (
+		<Box className={classes.allAppt} border={1} width="100%">
+			<TableContainer>
+			<Table style={{ width: '100%' }}>
+			<TableHead>
+				<TableRow align="center">
+					<TableCell key={"TH1"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} colSpan={colCount}>
+					{`Players of ${teamName} (${tournamentName})`}
+					</TableCell>
+				</TableRow>
+				<TableRow align="center">
+					<TableCell key={"TH20"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Image
+					</TableCell>
+					<TableCell key={"TH21"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Pid
+					</TableCell>
+					<TableCell key={"TH22"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Name
+					</TableCell>
+					<TableCell key={"TH23"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Role
+					</TableCell>
+					<TableCell key={"TH24"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Batting Style
+					</TableCell>
+					<TableCell key={"TH25"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Bowling Style
+					</TableCell>
+					<TableCell key={"TH31"} component="th" colSpan={3} scope="row" align="center" padding="none"
+					className={classes.th} >
+					cmds
+					</TableCell>
+				</TableRow>
+			</TableHead>
+			<TableBody>  
+			{playerList.map( (t, index) => {
+				let myClass = classes.tdPending;
+				return(
+					<TableRow key={"TROW"+index}>
+					<TableCell key={"TD0"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Avatar variant="square" 
+							src={`https://www.cricapi.com/playerpic/${t.pid}.JPG`} 
+							className={classes.medium} 
+						/>    
+					</TableCell>
+					<TableCell key={"TD1"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.pid}
+						</Typography>
+					</TableCell>
+					<TableCell key={"TD2"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.name}
+						</Typography>
+					</TableCell>
+					<TableCell key={"TD3"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.role}
+						</Typography>
+					</TableCell>
+					<TableCell key={"TD4"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.battingStyle}
+						</Typography>
+					</TableCell>
+					<TableCell key={"TD5"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.bowlingStyle}
+						</Typography>
+					</TableCell>
+					<TableCell key={"TD11"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<IconButton color="primary" size="small" onClick={() => { handleEdit(t) } } >
+							<EditIcon	 />
+						</IconButton>
+					</TableCell>
+					<TableCell key={"TD12"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<VsCancel onClick={() => { handleCancel(t) } } />
+					</TableCell>
+					</TableRow>
+				)}
+			)}
+			</TableBody> 
+			</Table>
+			</TableContainer>
+		</Box>		
+	)}
+	
+	function handlePlayerSelect(ppid) {
+		let myPlayer = allPlayerList.find(x => x.pid === ppid);
+		setPid(myPlayer.pid);
+		setPlayerName(myPlayer.name);
+		setRole(myPlayer.role);
+		setBattingStyle(myPlayer.battingStyle);
+		setBowlingStyle(myPlayer.bowlingStyle);
+		setSelPlayerName(myPlayer.pid);
+	}
   return (
-  <div className={classes.paper} align="center" key={newPlayerData.name}>
-      <DisplayPageHeader headerName="Configure New Player" groupName="" tournament=""/>
-      <Container component="main" maxWidth="xs">
-      <CssBaseline />
-      <ValidatorForm key={newPlayerData.name} onSubmit={handleSubmit} className={classes.form}>  
-      {/* onSubmit={handleSubmit}> */}
-      <BlankArea/>
-      <Select labelId='tname' id='tname'
-        variant="outlined"
-        required
-        fullWidth
-        label="Tournament Name"
-        name="tname"
-        id="tname"
-        value={tournamentName}
-        inputProps={{
-          name: 'Type',
-          id: 'filled-age-native-simple',
-        }}
-        //displayEmpty 
-        onChange={(event) => selectTournamentName(event.target.value)}
-      >
-      {tournamentList.map(x =>
-        <MenuItem key={x.name} value={x.name}>{x.name}</MenuItem>)}
+  <div className={classes.paper} align="center" key="groupinfo">
+	<DisplayPageHeader headerName={`Configure players of team ${teamName} (Tournament: ${tournamentName})`} groupName="" tournament=""/>
+	<Container component="main" maxWidth="md">
+	<CssBaseline />
+	{(teamName === "") &&
+		<Typography>Team not selected"</Typography>
+	}
+	{(teamName !== "") &&
+	<div>
+		<div align="right">
+			<VsButton name="Add new Player" onClick={handleAdd} />
+		</div>
+	<DisplayPlayerList />
+	<Drawer className={classes.drawer}
+		anchor="right"
+		variant="temporary"
+		open={isDrawerOpened !== ""}
+	>
+	<VsCancel align="right" onClick={() => {setIsDrawerOpened("")}} />
+	{((isDrawerOpened === "ADD") || (isDrawerOpened === "EDIT")) &&
+		<div align="center">
+		<ValidatorForm className={gClasses.form} onSubmit={addEditTeamSubmit}>
+		<Typography className={classes.title}>{(isDrawerOpened === "ADD") ?"New Player" : "Edit Player"}</Typography>
+		{((isDrawerOpened === "ADD") && (newPlayer)) &&
+		<VsButton name="Existing Player" align="right" onClick={() => setNewPlayer(false)} />
+		}
+		{((isDrawerOpened === "ADD") && (!newPlayer)) &&
+			<div>
+			<VsButton name="New Player" align="right" onClick={() => setNewPlayer(true)} />
+			<Select variant="outlined" required fullWidth label="Player"
+				value={selPlayerName} onChange={(event) => handlePlayerSelect(event.target.value)}
+			>
+				{allPlayerList.map(x =>
+				<MenuItem key={x.pid} value={x.pid}>{`${x.name} (PID: ${x.pid})`}</MenuItem>)}
       </Select>
-      <BlankArea/>
-      <Select labelId='team' id='team'
-        variant="outlined"
-        required
-        fullWidth
-        label="Team"
-        name="team"
-        id="team"
-        value={currTeam}
-        inputProps={{
-          name: 'Team',
-          id: 'filled-age-native-simple',
-        }}
-        onChange={(event) => selectCurrTeam(event.target.value)}
-      >
-      {teamList.map(x =>
-        <MenuItem key={x.name} value={x.name}>{x.name}</MenuItem>)}
-      </Select>
-      <BlankArea/>
-      <Button key={"create"} variant="contained" color="primary" 
-          onClick={() => { handleFetchPlayers() }}
-          className={classes.button}>Fetch Players
-      </Button>
-      <BlankArea/>
-      <DisplayPageHeader headerName="Player List" groupName="" tournament=""/>
-      <BlankArea/>
-      <ShowPlayerCount />
-      <DisplayPlayer />
-      <Typography className={classes.root}>
-      <Link href="#" onClick={handleAddNewPlayer} variant="body2">Add New Player</Link>
-      </Typography>
-      <ShowResisterStatus/>
-      <BlankArea/>
-      <Button type="submit" key={"create"} variant="contained" color="primary" 
-          className={classes.button}>Submit
-      </Button>
-      </ValidatorForm>
-      <ValidComp />   
-      </Container>
+			</div>
+		}			
+		<BlankArea />
+		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
+			label="Pid" 
+			value={pid}
+			disabled={isDrawerOpened === "EDIT"}
+			onChange={() => { setPid(event.target.value) }}
+			validators={["minNumber:1000)"]}
+			errorMessages={['Invalid PID']}
+		/>
+		<TextValidator fullWidth  required className={gClasses.vgSpacing}
+			label="Name" 
+			value={playerName}
+			onChange={() => { setPlayerName(event.target.value) }}
+			validators={['noSpecialCharacters']}
+			errorMessages={['Special characters not permitted', ]}
+		/>
+		<TextValidator fullWidth  required className={gClasses.vgSpacing}
+			label="Role" 
+			value={role}
+			onChange={() => { setRole(event.target.value) }}
+			validators={['noSpecialCharacters']}
+			errorMessages={['Special characters not permitted', ]}
+		/>
+		<TextValidator fullWidth  required className={gClasses.vgSpacing}
+			label="Batting Style" 
+			value={battingStyle}
+			onChange={() => { setBattingStyle(event.target.value) }}
+			validators={['noSpecialCharacters']}
+			errorMessages={['Special characters not permitted', ]}
+		/>
+		<TextValidator fullWidth  required className={gClasses.vgSpacing}
+			label="Bowling Style" 
+			value={bowlingStyle}
+			onChange={() => { setBowlingStyle(event.target.value) }}
+			validators={['noSpecialCharacters']}
+			errorMessages={['Special characters not permitted', ]}
+		/>
+		<VsButton name={(isDrawerOpened === "ADD") ? "Add" : "Update"} align="center" />
+		<ValidComp />
+		</ValidatorForm>
+		</div>
+	}
+	</Drawer>
+	</div>
+	}
+	</Container>
   </div>
   );    
 }

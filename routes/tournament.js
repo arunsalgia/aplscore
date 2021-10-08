@@ -45,6 +45,14 @@ router.get(`/list/running`, function(req, res, next) {
   publishTournament(res, {enabled: true, over: false});
 });
 
+router.get(`/list`, function(req, res, next) {
+  // TournamentRes = res;
+  setHeader(res);
+  if (!db_connection) { senderr(res, DBERROR, ERR_NODB); return; }
+  publishTournament(res, {enabled: true});
+});
+
+
 router.get(`/list/notstarted`, function(req, res, next) {
   // TournamentRes = res;
   setHeader(res);
@@ -129,11 +137,11 @@ router.get('/add/:tournamentName/:tournamentDesc/:tournamentType', async functio
         myrec.name = tournamentName;
         myrec.desc = tournamentDesc;
         myrec.type = tournamentType;
-		myrec.started = false;
+				myrec.started = false;
         myrec.over = false;
-		myrec.enabled = true;
+				myrec.enabled = true;
         myrec.save();
-        sendok(res, `Successfully created tournament ${tournamentName}`);
+        sendok(res, myrec);
     } else
         senderr(res, 742,`Tournament ${tournamentName} already exists`);
 });
@@ -162,7 +170,18 @@ router.get('/update/:tournamentName/:tournamentDesc/:tournamentType', async func
 	myrec.desc = tournamentDesc;
 	myrec.type = tournamentType;
 	myrec.save();
-	sendok(res, `Successfully updated tournament ${tournamentName}`);
+	sendok(res, myrec);
+});
+
+router.get('/delete/:tournamentName', async function(req, res, next) {
+	// TournamentRes = res;
+	setHeader(res);
+	if (!db_connection) { senderr(res, DBERROR, ERR_NODB); return; }
+
+	var {tournamentName} = req.params;
+	tournamentName = tournamentName.toUpperCase();
+  await Tournament.deleteOne({name: tournamentName}) 
+  sendok(res, "Deleted");
 });
 
 
