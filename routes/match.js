@@ -41,6 +41,20 @@ router.use('/', function(req, res, next) {
   next('route');
 });
 
+router.get('/score/:tournamentName/:mid', async function(req, res) {
+  setHeader(res);
+  var {tournamentName, mid} = req.params;
+	tournamentName = tournamentName.toUpperCase();
+	mid = Number(mid);
+	
+	
+  let matchStat= mongoose.model(tournamentName, StatSchema);
+
+  let matchScore = await matchStat.find({mid: mid});
+  sendok(res, matchScore);
+});
+
+
 
 router.get('/matchinfo/:myGroup', async function(req, res, next) {
   // MatchRes = res;  

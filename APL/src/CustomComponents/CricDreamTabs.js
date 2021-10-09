@@ -28,7 +28,7 @@ import SU_Tournament from "views/SuperUser/Tournament.js"
 import Player from "views/SuperUser/Player.js"
 import Team from "views/SuperUser/Team.js" 
 import Match from "views/SuperUser/Match.js" 
-
+import Score from "views/SuperUser/Score.js" 
 
 import Modal from 'react-modal';
 // import download from 'js-file-downloader';
@@ -209,7 +209,7 @@ export function CricDreamTabs() {
   const handleTeam = () => { setMenuValue(2);  }
 	const handlePlayer = () => { setMenuValue(3);  }
 	const handleMatch = () => { setMenuValue(4);  }
-  
+  const handleScore = () => { setMenuValue(5) };
   const handleLogout = () => {
     handleClose();
     localStorage.setItem("uid", "");
@@ -223,6 +223,7 @@ export function CricDreamTabs() {
       case 2: return <Team />;
 			case 3: return <Player />;
 			case 4: return <Match />;
+			case 5: return <Score />;
       default: return  null;
     }
   }

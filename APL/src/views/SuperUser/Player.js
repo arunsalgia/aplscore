@@ -30,6 +30,7 @@ import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 import Avatar from "@material-ui/core/Avatar"
 import { useAlert } from 'react-alert'
+import { confirmAlert } from 'react-confirm-alert';
 import VsButton from "CustomComponents/VsButton";
 import VsCancel from "CustomComponents/VsCancel"
 import globalStyles from "assets/globalStyles";
@@ -44,11 +45,12 @@ import CloseIcon from '@material-ui/icons/Close';
 // import CardAvatar from "components/Card/CardAvatar.js";
 // import { useHistory } from "react-router-dom";
 // import { UserContext } from "../../UserContext";
-import { getImageName } from "views/functions.js"
-import {DisplayPageHeader, ValidComp, BlankArea, NothingToDisplay, DisplayBalance} from "CustomComponents/CustomComponents.js"
+import { getImageName, vsDialog } from "views/functions.js"
+import {DisplayPageHeader, ValidComp, BlankArea} from "CustomComponents/CustomComponents.js"
 import {red, blue, deepOrange } from '@material-ui/core/colors';
 import { LeakRemoveTwoTone, LensTwoTone } from '@material-ui/icons';
 import {setTab} from "CustomComponents/CricDreamTabs.js"
+
 
 const useStyles = makeStyles((theme) => ({
 	title: {
@@ -123,6 +125,8 @@ const useStyles = makeStyles((theme) => ({
 
 export default function Team() {
 	const [isDrawerOpened, setIsDrawerOpened] = useState("");
+	const [isListDrawer, setIsListDrawer] = useState("");
+	
   const [tournamentName, setTournamentName] = useState("");
   const [teamName, setTeamName] = useState("");
 
@@ -137,6 +141,9 @@ export default function Team() {
 	const [battingStyle, setBattingStyle] = useState("NA");
 	const [bowlingStyle, setBowlingStyle] = useState("NA");
 	
+	const [cancelPlayerRec, setCancelPlayerRec] = useState({});
+	const [isCancel, setIsCancel] = useState(false);
+	
 	const [teamData, setTeamData] = useState({});
   const classes = useStyles();
 	const gClasses = globalStyles();
@@ -146,7 +153,7 @@ export default function Team() {
   useEffect(() => {
 			const tournament = async () => {
 				try {
-					let tRec = JSON.parse(sessionStorage.getItem("shareData"));
+					let tRec = JSON.parse(sessionStorage.getItem("shareTeam"));
 					setTeamData(tRec);
 					setTournamentName(tRec.tournament);
 					setTeamName(tRec.name);
@@ -498,7 +505,7 @@ export default function Team() {
 		setPlayerName("");
 		setRole("NA");
 		setBowlingStyle("NA");
-		setBattingStyle("")
+		setBattingStyle("NA")
 		setIsDrawerOpened("ADD");
 	}
 	
@@ -540,8 +547,42 @@ export default function Team() {
 
 	}
 	
-
+	async function oldhandleCancel(t) {
+		console.log("In cancel");
+		confirmAlert(
+		{
+			title: 'Delete Player',
+			message: `Are you sure you want to delete player ${t.name} fewfew few fqewf ewfew few few few fewf ewf ewf wf f ewfew few few few few f ewf ewf ewf ewfqew `,
+      buttons: [
+        {label: 'Yes', onClick: () => handleCancelConfirm(t)},
+        {label: 'No',  onClick: () => alert.error('Click No')}
+				//{label: 'NotSure',  onClick: () => alert.error('Click No')}
+        //}
+      ],
+			childrenElement: () => <div />,
+			customUI: ({ onClose }) => <div>Custom UI</div>,
+			closeOnEscape: true,
+			closeOnClickOutside: true,
+			willUnmount: () => {},
+			afterClose: () => {},
+			onClickOutside: () => {},
+			onKeypressEscape: () => {},
+			overlayClassName: "overlay-custom-class-name"
+		})
+	}
+	
+	
 	async function handleCancel(t) {
+		vsDialog(
+			'Delete Player', 
+			`Are you sure you want to delete player ${t.name}`,
+			{label: 'Yes', onClick: () => handleCancelConfirm(t) },
+			{label: 'No'}
+		)
+	}
+	
+	
+	async function handleCancelConfirm(t) {
 		try {
 			// now delete
 			await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/delete/${t.pid}/${t.tournament}/${t.Team}`);
@@ -552,6 +593,31 @@ export default function Team() {
 			alert.error("Error removing player "+t.name);
 		}
 	}
+	
+	function selectPlayer(pRec) {
+		setIsListDrawer("");
+		setPid(pRec.pid);
+		setPlayerName(pRec.name);
+		setRole(pRec.role);
+		setBattingStyle(pRec.battingStyle);
+		setBowlingStyle(pRec.bowlingStyle);
+	}
+	
+	
+	function PlayerMenuItem() {
+	return (	
+		<div>
+		<VsCancel align="right" onClick={() => setIsListDrawer("")} />
+		{allPlayerList.map( (p, index) =>
+			<MenuItem key={p.name} value={p.name}>
+			<Typography onClick={() => selectPlayer(p)}>
+				{p.name}
+			</Typography>
+			</MenuItem>
+		)}
+		</div>
+	)}
+	
 	
 	function DisplayPlayerList() {
 	let colCount = 9;
@@ -667,6 +733,8 @@ export default function Team() {
 		setBowlingStyle(myPlayer.bowlingStyle);
 		setSelPlayerName(myPlayer.pid);
 	}
+	
+	
   return (
   <div className={classes.paper} align="center" key="groupinfo">
 	<DisplayPageHeader headerName={`Configure players of team ${teamName} (Tournament: ${tournamentName})`} groupName="" tournament=""/>
@@ -677,9 +745,7 @@ export default function Team() {
 	}
 	{(teamName !== "") &&
 	<div>
-		<div align="right">
-			<VsButton name="Add new Player" onClick={handleAdd} />
-		</div>
+	<VsButton align="right" name="Add new Player" onClick={handleAdd} />
 	<DisplayPlayerList />
 	<Drawer className={classes.drawer}
 		anchor="right"
@@ -691,20 +757,10 @@ export default function Team() {
 		<div align="center">
 		<ValidatorForm className={gClasses.form} onSubmit={addEditTeamSubmit}>
 		<Typography className={classes.title}>{(isDrawerOpened === "ADD") ?"New Player" : "Edit Player"}</Typography>
-		{((isDrawerOpened === "ADD") && (newPlayer)) &&
-		<VsButton name="Existing Player" align="right" onClick={() => setNewPlayer(false)} />
+		{(isDrawerOpened === "ADD") &&
+			<VsButton name="Select Existing Player" align="right" 
+			onClick={() => setIsListDrawer("PLAYERLIST")} />
 		}
-		{((isDrawerOpened === "ADD") && (!newPlayer)) &&
-			<div>
-			<VsButton name="New Player" align="right" onClick={() => setNewPlayer(true)} />
-			<Select variant="outlined" required fullWidth label="Player"
-				value={selPlayerName} onChange={(event) => handlePlayerSelect(event.target.value)}
-			>
-				{allPlayerList.map(x =>
-				<MenuItem key={x.pid} value={x.pid}>{`${x.name} (PID: ${x.pid})`}</MenuItem>)}
-      </Select>
-			</div>
-		}			
 		<BlankArea />
 		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
 			label="Pid" 
@@ -742,11 +798,18 @@ export default function Team() {
 			validators={['noSpecialCharacters']}
 			errorMessages={['Special characters not permitted', ]}
 		/>
-		<VsButton name={(isDrawerOpened === "ADD") ? "Add" : "Update"} align="center" />
+		<VsButton name={(isDrawerOpened === "ADD") ? "Add" : "Update"} type="submit" align="center" />
 		<ValidComp />
 		</ValidatorForm>
 		</div>
 	}
+	</Drawer>
+	<Drawer className={classes.drawer}
+		anchor="left" 
+		variant="temporary" 
+		open={isListDrawer !== ""}
+	>
+		<PlayerMenuItem />
 	</Drawer>
 	</div>
 	}

@@ -173,7 +173,7 @@ export default function Match() {
   useEffect(() => {
 		const tournament = async () => {
 			try {
-				let tRec = JSON.parse(sessionStorage.getItem("shareData"));
+				let tRec = JSON.parse(sessionStorage.getItem("shareTournament"));
 				setTournamentName(tRec.name);
 				setTournamentDesc(tRec.desc);
 				setTournamentType(tRec.type);
@@ -628,9 +628,9 @@ export default function Match() {
 
 	}
 	
-	function handlePlayer(t) {
-		sessionStorage.setItem("shareData", JSON.stringify(t));
-		setTab(3);
+	function handleScore(t) {
+		sessionStorage.setItem("shareMatch", JSON.stringify(t));
+		setTab(5);
 	}
 	
 	async function handleCancel(t) {
@@ -652,7 +652,7 @@ export default function Match() {
 	}
 	
 	function DisplayMatchList() {
-	let colCount = 6;
+	let colCount = 7;
 	return (
 		<Box className={classes.allAppt} border={1} width="100%">
 			<TableContainer>
@@ -681,7 +681,7 @@ export default function Match() {
 					className={classes.th} >
 					Team2
 					</TableCell>
-					<TableCell key={"TH31"} component="th" colSpan={2} scope="row" align="center" padding="none"
+					<TableCell key={"TH31"} component="th" colSpan={3} scope="row" align="center" padding="none"
 					className={classes.th} >
 					cmds
 					</TableCell>
@@ -723,11 +723,17 @@ export default function Match() {
 					</TableCell>
 					<TableCell key={"TD11"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
+						<Typography className={classes.link}>
+						<Link href="#" variant="body2" onClick={() => handleScore(t)}>Score</Link>
+						</Typography>
+					</TableCell>
+					<TableCell key={"TD12"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
 						<IconButton color="primary" size="small" onClick={() => { handleEdit(t) } } >
 							<EditIcon	 />
 						</IconButton>
 					</TableCell>
-					<TableCell key={"TD12"+index} align="center" component="td" scope="row" align="center" padding="none"
+					<TableCell key={"TD13"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<VsCancel onClick={() => { handleCancel(t) } } />
 					</TableCell>

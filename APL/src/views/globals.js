@@ -1,3 +1,6 @@
+import React from 'react';
+import 'react-confirm-alert/src/react-confirm-alert.css'; // Import css
+
 export const SupportedMimeTypes = ["image/png",  "image/jpeg", "application/pdf"]
 export const SupportedExtensions = ["PNG",  "JPG", "PDF"];
 
@@ -53,3 +56,23 @@ afternoonBlockEnd: 63,
 eveningBlockStart: 64,
 eveningBlockEnd: 95,
 }
+
+
+export const dialogOptions={
+  title: 'Title',
+  message: 'Message',
+  buttons: [
+    {label: 'Yes', onClick: () => alert('Click Yes')},
+    {label: 'No',  onClick: () => alert('Click No')}
+  ],
+  childrenElement: () => <div />,
+  //customUI: ({ onClose }) => <div>Custom UI</div>,
+  closeOnEscape: false,
+  closeOnClickOutside: false,
+  willUnmount: () => {},
+  afterClose: () => {},
+  onClickOutside: () => {},
+  onKeypressEscape: () => {},
+  overlayClassName: "overlay-custom-class-name"
+}
+

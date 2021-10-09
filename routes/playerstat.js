@@ -99,9 +99,9 @@ async function getPlayerPid(key) {
 
 /* GET all users listing. */
 router.use('/', async function(req, res, next) {
-  // PlayerStatRes = res;
   setHeader(res);
   if (!db_connection) { senderr(res, DBERROR, ERR_NODB); return; }
+	console.log(req.url);
   next('route');
 });
 
@@ -194,6 +194,18 @@ router.get('/recalc/:tournamnet', async function(req, res) {
   sendok(res, allBrief);
 });
 
+router.get('/getscore/:tournamentName/:mid', async function(req, res) {
+  setHeader(res);
+  var {tournamentName, mid} = req.params;
+	tournamentName = tournamentName.toUpperCase();
+	mid = Number(mid);
+	
+	
+  let matchStat= mongoose.model(tournamentName, StatSchema);
+
+  let matchScore = await matchStat.find({mid: mid});
+  sendok(res, matchScore);
+});
 
 router.use('/xxxxxxswap/:gid1/:gid2', async function(req, res, next) {
   // PlayerStatRes = res;  

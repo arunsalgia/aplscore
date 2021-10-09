@@ -8,15 +8,15 @@ import "assets/css/material-dashboard-react.css?v=1.9.0";
 // import { DesktopWindows } from "@material-ui/icons";
 import { CricDreamTabs, setTab }from "CustomComponents/CricDreamTabs"
 import axios from "axios";
-import SignIn from "views/Login/SignIn.js";
-import SignUp from "views/Login/SignUp.js";
-import Welcome from "views/APL/Welcome";
-import ResetPassword from "views/Login/ResetPassword";
+//import SignIn from "views/Login/SignIn.js";
+//import SignUp from "views/Login/SignUp.js";
+//import Welcome from "views/APL/Welcome";
+//import ResetPassword from "views/Login/ResetPassword";
 //import JoinGroup from "views/Group/JoinGroup.js"
-import ForgotPassword from "views/Login/ForgotPassword.js";
+//import ForgotPassword from "views/Login/ForgotPassword.js";
 import IdleTimer from 'react-idle-timer'
 import { setIdle }from "views/functions.js"
-import Wallet from "views/Wallet/Wallet";
+//import Wallet from "views/Wallet/Wallet";
 import { PinDropSharp } from "@material-ui/icons";
 import firebase from 'firebase';
 //import arunfb from 'firebase';
@@ -109,34 +109,13 @@ function AppRouter() {
 
 
   function DispayTabs() {
-    let isLogged = isUserLogged();
+    //let isLogged = isUserLogged();
     // console.log("Login status", isLogged)
-    if (true) {
-      return (
-        <div>
-          <CricDreamTabs/>
-        </div>
-      )  
-    } else {
-      //console.log("New login requested");
-      if (sessionStorage.getItem("currentLogin") === "SIGNUP")
-        return (<SignUp/>)
-      else if (sessionStorage.getItem("currentLogin") === "RESET")
-        return (<ForgotPassword/>);
-      else if (sessionStorage.getItem("currentLogin") === "SIGNIN")
-        return (<SignIn/>)
-      else {
-				let userId = checkResetPasswordRequest();
-				if (userId !== "") {
-					sessionStorage.setItem("currentUserCode", userId);
-					hist.push("/");
-					//console.log(history, hist);
-					return (<ResetPassword />);
-				} else {
-					return (<Welcome/>)
-				}
-			}
-    }
+		return (
+			<div>
+				<CricDreamTabs/>
+			</div>
+		)   
   }
 
 

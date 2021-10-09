@@ -44,7 +44,7 @@ import CloseIcon from '@material-ui/icons/Close';
 // import CardAvatar from "components/Card/CardAvatar.js";
 // import { useHistory } from "react-router-dom";
 // import { UserContext } from "../../UserContext";
-import { getImageName } from "views/functions.js"
+import { getImageName, vsDialog } from "views/functions.js"
 import {DisplayPageHeader, ValidComp, BlankArea, NothingToDisplay, DisplayBalance} from "CustomComponents/CustomComponents.js"
 import {red, blue, deepOrange } from '@material-ui/core/colors';
 import { LeakRemoveTwoTone, LensTwoTone } from '@material-ui/icons';
@@ -150,7 +150,7 @@ export default function Team() {
       }
 			const tournament = async () => {
 				try {
-					let tRec = JSON.parse(sessionStorage.getItem("shareData"));
+					let tRec = JSON.parse(sessionStorage.getItem("shareTournament"));
 					setTournamentName(tRec.name);
 					setTournamentDesc(tRec.desc);
 					setTournamentType(tRec.type);
@@ -595,19 +595,23 @@ export default function Team() {
 	}
 	
 	function handlePlayer(t) {
-		sessionStorage.setItem("shareData", JSON.stringify(t));
+		sessionStorage.setItem("shareTeam", JSON.stringify(t));
 		setTab(3);
 	}
 	
 	async function handleCancel(t) {
-		try {
-			// add tournament
 			let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/team/count/${t.tournament}/${t.name}`);
 			if (resp.data.count > 0) {
 				alert.error("Cannot delete team "+t.name+". Delete players first");
-				return;
+			} else {
+				vsDialog('Delete Team', `Are you sure you want to delete team ${t.name}`,
+				{label: 'Yes', onClick: () => handleCancelConfirm(t) }, {label: 'No'}
+				)
 			}
-			// nor delete
+	}
+	
+	async function handleCancelConfirm(t) {
+		try {
 			resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/team/delete/${t.tournament}/${t.name}`);
 			alert.success("Successfully removed tournament "+t.name);
 			let tmpArray = teamList.filter(x => x.name !== t.name);
@@ -726,7 +730,7 @@ export default function Team() {
 		/>
 		</Grid>
 		<Grid item xs={6} sm={6} md={6} lg={6} >
-			<VsButton name={(isDrawerOpened === "ADD") ? "Add" : "Update"} />
+			<VsButton name={(isDrawerOpened === "ADD") ? "Add" : "Update"} type="submit" />
 		</Grid>
 		</Grid>
 		<ValidComp />

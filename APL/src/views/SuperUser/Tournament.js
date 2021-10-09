@@ -588,12 +588,12 @@ export default function SU_Tournament() {
 	}
 	
 	function handleTeam(t) {
-		sessionStorage.setItem("shareData", JSON.stringify(t));
+		sessionStorage.setItem("shareTournament", JSON.stringify(t));
 		setTab(2);
 	}
 	
 	function handleMatch(t) {
-		sessionStorage.setItem("shareData", JSON.stringify(t));
+		sessionStorage.setItem("shareTournament", JSON.stringify(t));
 		setTab(4);
 	}
 	
@@ -674,7 +674,7 @@ export default function SU_Tournament() {
 						className={myClass}>
 						<Typography className={classes.link}>
 						<Link href="#" variant="body2" onClick={() => { handleTeam(t);}}>Team</Link>
-					</Typography>
+						</Typography>
 					</TableCell>
 					<TableCell key={"TD13"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>

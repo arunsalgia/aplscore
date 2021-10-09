@@ -5,6 +5,12 @@ import LinearProgress from '@material-ui/core/LinearProgress';
 import CircularProgressWithLabel from '@material-ui/core/LinearProgress';
 import { func } from "prop-types";
 import moment from 'moment';
+import { confirmAlert } from 'react-confirm-alert'; // Import
+import 'react-confirm-alert/src/react-confirm-alert.css'; // Import css
+import {cloneDeep} from "lodash";
+import {
+	dialogOptions,
+} from "views/globals"
 
 var crypto = require("crypto");
 var ifscsystem = require('ifsc-finder');
@@ -582,5 +588,15 @@ export async function getIdleTimeout() {
   let value = await getMaster("IDLETIMEOUT");
   if (value === "") value = process.env.REACT_APP_IDLETIMEOUT;
   return parseInt(value);
+}
+
+export function vsDialog(title, msg, yesB, noB) {
+	let option = cloneDeep(dialogOptions);
+	console.log(option); 
+	option.title = title;
+	option.message = msg;
+	option.buttons[0] = yesB;
+	option.buttons[1] = noB;
+	confirmAlert(option);
 }
 

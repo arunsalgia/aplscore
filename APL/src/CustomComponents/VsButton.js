@@ -15,8 +15,11 @@ function disabled() {
 export default function VsButton(props) {
 var bSTyle = {padding: "5px 10px", margin: "4px 2px", color: 'white', fontSize:'14px', borderRadius:7, border: 2};
 
-bSTyle.backgroundColor = (props.color) ? props.color: 'blue';
+bSTyle.backgroundColor = (props.color) ? props.color : 'blue';
 let handler=disabled;
+let buttonType = (props.type) ? props.type : 'button';
+//console.log(buttonType);
+let buttonAlign = (props.align) ? props.align : 'center';
 if (props.disabled) {
 	// job done
 	bSTyle.backgroundColor = yellow[100];
@@ -26,13 +29,10 @@ if (props.disabled) {
 		handler=props.onClick
 }
 
-if (props.align == null)
-	return(<button style={bSTyle} onClick={handler} >{props.name}</button>);
-else
-	return (
-	<div align={props.align}>
-		<button style={bSTyle} onClick={handler} >{props.name}</button>
+return (
+	<div align={buttonAlign}>
+		<button type={buttonType} style={bSTyle} onClick={handler} >{props.name}</button>
 	</div>
-	)
+)
 }
 
