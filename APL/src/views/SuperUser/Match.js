@@ -597,8 +597,10 @@ export default function Match() {
 		if (isDrawerOpened === "ADD") {
 			try {
 				// add tournament
+				console.log("Add");
 				let myDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(),
 					startTime.getHours(), startTime.getMinutes());
+					console.log(myDate);
 				let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/match/add/${tournamentName}/${tournamentType}/${mid}/${team1}/${team2}/${myDate.getTime()}`);
 				alert.show("Successfully added team "+newTeamName);
 				let tmpArray = [resp.data].concat(matchList);
@@ -818,7 +820,7 @@ export default function Match() {
 			initialValue={startTime}
 			onClose={handleTime}
 		/>
-		<VsButton name={(isDrawerOpened === "Add") ? "Add" : "Update"} />
+		<VsButton type="submit" name={(isDrawerOpened === "ADD") ? "Add" : "Update"} />
 		<ValidComp />
 		</ValidatorForm>
 		</div>
