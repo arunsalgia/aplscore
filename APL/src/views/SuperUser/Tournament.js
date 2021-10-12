@@ -592,6 +592,10 @@ export default function SU_Tournament() {
 		setTab(2);
 	}
 	
+	function handlePlayerInfo(t) {
+		sessionStorage.setItem("shareTournament", JSON.stringify(t));
+		setTab(6);
+	}
 	function handleMatch(t) {
 		sessionStorage.setItem("shareTournament", JSON.stringify(t));
 		setTab(4);
@@ -641,7 +645,7 @@ export default function SU_Tournament() {
 					className={classes.th} >
 					Type
 					</TableCell>
-					<TableCell key={"TH31"} component="th" colSpan={4} scope="row" align="center" padding="none"
+					<TableCell key={"TH31"} component="th" colSpan={5} scope="row" align="center" padding="none"
 					className={classes.th} >
 					cmds
 					</TableCell>
@@ -680,6 +684,12 @@ export default function SU_Tournament() {
 						className={myClass}>
 						<Typography className={classes.link}>
 						<Link href="#" variant="body2" onClick={() => { handleMatch(t);}}>Match</Link>
+					</Typography>
+					</TableCell>	
+					<TableCell key={"TD14"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.link}>
+						<Link href="#" variant="body2" onClick={() => { handlePlayerInfo(t);}}>PlayerInfo</Link>
 					</Typography>
 					</TableCell>					
 					<TableCell key={"TD11"+index} align="center" component="td" scope="row" align="center" padding="none"
