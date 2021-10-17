@@ -760,7 +760,7 @@ export default function Match() {
   return (
   <div className={classes.paper} align="center" key="groupinfo">
 	<DisplayPageHeader headerName={`Configure Match of ${tournamentName}`} groupName="" tournament=""/>
-	<Container component="main" maxWidth="sm">
+	<Container component="main" maxWidth="md">
 	<CssBaseline />
 	{(tournamentName === "") &&
 		<Typography>Tournament not selected"</Typography>

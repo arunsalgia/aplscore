@@ -2,33 +2,32 @@ const { GroupMemberCount, akshuGetGroup, akshuUpdGroup, akshuUpdGroupMember,
 		akshuUpdUser, akshuGetUser, akshuGetTournament } = require('./cricspecial'); 
 var router = express.Router();
 
-// /**
-//  * @param {Date} d The date
-//  */
-// function cricDate(d)  {
-//   var myHour = d.getHours();
-//   var myampm = AMPM[myHour];
-//   if (myHour > 12) myHour -= 12;
-//   var tmp = MONTHNAME[d.getMonth()] + ' '  + ("0" + d.getDate()).slice(-2) + ' . ' + 
-//       ("0" + myHour).slice(-2) + ':' + ("0" +  d.getMinutes()).slice(-2) + ' ' + myampm;
-//   return tmp;
-// }
 
-// const notToConvert = ['XI', 'ARUN']
-// /**
-//  * @param {string} t The date
-//  */
-// function cricTeamName(t)  {
-//   var tmp = t.split(' ');
-//   for(i=0; i < tmp.length; ++i)  {
-//     var x = tmp[i].trim().toUpperCase();
-//     if (notToConvert.includes(x))
-//       tmp[i] = x;
-//     else
-//       tmp[i] = x.substr(0, 1) + x.substr(1, x.length - 1).toLowerCase();
-//   }
-//   return tmp.join(' ');
-// }
+// modified on 17th October 2021
+async function update_scores_direct(mid, cricData) {
+	var currtime = new Date(); 
+	let mmm = await CricapiMatch.findOne({mid: mid});
+	let myTournament = mmm.tournament;
+  if (mid) { 
+		await updateTournamentStarted(myTournament);   
+		let thisMatchOver = true ;
+		//console.log(`Match Id: ${mmm.mid}  End: ${mmm.matchEndTime} Over sts: ${thisMatchOver} MOM: ${manofthematchPID}`);
+
+		let matchStat= mongoose.model(myTournament.name, StatSchema);
+		let briefStat =  mongoose.model(myTournament.name+BRIEFSUFFIX, BriefStatSchema);
+	
+		let allmatchentries = await matchStat.find({mid: mid})
+		console.log()
+	
+		if (thisMatchOver) {
+			mmm.matchEnded = true;
+			await mmm.save();
+			await checkTournamentOver(mmm.tournament);
+		}     
+	}
+	return;
+}
+
 
 /* GET all users listing. */
 router.use('/', function(req, res, next) {
@@ -51,10 +50,82 @@ router.get('/score/:tournamentName/:mid', async function(req, res) {
   let matchStat= mongoose.model(tournamentName, StatSchema);
 
   let matchScore = await matchStat.find({mid: mid});
+	console.log(matchScore);
+	
   sendok(res, matchScore);
 });
 
+router.get('/setscore/:tournamentName/:mid/:scoreList', async function(req, res) {
+  setHeader(res);
+  var {tournamentName, mid, scoreList} = req.params;
+	 
+	tournamentName = tournamentName.toUpperCase();
+	mid = Number(mid);
+	let matchStat = mongoose.model(tournamentName, StatSchema);
+	
+	scoreList = JSON.parse(scoreList);
+	console.log(scoreList);
+	/*
+	    mid: 12110171,
+    pid: 9968001,
+    playerName: 'Aqib Ilyas',
+    run: 0,
+    four: 0,
+    six: 0,
+    duck: 0,
+    wicket: 0,
+    maiden: 0,
+    economy: 0,
+    runout: 0,
+    stumped: 0,
+    catch: 0,
+    manOfTheMatch: false
 
+	*/
+	await matchStat.deleteMany({mid: mid});
+	//let newScore = [];
+	let matchType = "T20";
+	for(let i=0; i<scoreList.length; ++i) {
+		let s = scoreList[i];
+		let myRec = getBlankStatRecord(matchStat);
+		myRec.mid = s.mid;
+		myRec.pid = s.pid;
+		myRec.inning = 1;
+		myRec.playerName = s.playerName;
+		// batting details
+		myRec.run = s.run;
+		myRec.four = s.four;
+		myRec.six = s.six;
+		myRec.fifty = ((s.run >= 50) && (s.run < 100)) ? 1 : 0;
+		myRec.hundred = (s.run >= 100) ? 1 : 0;
+		//myRec.ballsPlayed = Number,
+		// bowling details
+		myRec.wicket = s.wicket
+		myRec.wicket3 = ((s.wicket >= Wicket3[matchType]) && 
+      (s.wicket < Wicket5[matchType])) ? 1 : 0;
+		myRec.wicket5 = (s.wicket >= Wicket5[matchType]) ? 1 : 0;
+		//myRec.hattrick = Number,
+		myRec.maiden = s.maiden;
+		//myRec.oversBowled = Number,
+		//myRec.maxTouramentRun = Number,
+		//myRec.maxTouramentWicket = Number,
+		// fielding details
+		myRec.runout = s.runout;
+		myRec.stumped = s.stumped;
+		//myRec.bowled = s.bowled;
+		//myRec.lbw = Number,
+		myRec.catch = s.catch;
+		myRec.duck = s.duck;
+		myRec.economy = s.economy;
+  // overall performance
+		myRec.manOfTheMatch = s.manOfTheMatch;
+		myRec.score = calculateScore(myRec, matchType);
+		await myRec.save();
+	};
+	
+	await calculateBrief(tournamentName);
+  sendok(res, "Done");
+});
 
 router.get('/matchinfo/:myGroup', async function(req, res, next) {
   // MatchRes = res;  
@@ -68,58 +139,7 @@ router.get('/matchinfo/:myGroup', async function(req, res, next) {
     senderr(res, 662, `Invalid group ${myGroup}`);
 });
 
-// GET all matches to be held on give date 
-// router.get('/date/:mydate', function(req, res, next) {
-//   // MatchRes = res;
-//   setHeader(res);
-//   var {mydate} = req.params;
-//   var todayDate = new Date();
 
-//   var maxDayRange = 1;
-//   switch (mydate.toUpperCase())
-//   {
-//     case "UPCOMING":
-//       //todayDate.setDate(todayDate.getDate()-10);
-//       mydate = todayDate.getFullYear().toString() + "-" +
-//               (todayDate.getMonth()+1).toString() + "-" +
-//               todayDate.getDate().toString() + " " +
-//               todayDate.getHours().toString() + ":" +
-//               todayDate.getMinutes().toString();
-//       maxDayRange = 200;
-//       break;
-//     case "TODAY":
-//       mydate = todayDate.getFullYear().toString() + "-" +
-//               (todayDate.getMonth()+1).toString() + "-" +
-//               todayDate.getDate().toString();
-//       break;
-//     case "YESTERDAY":
-//       todayDate.setDate(todayDate.getDate()-1);
-//       mydate = todayDate.getFullYear().toString() + "-" +
-//               (todayDate.getMonth()+1).toString() + "-" +
-//               todayDate.getDate().toString();
-//       break;
-//     case "TOMORROW":
-//       todayDate.setDate(todayDate.getDate()+1);
-//       mydate = todayDate.getFullYear().toString() + "-" +
-//               (todayDate.getMonth()+1).toString() + "-" +
-//               todayDate.getDate().toString();
-//       break;
-//   }
-//   console.log(`Date: ${mydate} and Range ${maxDayRange}`)
-//   var startDate, endDate;
-//   startDate =   new Date(mydate);
-//   if (isNaN(startDate)) { senderr(res, 661, `Invalid date ${mydate}`); return; }
-//   endDate = new Date(startDate.getTime());        // clone start date
-//   endDate.setDate(startDate.getDate()+maxDayRange);
-//   endDate.setHours(0);
-//   endDate.setMinutes(0);
-//   endDate.setSeconds(0);
-  
-//   //var currdate = new Date();
-//   //console.log(`Curr Date: ${currdate} Start Date: ${startDate}   End Date: ${endDate}`);
-//   let myfilter = { tournament: _tournament, matchStartTime: { $gte: startDate, $lt: endDate } };
-//   publish_matches(res, myfilter);
-// });
 
 router.get('/add/:tournamentName/:type/:mid/:team1/:team2/:matchTime', async function(req, res, next) {  
   setHeader(res);
@@ -341,20 +361,102 @@ async function sendMatchInfoToClient(res, igroup, doSendWhat) {
 }
 
 
-async function publish_matches(res, myfilter)
-{
+async function publish_matches(res, myfilter) {
   // console.log(myfilter);
   var matchlist = await CricapiMatch.find(myfilter);  
   sendok(res, matchlist);
 }
-async function publish_matches_r0(myfilter)
-{
+
+async function publish_matches_r0(myfilter) {
   //console.log(myfilter);
     var matchlist = await Match.find(myfilter);
     
     sendok(res, matchlist);
 }
  
+function calculateScore(mystatrec, type) {
+  //console.log(mystatrec);
+  var mysum = 0;
+  mysum += 
+    (mystatrec.run * BonusRun[type]) +
+    (mystatrec.four * Bonus4[type]) +
+    (mystatrec.six * Bonus6[type]) +
+    (mystatrec.fifty * Bonus50[type]) +
+    (mystatrec.hundred * Bonus100[type]) +
+    (mystatrec.wicket * BonusWkt[type]) +
+    (mystatrec.wicket3 * BonusWkt3[type]) +
+    (mystatrec.wicket5 * BonusWkt5[type]) +
+    (mystatrec.maiden * BonusMaiden[type]) +
+    //((mystatrec.wicket == 0) ? BonusDuck : 0) +
+    ((mystatrec.manOfTheMatch) ? BonusMOM[type] : 0) + 
+    ((mystatrec.maxTouramentRun > 0) ? BonusMaxRun[type] : 0) +
+    ((mystatrec.maxTouramentWicket > 0) ?  BonusMaxWicket[type] : 0);
+
+  mysum += 
+    (mystatrec.catch * BonusCatch[type]) + 
+    (mystatrec.runout * BonusRunOut[type]) + 
+    (mystatrec.stumped * BonusStumped[type]);
+
+  // now add penalty for duck
+  mysum += (mystatrec.duck * BonusDuck[type]);
+
+  // now add for economy
+  mysum += (mystatrec.economy * BonusEconomy[type]);
+
+  return  mysum
+}
+
+async function calculateBrief(tournamentName) {
+  let matchStat= mongoose.model(tournamentName, StatSchema);
+  let briefStat =  mongoose.model(tournamentName+BRIEFSUFFIX, BriefStatSchema);
+
+  let allMatch = await matchStat.find({});
+  let pidList = _.map(allMatch, 'pid');
+  pidList = _.uniqBy(pidList);
+  console.log(pidList);
+  let allBrief = [];
+  pidList.forEach(myPid => {
+    let myData = _.filter(allMatch, x => x.pid === myPid);
+    if (myData.length !== 0) {
+      var mybrief = getBlankBriefRecord(briefStat);
+      mybrief.sid = 0;
+      mybrief.pid = myPid;
+      mybrief.playerName = myData[0].playerName;
+      mybrief.score = _.sumBy(myData, x => x.score);
+      mybrief.inning = _.sumBy(myData, x => x.inning);
+      // batting details
+      mybrief.run = _.sumBy(myData, x => x.run);
+      mybrief.four = _.sumBy(myData, x => x.four);
+      mybrief.six = _.sumBy(myData, x => x.six);
+      mybrief.fifty = _.sumBy(myData, x => x.fifty);
+      mybrief.hundred =  _.sumBy(myData, x => x.hundred);
+      mybrief.ballsPlayed = _.sumBy(myData, x => x.ballsPlayed);
+      // bowling details
+      mybrief.wicket = _.sumBy(myData, x => x.wicket);
+      mybrief.wicket3 = _.sumBy(myData, x => x.wicket3);
+      mybrief.wicket5 = _.sumBy(myData, x => x.wicket5);
+      mybrief.hattrick = _.sumBy(myData, x => x.hattrick);
+      mybrief.maiden = _.sumBy(myData, x => x.maiden);
+      mybrief.oversBowled = _.sumBy(myData, x => x.oversBowled);
+      // fielding detail
+      mybrief.runout = _.sumBy(myData, x => x.runout);
+      mybrief.stumped = _.sumBy(myData, x => x.stumped);
+      mybrief.bowled = _.sumBy(myData, x => x.bowled);
+      mybrief.lbw = _.sumBy(myData, x => x.lbw);
+      mybrief.catch = _.sumBy(myData, x => x.catch);
+      mybrief.duck = _.sumBy(myData, x => x.duck);
+      mybrief.economy = _.sumBy(myData, x => x.economy);
+      // overall performance
+      mybrief.manOfTheMatch = _.filter(myData, x => x.manOfTheMatch === true).length;
+      mybrief.maxTouramentRun = 0;
+      mybrief.maxTouramentWicket = 0;
+      allBrief.push(mybrief);
+    }
+  })
+  await briefStat.deleteMany({sid: 0});
+  allBrief.forEach(x => { x.save(); });
+};
+
 function sendok(res, usrmsg) { res.send(usrmsg); }
 function senderr(res, errcode, errmsg) { res.status(errcode).send(errmsg); }
 function setHeader(res) {

@@ -160,18 +160,20 @@ export default function Score() {
 	const [pid, setPid] = useState(0);
 	const [playerName, setPlayerName] = useState("");
 	
-	const [runs, setRuns] = useState(0);
-	const [fours, setFours] = useState(0);
-	const [sixes, setSixes] = useState(0);
-	const [ducks, setDucks] = useState(0);
+	const [run, setRuns] = useState(0);
+	const [four, setFours] = useState(0);
+	const [six, setSixes] = useState(0);
+	const [duck, setDucks] = useState(0);
 	
-	const [wickets, setWickets] = useState(0);
-	const [maidens, setMaidens] = useState(0);
+	const [wicket, setWickets] = useState(0);
+	const [maiden, setMaidens] = useState(0);
 	const [economy, setEconomy] = useState(0);
 	
 	const [stumped, setStumped] = useState(0);
-	const [runouts, setRunOuts] = useState(0);
+	const [runout, setRunOuts] = useState(0);
 	const [catches, setCatches] = useState(0);
+	
+	const [manOfTheMatch, setMom] = useState(0);
 	
 	const [playerList, setPlayerList] = useState([]);
 	const [scoreList, setScoreList] = useState([]);
@@ -235,12 +237,13 @@ export default function Score() {
 	async function getScore(myTournament, myMid) {
 		try {
 			let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/match/score/${myTournament}/${myMid}`);
+			console.log(resp.data);
 			setScoreList(resp.data);
 		} catch(e) {
 			console.log(e)
+			setScoreList([]);
 			alert.error("error fetching score of match "+myMid);
 		}
-		setScoreList([]);
 	}
 
 	
@@ -358,66 +361,8 @@ export default function Score() {
     ));
   }
   
-      
-  async function handleSubmit() {
-    let tmp;
-		alert.info("in alert");
-		return;
-		
-    //console.log("Submit Clicked");
-    let errCode = 0;
-    if (tournamentName.length === 0) {
-      setRegisterStatus(2001);
-      return;
-    }
-    if (tournamentType.length === 0) {
-      setRegisterStatus(2002);
-      return;
-    } 
-    if (newTeamList.length <= 1) {
-      setRegisterStatus(2003);
-      return;
-    } 
-    tmp = newTeamList.filter(x => x.name === "");
-    if (tmp.length > 0) {
-      setRegisterStatus(2004);
-      return;
-    } 
-    let i;
-    for (i=0; i<newTeamList.length; ++i) {
-      let  tmp = newTeamList.find(x => x.name === newTeamList[i].name);
-      if (tmp.length > 1) {
-        setRegisterStatus(2005);
-        return;
-      }
-    }
-    try {
-      // add tournament
-      await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/update/${tournamentName}/${tournamentDesc}/${tournamentType}`);
-    } catch {
-      setRegisterStatus(2006);  // duplicate tournament name
-      return;
-    }
-    try {
-      await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/team/tournamentdelete/${tournamentName}`);
-      // add all teams 1 by 1 
-      let i;
-      for(i=0; i<newTeamList.length; ++i) {
-        let tm = newTeamList[i];
-        //console.log(`Now setting team ${tm.name}`)
-        await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/team/add/${tournamentName}/${tm.name}`);
-        //console.log(`done team ${tm.name}`)
-      };
-      setRegisterStatus(2000);  
-    } catch {
-      setRegisterStatus(2007);
-    }
-    console.log(`All done `)
-  }
-
 
 	async function handleAdd() {
-		
 		setPid(0);
 		setPlayerName("");
 		
@@ -434,58 +379,74 @@ export default function Score() {
 		setCatches(0);
 		setRunOuts(0);
 		
+		setMom(0);
 		setIsDrawerOpened("ADD");
 	}
 	
 	async function handleEdit(t) {
-		setMid(t.mid);
-		setTeam1(t.team1);
-		setTeam2(t.team2);
-		setStartDate(new Date(t.matchStartTime));
-		setStartTime(new Date(t.matchStartTime));
+		setPid(t.pid);
+		setPlayerName(t.playerName);
+		
+		setRuns(t.run);
+		setFours(t.four);
+		setSixes(t.six);
+		setDucks(t.duck);
+		
+		setWickets(t.wicket);
+		setMaidens(t.maiden);
+		setEconomy(t.economy);
+		
+		setStumped(t.stumped);
+		setCatches(t.catch);
+		setRunOuts(t.runout);
+		
+		setMom((t.manOfTheMatch) ? 1 : 0);
 		setIsDrawerOpened("EDIT");
 	}
 	
 	async function addEditScoreSubmit() {		
-		//console.log(runs, ducks);
+		//console.log(run, duck);
 		
-		if (runs < fours*4) return alert.error("Invalid fours");
-		if (runs < sixes*6) return alert.error("Invalid sixes");
-		if (runs < (fours*4 + sixes*6)) return alert.error("Invalid runs/fours/sixes");
-		if ((runs > 0) && (ducks > 0)) return alert.error("Duck not allowed if runs greater than 0");
+		if (run < four*4) return alert.error("Invalid four");
+		if (run < six*6) return alert.error("Invalid six");
+		if (run < (four*4 + six*6)) return alert.error("Invalid run/four/six");
+		if ((run > 0) && (duck > 0)) return alert.error("Duck not allowed if run greater than 0");
 		
-		if ((runouts + stumped + catches) > 10) return alert.error("Invalid run outs/stumped/catches");
+		console.log(runout + stumped , runout + catches, stumped + catches, runout + stumped + catches);
+		if ((runout + stumped + catches) > 10) return alert.error("Invalid run outs/stumped/catch");
 		
-		let tmpArray;
+		let playerData;
 		
 		if (isDrawerOpened === "EDIT") {
-			tmpArray = scoreList.filter(x.pid !== pid);
+			playerData = scoreList.find(x => x.pid === pid);
 		} if (isDrawerOpened === "ADD") { 
-			let xxx = scoreList.filter(x => x.pid === pid);
-			if (xxx.length > 0) return alert.error(`Duplicate player ${playerName}`);
-			
-			tmpArray = [].concat(scoreList);
+			let tmp = scoreList.find(x => x.pid === pid);
+			if (tmp) return alert.error(`Duplicate player ${playerName}`);
+			playerData = {};
 		}
 			
-		let tmp = {
+		playerData = {
+			mid: mid,
 			pid: pid, 
 			playerName: playerName,
 			
-			run: runs,
-			four: fours,
-			six: sixes,
-			duck: ducks,
+			run: run,
+			four: four,
+			six: six,
+			duck: duck,
 			
-			wicket: wickets,
-			maiden: maidens,
+			wicket: wicket,
+			maiden: maiden,
 			economy: economy,
 			
-			runout: runouts,
+			runout: runout,
 			stumped: stumped,
-			catch: catches
+			catch: catches,
+			manOfTheMatch: (manOfTheMatch == 1)
 		}
 
-		tmpArray.push(tmp);
+		let tmpArray = scoreList.filter(x => x.pid !== pid);
+		tmpArray.push(playerData);
 		tmpArray = _.sortBy(tmpArray, 'playerName');
 		setScoreList(tmpArray);
 		setIsDrawerOpened("");
@@ -515,15 +476,15 @@ export default function Score() {
 				<TableRow align="center">
 					<TableCell key={"TH00"} component="th" scope="row" align="center" padding="none"
 						className={classes.th} colSpan={2}>
-						<VsButton name={`${team1}`} onClick={() => setCurrentTeam(team1)} />
+						{`${team1}`}
 					</TableCell>
 					<TableCell key={"TH01"} component="th" scope="row" align="center" padding="none"
-					className={classes.th} colSpan={10}>
+					className={classes.th} colSpan={11}>
 					{`Score of match ${mid} between ${team1} and ${team2}`}
 					</TableCell>
 					<TableCell key={"TH02"} component="th" scope="row" align="center" padding="none"
 						className={classes.th} colSpan={2}>
-						<VsButton name={`${team2}`} onClick={() => setCurrentTeam(team2)} />
+						{`${team2}`}
 					</TableCell>
 				</TableRow>
 				<TableRow align="center">
@@ -574,6 +535,10 @@ export default function Score() {
 					<TableCell key={"TH32"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
 					Catch
+					</TableCell>
+					<TableCell key={"TH33"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Mom
 					</TableCell>
 					<TableCell key={"TH91"} component="th" colSpan={2} scope="row" align="center" padding="none"
 					className={classes.th} >
@@ -658,6 +623,12 @@ export default function Score() {
 							{t.catch}
 						</Typography>
 					</TableCell>
+					<TableCell key={"TD13"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{(t.manOfTheMatch) ? 1 : 0}
+						</Typography>
+					</TableCell>
 					<TableCell key={"TD91"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<IconButton color="primary" size="small" onClick={() => { handleEdit(t) } } >
@@ -691,6 +662,17 @@ export default function Score() {
 		</div>
 	)}
 	
+	async function handleUpdate() {
+		try {
+			let tmp = JSON.stringify(scoreList);
+			let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/match/setscore/${tournamentName}/${mid}/${tmp}`);
+		} catch(e) {
+			console.log(e)
+			alert.error("error updating score list of match"+mid);
+		}
+	}
+	
+	
   return (
   <div className={classes.paper} align="center" key="groupinfo">
 	<DisplayPageHeader headerName={`Configure Match of ${tournamentName}`} groupName="" tournament=""/>
@@ -703,6 +685,7 @@ export default function Score() {
 	<div>
 	<VsButton name="Add new player" align="right" onClick={handleAdd} />
 	<DisplayScoreList />
+	<VsButton name="Update match score" align="right" onClick={handleUpdate} />
 	<Drawer className={classes.drawer}
 		anchor="right"
 		variant="temporary"
@@ -711,7 +694,9 @@ export default function Score() {
 	<VsCancel align="right" onClick={() => {setIsDrawerOpened("")}} />
 	{((isDrawerOpened === "ADD") || (isDrawerOpened === "EDIT")) &&
 		<div align="center">
-		<VsButton name="Select Player" align="right" onClick={() => setIsListDrawer("LIST") } />
+		{(isDrawerOpened === "ADD") &&
+			<VsButton name="Select Player" align="right" onClick={() => setIsListDrawer("LIST") } />
+		}
 		<ValidatorForm className={gClasses.form} onSubmit={addEditScoreSubmit}>
 		<Typography className={classes.title}>{((isDrawerOpened === "ADD") ?"New Player" : "Edit Player")+" for match "+mid}</Typography>
 		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
@@ -728,41 +713,41 @@ export default function Score() {
 		/>
 		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
 			label="Runs" 
-			value={runs}
+			value={run}
 			disabled={pid===0}
-			onChange={() => { setRuns(event.target.value) }}
+			onChange={() => { setRuns(Number(event.target.value)) }}
 			validators={['minNumber:0']}
 			errorMessages={['Invalid Runs' ]}
 		/>
 		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
 			label="Fours" 
-			value={fours}
+			value={four}
 			disabled={pid===0}
-			onChange={() => { setFours(event.target.value) }}
+			onChange={() => { setFours(Number(event.target.value)) }}
 			validators={['minNumber:0']}
 			errorMessages={['Invalid Fours' ]}
 		/>
 		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
 			label="Sixes" 
-			value={sixes}
+			value={six}
 			disabled={pid===0}
-			onChange={() => { setSixes(event.target.value) }}
+			onChange={() => { setSixes(Number(event.target.value)) }}
 			validators={['minNumber:0']}
 			errorMessages={['Invalid Sixes' ]}
 		/>
 		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
 			label="Duck" 
-			value={ducks}
+			value={duck}
 			disabled={pid===0}
-			onChange={() => { setDucks(event.target.value) }}
+			onChange={() => { setDucks(Number(event.target.value)) }}
 			validators={['minNumber:0', 'maxNumber:1']}
 			errorMessages={['Invalid Duck','Invalid Duck' ]}
 		/>
 		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
 			label="Wickets" 
-			value={wickets}
+			value={wicket}
 			disabled={pid===0}
-			onChange={() => { setWickets(event.target.value) }}
+			onChange={() => { setWickets(Number(event.target.value)) }}
 			validators={['minNumber:0', 'maxNumber:10']}
 			errorMessages={['Invalid Wicket','Invalid Wicket' ]}
 		/>
@@ -770,23 +755,23 @@ export default function Score() {
 			label="Economy" 
 			value={economy}
 			disabled={pid===0}
-			onChange={() => { setEconomy(event.target.value) }}
+			onChange={() => { setEconomy(Number(event.target.value)) }}
 			validators={['minNumber:0']}
 			errorMessages={['Invalid Economy']}
 		/>
 		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
 			label="Maidens" 
-			value={maidens}
+			value={maiden}
 			disabled={pid===0}
-			onChange={() => { setMaidens(event.target.value) }}
+			onChange={() => { setMaidens(Number(event.target.value)) }}
 			validators={['minNumber:0']}
 			errorMessages={['Invalid Maidens']}
 		/>
 		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
 			label="Run Outs" 
-			value={runouts}
+			value={runout}
 			disabled={pid===0}
-			onChange={() => { setRunOuts(event.target.value) }}
+			onChange={() => { setRunOuts(Number(event.target.value)) }}
 			validators={['minNumber:0']}
 			errorMessages={['Invalid Run outs']}
 		/>
@@ -794,7 +779,7 @@ export default function Score() {
 			label="Stumped" 
 			value={stumped}
 			disabled={pid===0}
-			onChange={() => { setStumped(event.target.value) }}
+			onChange={() => { setStumped(Number(event.target.value)) }}
 			validators={['minNumber:0']}
 			errorMessages={['Invalid Stumped']}
 		/>
@@ -802,9 +787,17 @@ export default function Score() {
 			label="Catches" 
 			value={catches}
 			disabled={pid===0}
-			onChange={() => { setCatches(event.target.value) }}
+			onChange={() => { setCatches(Number(event.target.value)) }}
 			validators={['minNumber:0']}
 			errorMessages={['Invalid Catches']}
+		/>
+		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
+			label="Man of the match" 
+			value={(manOfTheMatch) ? 1 : 0}
+			disabled={pid===0}
+			onChange={() => { setMom(Number(event.target.value)) }}
+			validators={['minNumber:0', 'maxNumber:1']}
+			errorMessages={['Invalid Mom','Invalid Mom']}
 		/>
 		<VsButton type="submit" name={(isDrawerOpened === "ADD") ? "Add" : "Update"} />
 		<ValidComp />
