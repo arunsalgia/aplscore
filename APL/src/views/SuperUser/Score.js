@@ -466,6 +466,39 @@ export default function Score() {
 		setScoreList(tmpArray);
 	}
 	
+	function addTeamPlayer(myTeam) {
+		//console.log(myTeam);
+		let myList = playerList.filter(x => x.Team === myTeam);
+		//console.log(myList);
+		let newScorelist = [].concat(scoreList);
+		for(let i=0; i<myList.length; ++i) {
+			//console.log(myList[i]);
+			let tmp = newScorelist.find(x => x.pid === myList[i].pid);
+			//console.log(tmp);
+			if (!tmp) {
+				newScorelist.push( {
+					mid: mid,
+					pid: myList[i].pid, 
+					playerName: myList[i].name,
+					run: 0,
+					four: 0,
+					six: 0,
+					duck: 0,
+					wicket: 0,
+					maiden: 0,
+					economy: 0,
+					runout: 0,
+					stumped: 0,
+					catch: 0,
+					manOfTheMatch: 0
+				});
+			} else {
+				//console.log(`already present ${i}`);
+			}
+		}
+		//console.log(newScorelist);
+		setScoreList(_.sortBy(newScorelist, 'playerName'))
+	}
 	
 	function DisplayScoreList() {
 	return (
@@ -476,7 +509,7 @@ export default function Score() {
 				<TableRow align="center">
 					<TableCell key={"TH00"} component="th" scope="row" align="center" padding="none"
 						className={classes.th} colSpan={2}>
-						{`${team1}`}
+						<VsButton name={`Add ${team1}`} onClick={() => {addTeamPlayer(team1)}} />
 					</TableCell>
 					<TableCell key={"TH01"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} colSpan={11}>
@@ -484,7 +517,7 @@ export default function Score() {
 					</TableCell>
 					<TableCell key={"TH02"} component="th" scope="row" align="center" padding="none"
 						className={classes.th} colSpan={2}>
-						{`${team2}`}
+						<VsButton name={`Add ${team2}`} onClick={() => {addTeamPlayer(team2)}} />
 					</TableCell>
 				</TableRow>
 				<TableRow align="center">
@@ -557,7 +590,7 @@ export default function Score() {
 							{t.pid}
 						</Typography>
 					</TableCell>
-					<TableCell key={"TD2"+index} align="center" component="td" scope="row" align="center" padding="none"
+					<TableCell key={"TD2"+index} align="left" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
 							{t.playerName}
