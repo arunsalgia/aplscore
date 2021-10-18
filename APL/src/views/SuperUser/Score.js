@@ -666,12 +666,22 @@ export default function Score() {
 		try {
 			let tmp = JSON.stringify(scoreList);
 			let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/match/setscore/${tournamentName}/${mid}/${tmp}`);
+			alert.success("Score update success");
 		} catch(e) {
 			console.log(e)
 			alert.error("error updating score list of match"+mid);
 		}
 	}
 	
+	async function handleClose() {
+		try {
+			let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/match/setclose/${tournamentName}/${mid}`);
+			alert.succes("Match close success");
+		} catch(e) {
+			console.log(e)
+			alert.error("error updating score list of match"+mid);
+		}
+	}
 	
   return (
   <div className={classes.paper} align="center" key="groupinfo">
@@ -685,7 +695,8 @@ export default function Score() {
 	<div>
 	<VsButton name="Add new player" align="right" onClick={handleAdd} />
 	<DisplayScoreList />
-	<VsButton name="Update match score" align="right" onClick={handleUpdate} />
+	<VsButton align="right" name="Update match score" onClick={handleUpdate} />
+	<VsButton align="right" name="Set match Close" onClick={handleClose} />
 	<Drawer className={classes.drawer}
 		anchor="right"
 		variant="temporary"

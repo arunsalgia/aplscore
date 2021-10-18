@@ -58,9 +58,16 @@ router.get('/score/:tournamentName/:mid', async function(req, res) {
 router.get('/setscore/:tournamentName/:mid/:scoreList', async function(req, res) {
   setHeader(res);
   var {tournamentName, mid, scoreList} = req.params;
-	 
 	tournamentName = tournamentName.toUpperCase();
 	mid = Number(mid);
+	const matchType = "T20";
+	
+	// declare as started
+	let myMatch = await CricapiMatch.findOne({mid: mid});
+	myMatch.matchStarted = true;
+	myMatch.save();
+
+	// now update player stats
 	let matchStat = mongoose.model(tournamentName, StatSchema);
 	
 	scoreList = JSON.parse(scoreList);
@@ -84,7 +91,6 @@ router.get('/setscore/:tournamentName/:mid/:scoreList', async function(req, res)
 	*/
 	await matchStat.deleteMany({mid: mid});
 	//let newScore = [];
-	let matchType = "T20";
 	for(let i=0; i<scoreList.length; ++i) {
 		let s = scoreList[i];
 		let myRec = getBlankStatRecord(matchStat);
@@ -139,6 +145,22 @@ router.get('/matchinfo/:myGroup', async function(req, res, next) {
     senderr(res, 662, `Invalid group ${myGroup}`);
 });
 
+router.get('/setclose/:tournamentName/:mid', async function(req, res) {
+  setHeader(res);
+  var {tournamentName, mid} = req.params;
+	
+	let success = true;
+	let myMatch = await CricapiMatch.findOne({mid: mid});
+	if (myMatch) {
+		myMatch.matchEnded = true;
+		myMatch.save()
+	} else
+		success = false;
+	
+	// check for tournament over 
+	
+	return (success) ? sendok(res, "Ok") : senderr(res, 601, "Error");
+});
 
 
 router.get('/add/:tournamentName/:type/:mid/:team1/:team2/:matchTime', async function(req, res, next) {  
@@ -278,6 +300,7 @@ router.get('/list/tournament/:tournamentName', async function(req, res, next) {
 	
 	
 	let matchRecs = await CricapiMatch.find({tournament : tournamentName});
+	console.log(matchRecs[0]);
 	sendok(res, matchRecs);
 });
 

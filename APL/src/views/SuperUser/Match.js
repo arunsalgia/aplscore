@@ -654,7 +654,7 @@ export default function Match() {
 	}
 	
 	function DisplayMatchList() {
-	let colCount = 7;
+	let colCount = 9;
 	return (
 		<Box className={classes.allAppt} border={1} width="100%">
 			<TableContainer>
@@ -682,6 +682,14 @@ export default function Match() {
 					<TableCell key={"TH23"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
 					Team2
+					</TableCell>
+					<TableCell key={"TH24"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Started
+					</TableCell>
+					<TableCell key={"TH25"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Over
 					</TableCell>
 					<TableCell key={"TH31"} component="th" colSpan={3} scope="row" align="center" padding="none"
 					className={classes.th} >
@@ -723,6 +731,18 @@ export default function Match() {
 							{t.team2}
 						</Typography>
 					</TableCell>
+					<TableCell key={"TD5"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{(t.matchStarted) ? "Started" : "Not Started"}
+						</Typography>
+					</TableCell>
+					<TableCell key={"TD6"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{(t.matchEnded) ? "Over" : "Not Over"}
+						</Typography>
+					</TableCell>					
 					<TableCell key={"TD11"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.link}>

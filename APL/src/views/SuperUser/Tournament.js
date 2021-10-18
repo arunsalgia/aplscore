@@ -620,7 +620,7 @@ export default function SU_Tournament() {
 	}
 	
 	function DisplayTournamentList() {
-	let colCount = 7;
+	let colCount = 8;
 	return (
 		<Box className={classes.allAppt} border={1} width="100%">
 			<TableContainer>
