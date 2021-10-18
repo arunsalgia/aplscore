@@ -697,9 +697,18 @@ export default function Score() {
 	
 	async function handleUpdate() {
 		try {
-			let tmp = JSON.stringify(scoreList);
-			let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/match/setscore/${tournamentName}/${mid}/${tmp}`);
-			alert.success("Score update success");
+			let tmp = encodeURIComponent(JSON.stringify(scoreList));
+			//let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/match/setscore/${tournamentName}/${mid}/${tmp}`);
+			let loopCount = Math.floor(scoreList.length / 10);
+			if ((scoreList.length % 10) > 0) ++loopCount;
+			for(let i=0; i<loopCount; ++i) {
+				let tmp = encodeURIComponent(JSON.stringify(scoreList.slice(i*10, (i+1)*10)));
+				await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/match/setscore/${tournamentName}/${mid}/${tmp}`);
+				alert.success(`Score update success of set ${i+1}`);
+			}
+			// finally update brief
+			await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/match/updatebrief/${tournamentName}`);
+			alert.success(`All Scores updated`);
 		} catch(e) {
 			console.log(e)
 			alert.error("error updating score list of match"+mid);
@@ -726,10 +735,12 @@ export default function Score() {
 	}
 	{(tournamentName !== "") &&
 	<div>
-	<VsButton name="Add new player" align="right" onClick={handleAdd} />
-	<DisplayScoreList />
-	<VsButton align="right" name="Update match score" onClick={handleUpdate} />
-	<VsButton align="right" name="Set match Close" onClick={handleClose} />
+		<div align="right">
+			<VsButton name="Add new player" onClick={handleAdd} />
+			<VsButton name="Update match score" onClick={handleUpdate} />
+			<VsButton name="Set match Close" onClick={handleClose} />	
+		</div>
+		<DisplayScoreList />
 	<Drawer className={classes.drawer}
 		anchor="right"
 		variant="temporary"

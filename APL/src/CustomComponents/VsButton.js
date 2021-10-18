@@ -19,7 +19,7 @@ bSTyle.backgroundColor = (props.color) ? props.color : 'blue';
 let handler=disabled;
 let buttonType = (props.type) ? props.type : 'button';
 //console.log(buttonType);
-let buttonAlign = (props.align) ? props.align : 'center';
+let _align = (props.align == null) 
 if (props.disabled) {
 	// job done
 	bSTyle.backgroundColor = yellow[100];
@@ -29,10 +29,14 @@ if (props.disabled) {
 		handler=props.onClick
 }
 
-return (
-	<div align={buttonAlign}>
-		<button type={buttonType} style={bSTyle} onClick={handler} >{props.name}</button>
-	</div>
-)
+	if (_align) {
+		return <button type={buttonType} style={bSTyle} onClick={handler} >{props.name}</button>
+	} else {
+		return (
+			<div align={props.align}>
+				<button type={buttonType} style={bSTyle} onClick={handler} >{props.name}</button>
+			</div>
+		)
+	}
 }
 

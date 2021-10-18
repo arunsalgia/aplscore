@@ -683,11 +683,11 @@ export default function Match() {
 					className={classes.th} >
 					Team2
 					</TableCell>
-					<TableCell key={"TH24"} component="th" scope="row" align="center" padding="none"
+					<TableCell key={"TH25"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
 					Started
 					</TableCell>
-					<TableCell key={"TH25"} component="th" scope="row" align="center" padding="none"
+					<TableCell key={"TH26"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
 					Over
 					</TableCell>

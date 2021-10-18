@@ -50,12 +50,12 @@ router.get('/score/:tournamentName/:mid', async function(req, res) {
   let matchStat= mongoose.model(tournamentName, StatSchema);
 
   let matchScore = await matchStat.find({mid: mid});
-	console.log(matchScore);
+	//console.log(matchScore);
 	
   sendok(res, matchScore);
 });
 
-router.get('/setscore/:tournamentName/:mid/:scoreList', async function(req, res) {
+router.get('/orgsetscore/:tournamentName/:mid/:scoreList', async function(req, res) {
   setHeader(res);
   var {tournamentName, mid, scoreList} = req.params;
 	tournamentName = tournamentName.toUpperCase();
@@ -71,7 +71,10 @@ router.get('/setscore/:tournamentName/:mid/:scoreList', async function(req, res)
 	let matchStat = mongoose.model(tournamentName, StatSchema);
 	
 	scoreList = JSON.parse(scoreList);
-	console.log(scoreList);
+	let pidList = _.map(scoreList, 'pid');
+	pidList = _.uniqBy(pidList);
+	//console.log(pidList);
+	//console.log(scoreList);
 	/*
 	    mid: 12110171,
     pid: 9968001,
@@ -89,7 +92,8 @@ router.get('/setscore/:tournamentName/:mid/:scoreList', async function(req, res)
     manOfTheMatch: false
 
 	*/
-	await matchStat.deleteMany({mid: mid});
+	
+	await matchStat.deleteMany({mid: mid, pid: {$in: pidList } });
 	//let newScore = [];
 	for(let i=0; i<scoreList.length; ++i) {
 		let s = scoreList[i];
@@ -132,6 +136,97 @@ router.get('/setscore/:tournamentName/:mid/:scoreList', async function(req, res)
 	await calculateBrief(tournamentName);
   sendok(res, "Done");
 });
+
+router.get('/setscore/:tournamentName/:mid/:scoreList', async function(req, res) {
+  setHeader(res);
+  var {tournamentName, mid, scoreList} = req.params;
+	tournamentName = tournamentName.toUpperCase();
+	mid = Number(mid);
+	const matchType = "T20";
+	
+	// declare as started
+	let myMatch = await CricapiMatch.findOne({mid: mid});
+	myMatch.matchStarted = true;
+	myMatch.save();
+
+	// now update player stats
+	let matchStat = mongoose.model(tournamentName, StatSchema);
+	
+	scoreList = JSON.parse(scoreList);
+	let pidList = _.map(scoreList, 'pid');
+	pidList = _.uniqBy(pidList);
+	//console.log(pidList);
+	//console.log(scoreList);
+	/*
+	    mid: 12110171,
+    pid: 9968001,
+    playerName: 'Aqib Ilyas',
+    run: 0,
+    four: 0,
+    six: 0,
+    duck: 0,
+    wicket: 0,
+    maiden: 0,
+    economy: 0,
+    runout: 0,
+    stumped: 0,
+    catch: 0,
+    manOfTheMatch: false
+
+	*/
+	
+	await matchStat.deleteMany({mid: mid, pid: {$in: pidList } });
+	//let newScore = [];
+	for(let i=0; i<scoreList.length; ++i) {
+		let s = scoreList[i];
+		let myRec = getBlankStatRecord(matchStat);
+		myRec.mid = s.mid;
+		myRec.pid = s.pid;
+		myRec.inning = 1;
+		myRec.playerName = s.playerName;
+		// batting details
+		myRec.run = s.run;
+		myRec.four = s.four;
+		myRec.six = s.six;
+		myRec.fifty = ((s.run >= 50) && (s.run < 100)) ? 1 : 0;
+		myRec.hundred = (s.run >= 100) ? 1 : 0;
+		//myRec.ballsPlayed = Number,
+		// bowling details
+		myRec.wicket = s.wicket
+		myRec.wicket3 = ((s.wicket >= Wicket3[matchType]) && 
+      (s.wicket < Wicket5[matchType])) ? 1 : 0;
+		myRec.wicket5 = (s.wicket >= Wicket5[matchType]) ? 1 : 0;
+		//myRec.hattrick = Number,
+		myRec.maiden = s.maiden;
+		//myRec.oversBowled = Number,
+		//myRec.maxTouramentRun = Number,
+		//myRec.maxTouramentWicket = Number,
+		// fielding details
+		myRec.runout = s.runout;
+		myRec.stumped = s.stumped;
+		//myRec.bowled = s.bowled;
+		//myRec.lbw = Number,
+		myRec.catch = s.catch;
+		myRec.duck = s.duck;
+		myRec.economy = s.economy;
+  // overall performance
+		myRec.manOfTheMatch = s.manOfTheMatch;
+		myRec.score = calculateScore(myRec, matchType);
+		await myRec.save();
+	};
+	
+	//await calculateBrief(tournamentName);
+  sendok(res, "Done");
+});
+
+router.get('/updatebrief/:tournamentName', async function(req, res, next) {
+	setHeader(res);
+  var {tournamentName} = req.params;
+	tournamentName = tournamentName.toUpperCase();
+	await calculateBrief(tournamentName);
+  sendok(res, "Done");
+});
+
 
 router.get('/matchinfo/:myGroup', async function(req, res, next) {
   // MatchRes = res;  
@@ -436,7 +531,7 @@ async function calculateBrief(tournamentName) {
   let allMatch = await matchStat.find({});
   let pidList = _.map(allMatch, 'pid');
   pidList = _.uniqBy(pidList);
-  console.log(pidList);
+  //console.log(pidList);
   let allBrief = [];
   pidList.forEach(myPid => {
     let myData = _.filter(allMatch, x => x.pid === myPid);
