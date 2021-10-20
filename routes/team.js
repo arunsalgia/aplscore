@@ -65,7 +65,11 @@ router.get('/uniquelist', async function (req, res, next) {
   // TeamRes = res;
   setHeader(res);  
   console.log("uniquelist");
-  await publishTeam(res, {}, true);
+  let allTeams = await Team.find({}); 
+	allTeams = _.uniqBy(allTeams, 'name');
+	allTeams = _.sortBy(allTeams, 'name');
+	//console.log(allTeams);
+	sendok(res, allTeams);
 });
 
 /* GET all users listing. */
