@@ -764,7 +764,7 @@ export default function SU_Tournament() {
       </Select>
 		</Grid>
 		<Grid item xs={1} sm={1} md={1} lg={1} >
-			<VsButton name={(isDrawerOpened === "ADD") ? "Add" : "Update"} />
+			<VsButton type="submit" name={(isDrawerOpened === "ADD") ? "Add" : "Update"} />
 		</Grid>
 		</Grid>
 		<ValidComp />

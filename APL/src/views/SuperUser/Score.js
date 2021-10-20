@@ -30,6 +30,11 @@ import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 import Avatar from "@material-ui/core/Avatar"
 import { useAlert } from 'react-alert'
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import FormControl from '@material-ui/core/FormControl';
+import RadioGroup from '@material-ui/core/RadioGroup';
+import Radio from '@material-ui/core/Radio';
+
 import VsButton from "CustomComponents/VsButton";
 import VsCancel from "CustomComponents/VsCancel"
 import globalStyles from "assets/globalStyles";
@@ -143,6 +148,7 @@ const useStyles = makeStyles((theme) => ({
     },
   }));
 
+const economyArray=[-1, 0, 1];
 
 export default function Score() {
 	const [isDrawerOpened, setIsDrawerOpened] = useState("");
@@ -806,14 +812,24 @@ export default function Score() {
 			validators={['minNumber:0', 'maxNumber:10']}
 			errorMessages={['Invalid Wicket','Invalid Wicket' ]}
 		/>
-		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
+		{/*<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
 			label="Economy" 
 			value={economy}
 			disabled={pid===0}
 			onChange={() => { setEconomy(Number(event.target.value)) }}
-			validators={['minNumber:0']}
-			errorMessages={['Invalid Economy']}
-		/>
+			//validators={['minNumber:-1', 'maxNumber:1']}
+			//errorMessages={['Invalid Economy', 'Invalid Economy']}
+		/>*/}
+		<Typography>Economy</Typography>
+		<FormControl component="fieldset">
+			<RadioGroup row aria-label="timeSelect" name="timeSelect" value={economy} 
+				onChange={() => {setEconomy(Number(event.target.value)); }}
+			>
+			{economyArray.map ( r =>
+			<FormControlLabel className={gClasses.filterRadio} value={r} control={<Radio color="primary"/>} label={r} />
+			)}
+			</RadioGroup>
+			</FormControl>		
 		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
 			label="Maidens" 
 			value={maiden}

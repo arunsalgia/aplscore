@@ -49,6 +49,8 @@ import {DisplayPageHeader, ValidComp, BlankArea, NothingToDisplay, DisplayBalanc
 import {red, blue, deepOrange } from '@material-ui/core/colors';
 import { LeakRemoveTwoTone, LensTwoTone } from '@material-ui/icons';
 import {setTab} from "CustomComponents/CricDreamTabs.js"
+import VsCheckBox from "CustomComponents/VsCheckBox";
+
 
 const useStyles = makeStyles((theme) => ({
 	title: {
@@ -122,6 +124,10 @@ const useStyles = makeStyles((theme) => ({
 
 
 export default function Team() {
+	
+	const [oldTeam, setOldTeam] = useState(false);
+	const [masterTeamList, setMasterTeamList] = useState([]);
+	
 	const [isDrawerOpened, setIsDrawerOpened] = useState("");
 	const [teamFound, setNewTournament] = useState(false);
   const [tournamentName, setTournamentName] = useState("");
@@ -130,6 +136,8 @@ export default function Team() {
   const [teamName, setTeamName] = useState("");
 	const [newTeamName, setNewTeamName] = useState("");
   const [teamList, setTeamList] = useState([]);
+	
+	const [tournamentArray, setTournamentArray] = useState([]);
 	
   const [registerStatus, setRegisterStatus] = useState(0);
   const [labelNumber, setLabelNumber] = useState(0);
@@ -146,8 +154,13 @@ export default function Team() {
   useEffect(() => {
       const a = async () => {
         var teamres = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/team/uniquelist/`);
-        setTeamList(teamres.data);
+        setMasterTeamList(teamres.data);
       }
+			
+			const  getTournamentList = async () => {
+				var tourres = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/list/`);
+        setTournamentArray(tourres.data);
+			}
 			const tournament = async () => {
 				try {
 					let tRec = JSON.parse(sessionStorage.getItem("shareTournament"));
@@ -159,8 +172,9 @@ export default function Team() {
 					alert.error("Tournament name not specified");
 				}
 			}
-      //a();
+      a();
 			tournament();
+			getTournamentList()
   }, [])
 
 	async function getAllTeams(tName) {
@@ -568,7 +582,7 @@ export default function Team() {
 			try {
 				// add tournament
 				let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/team/add/${tournamentName}/${newTeamName}`);
-				alert.show("Successfully added team "+newTeamName);
+				alert.success("Successfully added team "+newTeamName);
 				let tmpArray = [resp.data].concat(teamList);
 				tmpArray = sortBy(tmpArray, 'name');
 				setTeamList(tmpArray);
@@ -580,7 +594,7 @@ export default function Team() {
 			try {
 				// add tournament
 				let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/team/update/${tournamentName}/${teamName}/${newTeamName}`);
-				alert.show("Successfully updated team "+newTeamName);
+				alert.success("Successfully updated team "+newTeamName);
 	
 				let tmpArray = teamList.filter(x => x.name !== teamName);
 				tmpArray.push(resp.data);
@@ -592,6 +606,10 @@ export default function Team() {
 			}
 		}
 
+	}
+	
+	function handleImport() {
+		
 	}
 	
 	function handlePlayer(t) {
@@ -612,17 +630,17 @@ export default function Team() {
 	
 	async function handleCancelConfirm(t) {
 		try {
-			resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/team/delete/${t.tournament}/${t.name}`);
+			let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/team/delete/${t.tournament}/${t.name}`);
 			alert.success("Successfully removed tournament "+t.name);
 			let tmpArray = teamList.filter(x => x.name !== t.name);
 			setTeamList(tmpArray);
 		} catch {
-			alert.error("Error adding tournament "+tournamentName);
+			alert.error("Error deleting team "+t.name);
 		}
 	}
 	
 	function DisplayTeamList() {
-	let colCount = 6;
+	let colCount = 4;
 	return (
 		<Box className={classes.allAppt} border={1} width="100%">
 			<TableContainer>
@@ -643,7 +661,7 @@ export default function Team() {
 					className={classes.th} >
 					Name
 					</TableCell>
-					<TableCell key={"TH31"} component="th" colSpan={3} scope="row" align="center" padding="none"
+					<TableCell key={"TH31"} component="th" colSpan={2} scope="row" align="center" padding="none"
 					className={classes.th} >
 					cmds
 					</TableCell>
@@ -672,12 +690,12 @@ export default function Team() {
 						<Link href="#" variant="body2" onClick={() => handlePlayer(t)}>Player</Link>
 					</Typography>
 					</TableCell>
-					<TableCell key={"TD11"+index} align="center" component="td" scope="row" align="center" padding="none"
+					{/*<TableCell key={"TD11"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<IconButton color="primary" size="small" onClick={() => { handleEdit(t) } } >
 							<EditIcon	 />
 						</IconButton>
-					</TableCell>
+					</TableCell>*/}
 					<TableCell key={"TD12"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<VsCancel onClick={() => { handleCancel(t) } } />
@@ -704,39 +722,49 @@ export default function Team() {
 	}
 	{(tournamentName !== "") &&
 	<div>
+	<div align="right">
 	<VsButton name="Add new team" align="right" onClick={handleAdd} />
+	</div>
 	<DisplayTeamList />
 	<Drawer className={classes.drawer}
-		anchor="top"
+		anchor="right"
 		variant="temporary"
 		open={isDrawerOpened !== ""}
 	>
-	<VsCancel align="right" onClick={() => {setIsDrawerOpened("")}} />
-	{((isDrawerOpened === "ADD") || (isDrawerOpened === "EDIT")) &&
-		<div align="center">
-		<ValidatorForm className={gClasses.form} onSubmit={addEditTeamSubmit}>
-		<Grid key="ADDEDIT" container justify="center" alignItems="center" >
-		<Grid item xs={12} sm={12} md={12} lg={12} >
-		<Typography className={classes.title}>{(isDrawerOpened === "ADD") ?"New Team" : "Edit Team"}</Typography>
-		</Grid>
-		<Grid item xs={6} sm={6} md={6} lg={6} >
-		<TextValidator fullWidth  required className={gClasses.vgSpacing}
-			label="Team Name" 
-			value={newTeamName}
-			//disabled={isDrawerOpened === "EDIT"}
-			onChange={() => { setNewTeamName(event.target.value) }}
-			validators={['noSpecialCharacters']}
-			errorMessages={['Special characters not permitted', ]}
-		/>
-		</Grid>
-		<Grid item xs={6} sm={6} md={6} lg={6} >
+		<VsCancel align="left" onClick={() => {setIsDrawerOpened("")}} />
+		{((isDrawerOpened === "ADD") || (isDrawerOpened === "EDIT")) &&
+			<div align="center">
+			<VsCheckBox align='left' label="Existing Team" checked={oldTeam} onClick={() => setOldTeam(!oldTeam)} />
+			<ValidatorForm className={gClasses.form} onSubmit={addEditTeamSubmit}>
+			<Typography className={classes.title}>{(isDrawerOpened === "ADD") ?"New Team" : "Edit Team"}</Typography>
+				{(!oldTeam) &&
+					<TextValidator fullWidth  required className={gClasses.vgSpacing}
+						label="Team Name" 
+						value={newTeamName}
+						//disabled={isDrawerOpened === "EDIT"}
+						onChange={() => { setNewTeamName(event.target.value) }}
+						validators={['noSpecialCharacters']}
+						errorMessages={['Special characters not permitted', ]}
+					/>
+				}
+				{(oldTeam) &&
+					<Select labelId='time' id='time' name="time" padding={10}
+					required fullWidth label="Time" 
+					value={newTeamName}
+					inputProps={{
+					name: 'Time',
+					id: 'filled-age-native-simple',
+					}}
+					onChange={(event) => setNewTeamName(event.target.value)}
+					>
+					{masterTeamList.map(x =>	<MenuItem key={x.name} value={x.name}>{x.name}</MenuItem>)}
+					</Select>
+				}
 			<VsButton name={(isDrawerOpened === "ADD") ? "Add" : "Update"} type="submit" />
-		</Grid>
-		</Grid>
-		<ValidComp />
-		</ValidatorForm>
-		</div>
-	}
+			<ValidComp />
+			</ValidatorForm>
+			</div>
+		}	
 	</Drawer>
 	</div>
 	}
