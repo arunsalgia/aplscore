@@ -9,6 +9,11 @@ import { makeStyles } from '@material-ui/core/styles';
 
 
 const globalStyles = makeStyles((theme) => ({
+	filterRadio: {
+		fontSize: theme.typography.pxToRem(14),
+		fontWeight: theme.typography.fontWeightBold,
+		color: '#000000',	
+	},
 	green: {
 		color: green[900],
 	},

@@ -37,6 +37,8 @@ import Radio from '@material-ui/core/Radio';
 
 import VsButton from "CustomComponents/VsButton";
 import VsCancel from "CustomComponents/VsCancel"
+import VsRadioGroup from "CustomComponents/VsRadioGroup"
+
 import globalStyles from "assets/globalStyles";
 import _ from "lodash";
 import Datetime from "react-datetime";
@@ -149,6 +151,7 @@ const useStyles = makeStyles((theme) => ({
   }));
 
 const economyArray=[-1, 0, 1];
+const zeroOneArray=[0, 1];
 
 export default function Score() {
 	const [isDrawerOpened, setIsDrawerOpened] = useState("");
@@ -820,7 +823,7 @@ export default function Score() {
 			//validators={['minNumber:-1', 'maxNumber:1']}
 			//errorMessages={['Invalid Economy', 'Invalid Economy']}
 		/>*/}
-		<Typography>Economy</Typography>
+		{/*<Typography>Economy</Typography>
 		<FormControl component="fieldset">
 			<RadioGroup row aria-label="timeSelect" name="timeSelect" value={economy} 
 				onChange={() => {setEconomy(Number(event.target.value)); }}
@@ -830,6 +833,12 @@ export default function Score() {
 			)}
 			</RadioGroup>
 			</FormControl>		
+		*/}
+		<div align="left">
+		<Typography>Economy</Typography>
+		<VsRadioGroup value={economy} onChange={() => {setEconomy(Number(event.target.value)); }} 
+			radioList={economyArray} />
+		</div>
 		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
 			label="Maidens" 
 			value={maiden}
@@ -870,6 +879,11 @@ export default function Score() {
 			validators={['minNumber:0', 'maxNumber:1']}
 			errorMessages={['Invalid Mom','Invalid Mom']}
 		/>
+		<div align="left">
+		<Typography>Man of the match</Typography>
+		<VsRadioGroup value={(manOfTheMatch) ? 1 : 0} onChange={() => { setMom(Number(event.target.value)) }} 
+			radioList={zeroOneArray} />
+		</div>
 		<VsButton type="submit" name={(isDrawerOpened === "ADD") ? "Add" : "Update"} />
 		<ValidComp />
 		</ValidatorForm>
