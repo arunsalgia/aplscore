@@ -122,6 +122,29 @@ router.get('/playerinfo/:playerId', async function(req, res) {
 
 });
 
+router.get(`/tournamentover/:tournamentName`, async function(req, res, next) {
+  setHeader(res);
+  if (!db_connection) { senderr(res, DBERROR, ERR_NODB); return; }
+  var {tournamentName} = req.params;
+  tournamentName = tournamentName.toUpperCase();
+  var tournamentRec = await Tournament.findOne({name: tournamentName});
+  if (!tournamentRec) return senderr(res, 601, "Invalid tournament name");
+
+  let matchesNotOver = await CricapiMatch.find({tournament: tournamentName, matchEnded: false});
+  if (matchesNotOver.length > 0) return senderr(res, 602, "All matches not over");
+
+  await updateTournamentMaxRunWicket(tournamentName);
+
+  await updateAllGroupRankScore(tournamentName);
+
+  await awardRankPrize(tournamentName);
+  tournamentRec.over = true;
+  await tournamentRec.save();
+
+
+  sendok(res, matchesNotOver.length.toString());
+})
+
 
 router.get('/updatebrieftable/:tournamnet', async function(req, res) {
   // PlayerStatRes = res;  

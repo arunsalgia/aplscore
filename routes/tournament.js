@@ -81,6 +81,86 @@ router.get(`/list/disabled`, function(req, res, next) {
   publishTournament(res, {enabled: false});
 });
 
+
+updateTournamentMaxRunWicket = async function(tournamentName) {
+  //--- start
+  // ------------ Assuming tournament as over
+  let tournamentStat = mongoose.model(tournamentName, StatSchema);
+  let BriefStat = mongoose.model(tournamentName+BRIEFSUFFIX, BriefStatSchema);
+
+  let tdata = await BriefStat.find({});
+  let tmp = _.filter(tdata, x => x.sid === MaxRunMid);
+  if (tmp.length > 0) return true;    // max run already assigned. Assuming same done for max wicket
+
+  tmp = _.filter(tdata, x => x.sid == MaxWicketMid);
+  if (tmp.length > 0) return true;
+
+  let pidList = _.map(tdata, 'pid');
+  pidList = _.uniqBy(pidList);
+
+  // calculate total runs and total wickets of each player (played in tournament matches)
+  let sumList = [];
+  pidList.forEach( mypid => {
+    tmp = _.filter(tdata, x => x.pid === mypid);
+    if (tmp.length > 0) {
+      var iRun = _.sumBy(tmp, 'run');
+      var iWicket = _.sumBy(tmp, 'wicket');
+      sumList.push({pid: mypid, playerName: tmp[0].playerName, totalRun: iRun, totalWicket: iWicket});
+    }
+  });
+
+  // now get list of players who have score max runs (note there can be more than 1)
+  tmp = _.maxBy(sumList, x => x.totalRun);
+  //console.log(tmp);
+  let maxList = _.filter(sumList, x => x.totalRun == tmp.totalRun);
+  let bonusAmount  = BonusMaxRun["TEST"] / maxList.length;
+  maxList.forEach( mmm => {
+    let myrec = getBlankStatRecord(tournamentStat);
+    myrec.mid = MaxRunMid;
+    myrec.pid = mmm.pid;
+    myrec.playerName = mmm.playerName;
+    myrec.score = bonusAmount;
+    myrec.maxTouramentRun = mmm.totalRun;  
+    myrec.save(); 
+
+    let mybrief = getBlankBriefRecord(BriefStat);
+    mybrief.sid = MaxRunMid;
+    mybrief.pid = mmm.pid;
+    mybrief.playerName = mmm.playerName;
+    mybrief.score = bonusAmount;
+    mybrief.maxTouramentRun = mmm.totalRun;  
+    mybrief.save(); 
+  });
+
+  // now get list of players who have taken max wickets (note there can be more than 1)
+  tmp = _.maxBy(sumList, x => x.totalWicket);
+  //console.log(tmp);
+  maxList = _.filter(sumList, x => x.totalWicket == tmp.totalWicket);
+  bonusAmount  = BonusMaxWicket["TEST"] / maxList.length;
+  maxList.forEach( mmm => {
+    let myrec = getBlankStatRecord(tournamentStat);
+    myrec.mid = MaxWicketMid;
+    myrec.pid = mmm.pid;
+    myrec.playerName = mmm.playerName;
+    myrec.score = bonusAmount;
+    myrec.maxTouramentWicket = mmm.totalWicket;
+    myrec.save(); 
+
+    let mybrief = getBlankBriefRecord(BriefStat);
+    mybrief.sid = MaxWicketMid;
+    mybrief.pid = mmm.pid;
+    mybrief.playerName = mmm.playerName;
+    mybrief.score = bonusAmount;
+    mybrief.maxTouramentWicket = mmm.totalWicket;  
+    mybrief.save(); 
+  });
+
+  // all done
+  return true;
+}
+
+
+
 router.get(`/statusupdate/:tournamentName`, async function(req, res, next) {
   // TournamentRes = res;
   setHeader(res);
