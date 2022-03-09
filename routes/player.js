@@ -104,7 +104,7 @@ router.get('/tteam/:tournamentName/:teamName', async function(req, res, next) {
 	allPids = _.uniqBy(allPids);
 	console.log(allPids);
 	
-  await publish_players(res, { pid: {$in: allPids} } );
+  await publish_players(res, { tournament: tournamentName, Team: teamName, pid: {$in: allPids} } );
 });
 
 router.get('/team/count/:tournamentName/:teamName', async function(req, res, next) {

@@ -239,7 +239,7 @@ export default function Score() {
 			console.log(e)
 			alert.error("error fetching team list of "+myTeam1+" and "+myTeam2);
 		}
-		//console.log(myPlayers);
+		console.log(myPlayers);
 		setPlayerList(_.sortBy(myPlayers, 'name'));
 	}
 
@@ -478,7 +478,7 @@ export default function Score() {
 	function addTeamPlayer(myTeam) {
 		//console.log(myTeam);
 		let myList = playerList.filter(x => x.Team === myTeam);
-		//console.log(myList);
+		console.log(myList);
 		let newScorelist = [].concat(scoreList);
 		for(let i=0; i<myList.length; ++i) {
 			//console.log(myList[i]);
@@ -507,6 +507,7 @@ export default function Score() {
 		}
 		//console.log(newScorelist);
 		setScoreList(_.sortBy(newScorelist, 'playerName'))
+		alert.info(`Added ${myList.length} players of team ${myTeam}`);
 	}
 	
 	function DisplayScoreList() {
@@ -736,7 +737,7 @@ export default function Score() {
 	
   return (
   <div className={classes.paper} align="center" key="groupinfo">
-	<DisplayPageHeader headerName={`Configure Match of ${tournamentName}`} groupName="" tournament=""/>
+	<DisplayPageHeader headerName={`Score of match ${mid} between ${team1} and ${team2}`} groupName="" tournament=""/>
 	<Container component="main" maxWidth="lg">
 	<CssBaseline />
 	{(tournamentName === "") &&
