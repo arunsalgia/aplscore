@@ -84,7 +84,7 @@ router.get('/tournament/:tournamentName', async function(req, res, next) {
   await publish_players(res, { tournament: tournamentName } );
 });
 
-router.get('/tteam/:tournamentName/:teamName', async function(req, res, next) {
+router.get('/auction/:tournamentName/:teamName', async function(req, res, next) {
   // PlayerRes = res;
   setHeader(res);
   var {tournamentName, teamName}=req.params;
@@ -105,6 +105,16 @@ router.get('/tteam/:tournamentName/:teamName', async function(req, res, next) {
 	console.log(allPids);
 	
   await publish_players(res, { tournament: tournamentName, Team: teamName, pid: {$in: allPids} } );
+});
+
+router.get('/tteam/:tournamentName/:teamName', async function(req, res, next) {
+  // PlayerRes = res;
+  setHeader(res);
+  var {tournamentName, teamName}=req.params;
+	tournamentName = tournamentName.toUpperCase();
+	teamName = teamName.toUpperCase();
+		
+  await publish_players(res, { tournament: tournamentName, Team: teamName } );
 });
 
 router.get('/team/count/:tournamentName/:teamName', async function(req, res, next) {

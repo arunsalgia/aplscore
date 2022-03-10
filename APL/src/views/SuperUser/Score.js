@@ -230,9 +230,9 @@ export default function Score() {
 	async function getAllPlayers(myTournament, myTeam1, myTeam2) {
 		let myPlayers=[];
 		try {
-			let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/tteam/${myTournament}/${myTeam1}`);
+			let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/auction/${myTournament}/${myTeam1}`);
 			myPlayers = myPlayers.concat(resp.data);
-			resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/tteam/${myTournament}/${myTeam2}`);			 
+			resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/auction/${myTournament}/${myTeam2}`);			 
 			myPlayers = myPlayers.concat(resp.data);
 			
 		} catch(e) {
