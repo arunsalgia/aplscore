@@ -133,6 +133,9 @@ export default function Team() {
 	const [newPlayer, setNewPlayer] = useState(false);
   const [playerList, setPlayerList] = useState([]);
 	const [allPlayerList, setAllPlayerList] = useState([]);
+	const [filterPlayerList, setFilterPlayerList] = useState([]);
+	const [filter, setFilter] = useState("");
+
 	const [selPlayerName, setSelPlayerName] = useState([]);
 	
 	const [pid, setPid] = useState(0);
@@ -337,7 +340,7 @@ export default function Team() {
     <Accordion expanded={expandedPanel === team.label} onChange={handleAccordionChange(team.label)}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content" id="panel1a-header">
         <Grid container justify="center" alignItems="center" >
-            <GridItem xs={9} sm={9} md={9} lg={9} >
+            <GridItem xs={3} sm={3} md={3} lg={3} >
             <Typography className={classes.heading}>{team.name}</Typography>
             </GridItem>
             <GridItem xs={3} sm={3} md={3} lg={3} >
@@ -595,6 +598,7 @@ export default function Team() {
 	}
 	
 	function selectPlayer(pRec) {
+		
 		setIsListDrawer("");
 		setPid(pRec.pid);
 		setPlayerName(pRec.name);
@@ -603,12 +607,21 @@ export default function Team() {
 		setBowlingStyle(pRec.bowlingStyle);
 	}
 	
-	
+	function handlePlayerFilter(playerName) {
+		playerName = playerName.trim();
+		//console.log(playerName);
+		//console.log("handlePlayerFilter");
+		setFilter(playerName);
+		let myFIlterPlayers = allPlayerList.filter(x => x.name.toLowerCase().includes(playerName));
+		//console.log(myFIlterPlayers)
+		setFilterPlayerList(myFIlterPlayers);	
+	}
+
+
 	function PlayerMenuItem() {
 	return (	
 		<div>
-		<VsCancel align="right" onClick={() => setIsListDrawer("")} />
-		{allPlayerList.map( (p, index) =>
+		{filterPlayerList.map( (p, index) =>
 			<MenuItem key={p.name} value={p.name}>
 			<Typography onClick={() => selectPlayer(p)}>
 				{p.name}
@@ -620,7 +633,7 @@ export default function Team() {
 	
 	
 	function DisplayPlayerList() {
-	let colCount = 9;
+	let colCount = 8;
 	return (
 		<Box className={classes.allAppt} border={1} width="100%">
 			<TableContainer>
@@ -633,10 +646,6 @@ export default function Team() {
 					</TableCell>
 				</TableRow>
 				<TableRow align="center">
-					<TableCell key={"TH20"} component="th" scope="row" align="center" padding="none"
-					className={classes.th} >
-					Image
-					</TableCell>
 					<TableCell key={"TH21"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
 					Pid
@@ -668,13 +677,19 @@ export default function Team() {
 				let myClass = classes.tdPending;
 				return(
 					<TableRow key={"TROW"+index}>
-					<TableCell key={"TD0"+index} align="center" component="td" scope="row" align="center" padding="none"
+					{/*<TableCell key={"TD0"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Avatar variant="square" 
 							src={`https://www.cricapi.com/playerpic/${t.pid}.JPG`} 
 							className={classes.medium} 
 						/>    
-					</TableCell>
+						Bhanuka Rajapaksa
+						Bjorn Fortuin
+						Hari Nishanth
+						Shakib Al Hasan
+						Vaibhav Arora
+
+				</TableCell>*/}
 					<TableCell key={"TD1"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
@@ -734,7 +749,30 @@ export default function Team() {
 		setSelPlayerName(myPlayer.pid);
 	}
 	
-	
+	function selectExistingPlayer() {
+		setFilter("");
+		setFilterPlayerList(allPlayerList);
+		setIsListDrawer("PLAYERLIST");
+		console.log("In select")
+	}
+
+	function DisplayFilter() {
+	return (
+	<div>
+		<Grid container justify="center" alignItems="center" >
+		<GridItem xs={9} sm={9} md={9} lg={9} >
+				<TextField className={classes.filter} 
+			variant="outlined" margin="none" size="small" defaultValue={filter}
+		/> 
+	</GridItem>
+	<GridItem xs={3} sm={3} md={3} lg={3} >
+		
+	</GridItem>
+	</Grid>
+
+	</div>
+	)}
+
   return (
   <div className={classes.paper} align="center" key="groupinfo">
 	<DisplayPageHeader headerName={`Configure players of team ${teamName} (Tournament: ${tournamentName})`} groupName="" tournament=""/>
@@ -758,8 +796,7 @@ export default function Team() {
 		<ValidatorForm className={gClasses.form} onSubmit={addEditTeamSubmit}>
 		<Typography className={classes.title}>{(isDrawerOpened === "ADD") ?"New Player" : "Edit Player"}</Typography>
 		{(isDrawerOpened === "ADD") &&
-			<VsButton name="Select Existing Player" align="right" 
-			onClick={() => setIsListDrawer("PLAYERLIST")} />
+			<VsButton name="Select Existing Player" align="right" onClick={selectExistingPlayer} />
 		}
 		<BlankArea />
 		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
@@ -809,6 +846,10 @@ export default function Team() {
 		variant="temporary" 
 		open={isListDrawer !== ""}
 	>
+		<VsCancel align="right" onClick={() => setIsListDrawer("")} />
+		<br />
+		<DisplayFilter />
+		<br />   
 		<PlayerMenuItem />
 	</Drawer>
 	</div>

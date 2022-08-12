@@ -127,7 +127,10 @@ router.get(`/tournamentover/:tournamentName`, async function(req, res, next) {
   if (!db_connection) { senderr(res, DBERROR, ERR_NODB); return; }
   var {tournamentName} = req.params;
   tournamentName = tournamentName.toUpperCase();
+	//console.log(tournamentName);
   var tournamentRec = await Tournament.findOne({name: tournamentName});
+	//console.log(tournamentRec)
+	
   if (!tournamentRec) return senderr(res, 601, "Invalid tournament name");
 
   let matchesNotOver = await CricapiMatch.find({tournament: tournamentName, matchEnded: false});

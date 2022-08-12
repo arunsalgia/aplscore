@@ -121,11 +121,24 @@ const useStyles = makeStyles((theme) => ({
   }));
 
 
-export default function SU_Tournament() {
+const AuctionStatusList = ['PENDING', 'OVER'];
+
+export default function SU_Group() {
 	const [isDrawerOpened, setIsDrawerOpened] = useState("");
-	const [newTournament, setNewTournament] = useState(false);
-  const [tournamentName, setTournamentName] = useState("");
   const [tournamentList, setTournamentList] = useState([]);
+  const [groupList, setGroupList] = useState([]);
+	const [newGroup, setNewGroup] = useState(false);
+  const [ownerNames, setOwnweNames] = useState([]);
+
+  const [groupName, setGroupName] = useState("");
+  const [tournamentName, setTournamentName] = useState("");
+  const [auctionStatus, setAuctionStatus] = useState(AuctionStatusList[0]);
+  const [memberCount, setMemberCount] = useState(2);
+  const [memberFee, setMemberFee] = useState(500);
+  const [bidAmount, setBidAmount] = useState(1000);
+  const [prizeCount, setPrizeCount] = useState(1);
+
+
   const [tournamentType, setTournamentType] = useState("T20");
   const [tournamentDesc, setTournamentDesc] = useState("");
   const [tournamentData, setTournamentData] = useState(["T20", "ODI", "TEST"]);
@@ -144,17 +157,14 @@ export default function SU_Tournament() {
 	
   useEffect(() => {
       const a = async () => {
-        var teamres = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/team/uniquelist/`);
-        setTeamList(teamres.data);
+        await getAllTournament();
+        await getAllGroup();
+        await getAllGroupOwnerNames();
       }
-			const tournament = async () => {
-				getAllTournament();
-			}
-      //a();
-			tournament();
+		  a();
   }, [])
 
-	async function getAllTournament() {
+  async function getAllTournament() {
 		try {
 			 let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/list`);
 			 setTournamentList(resp.data);
@@ -163,11 +173,31 @@ export default function SU_Tournament() {
 			alert.error("error fetching tournament list");
 		}
 	}
+
+  async function getAllGroup() {
+		try {
+			 let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/group/list`);
+			 setGroupList(resp.data);
+		} catch(e) {
+			console.log(e)
+			alert.error("error fetching group list");
+		}
+	}
+
+	async function getAllGroupOwnerNames() {
+		try {
+			 let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/group/ownernames`);
+			 setOwnweNames(resp.data);
+		} catch(e) {
+			console.log(e)
+			alert.error("error fetching group owner name list");
+		}
+	}
 	
 	async function getTournamentTeams(myName) {
 		try {
 			 let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/team/tournament/${myName}`);
-			 setTournamentList(resp.data);
+			 setGroupList(resp.data);
 			 alert.status("Fetched teams of tournament "+tournamentName);
 		} catch(e) {
 			console.log(e)
@@ -510,7 +540,7 @@ export default function SU_Tournament() {
     console.log(chkstr);
     let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/allfilter/${chkstr}`);
     console.log(resp.data);
-    setTournamentList(resp.data);
+    setGroupList(resp.data);
     setTournamentName("");
     setTournamentDesc("");
       //setTeamList([]);
@@ -522,7 +552,7 @@ export default function SU_Tournament() {
     // }      
   }
 
-	async function addNewTournament() {
+	async function addnewGroup() {
 		try {
       // add tournament
       await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/add/${tournamentName}/${tournamentName}/${tournamentType}`);
@@ -530,7 +560,7 @@ export default function SU_Tournament() {
     } catch {
 			alert.error("Error adding tournamenet "+tournamentName);
     }
-		getAllTournament();
+		getAllGroup();
 		setTournamentName("");
 	}
 	
@@ -562,9 +592,9 @@ export default function SU_Tournament() {
 				// add tournament
 				let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/add/${tournamentName}/${tournamentDesc}/${tournamentType}`);
 				alert.show("Successfully added tournament "+tournamentName);
-				let tmpArray = [resp.data].concat(tournamentList);
+				let tmpArray = [resp.data].concat(groupList);
 				tmpArray = sortBy(tmpArray, 'name');
-				setTournamentList(tmpArray);
+				setGroupList(tmpArray);
 				setIsDrawerOpened("")
 			} catch {
 				alert.error("Error adding tournament "+tournamentName);
@@ -575,10 +605,10 @@ export default function SU_Tournament() {
 				let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/update/${tournamentName}/${tournamentDesc}/${tournamentType}`);
 				alert.show("Successfully updated details of tournament "+tournamentName);
 	
-				let tmpArray = tournamentList.filter(x => x.name !== resp.data.name);
+				let tmpArray = groupList.filter(x => x.name !== resp.data.name);
 				tmpArray.push(resp.data);
 				tmpArray = sortBy(tmpArray, 'name');
-				setTournamentList(tmpArray);
+				setGroupList(tmpArray);
 				setIsDrawerOpened("")
 			} catch {
 				alert.error("Error updating details of tournament "+tournamentName);
@@ -612,15 +642,15 @@ export default function SU_Tournament() {
 			// nor delete
 			resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/delete/${t.name}`);
 			alert.success("Successfully removed tournament "+t.name);
-			let tmpArray = tournamentList.filter(x => x.name !== t.name);
-			setTournamentList(tmpArray);
+			let tmpArray = groupList.filter(x => x.name !== t.name);
+			setGroupList(tmpArray);
 		} catch {
 			alert.error("Error adding tournament "+tournamentName);
 		}
 	}
 	
-	function DisplayTournamentList() {
-	let colCount = 8;
+	function DisplayGroupList() {
+	let colCount = 14;
 	return (
 		<Box className={classes.allAppt} border={1} width="100%">
 			<TableContainer>
@@ -629,21 +659,45 @@ export default function SU_Tournament() {
 				<TableRow align="center">
 					<TableCell key={"TH1"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} colSpan={colCount}>
-					{"Tournament List"}
+					{"Group List"}
 					</TableCell>
 				</TableRow>
 				<TableRow align="center">
 					<TableCell key={"TH21"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
-					Name
+					GID
 					</TableCell>
 					<TableCell key={"TH22"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
-					Desc
+					Name
 					</TableCell>
 					<TableCell key={"TH23"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
-					Type
+					Owner
+					</TableCell>
+          <TableCell key={"TH24"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Tournamenet
+					</TableCell>
+          <TableCell key={"TH25"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Auct.Sts.
+					</TableCell>
+          <TableCell key={"TH26"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Mem.Count
+					</TableCell>
+          <TableCell key={"TH27"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Fee
+					</TableCell>
+          <TableCell key={"TH27"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Bid Amt.
+					</TableCell>
+          <TableCell key={"TH27"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					MaxPrize
 					</TableCell>
 					<TableCell key={"TH31"} component="th" colSpan={5} scope="row" align="center" padding="none"
 					className={classes.th} >
@@ -652,26 +706,66 @@ export default function SU_Tournament() {
 				</TableRow>
 			</TableHead>
 			<TableBody>  
-			{tournamentList.map( (t, index) => {
+			{groupList.map( (t, index) => {
 				let myClass = classes.tdPending;
+        console.log(t.owner);
+        let tmp = ownerNames.find(x => x.uid === t.owner);
+        console.log(tmp);
+        let myName = (tmp != null) ? tmp.displayName : "Err";
 				return(
 					<TableRow key={"TROW"+index}>
 					<TableCell key={"TD1"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
-							{t.name}
+							{t.gid}
 						</Typography>
 					</TableCell>
 					<TableCell key={"TD2"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
-							{t.desc}
+							{t.name}
 						</Typography>
 					</TableCell>
 					<TableCell key={"TD3"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
-							{t.type}
+							{myName}
+						</Typography>
+					</TableCell>
+          <TableCell key={"TD4"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.tournament}
+						</Typography>
+					</TableCell>
+          <TableCell key={"TD5"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.auctionStatus}
+						</Typography>
+					</TableCell>
+          <TableCell key={"TD6"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.memberCount}
+						</Typography>
+					</TableCell>
+          <TableCell key={"TD7"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.memberFee}
+						</Typography>
+					</TableCell>
+          <TableCell key={"TD8"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.maxBidAmount}
+						</Typography>
+					</TableCell>
+          <TableCell key={"TD9"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.prizeCount}
 						</Typography>
 					</TableCell>
 					<TableCell key={"TD10"+index} align="center" component="td" scope="row" align="center" padding="none"
@@ -716,11 +810,11 @@ export default function SU_Tournament() {
 	
   return (
   <div className={classes.paper} align="center" key="groupinfo">
-	<DisplayPageHeader headerName="Tournament List" groupName="" tournament=""/>
+	<DisplayPageHeader headerName="Group List" groupName="" tournament=""/>
 	<Container component="main" maxWidth="lg">
 	<CssBaseline />
-	<VsButton name="Add new tournament" align="right" onClick={handleAdd} />
-	<DisplayTournamentList />
+	<VsButton name="Add new Group" align="right" onClick={handleAdd} />
+	<DisplayGroupList />
 	<Drawer className={classes.drawer}
 		anchor="top"
 		variant="temporary"

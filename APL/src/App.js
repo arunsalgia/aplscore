@@ -3,11 +3,20 @@ import { BrowserRouter as Router, Route, Redirect } from "react-router-dom";
 import { useHistory } from "react-router-dom";
 import { createBrowserHistory } from "history";
 import { UserContext } from "./UserContext";
+import Box from '@material-ui/core/Box';
+import Typography from '@material-ui/core/Typography';
+import Grid from "@material-ui/core/Grid";
+
+import globalStyles from "assets/globalStyles";
+
 //import Admin from "layouts/Admin.js";
 import "assets/css/material-dashboard-react.css?v=1.9.0";
 // import { DesktopWindows } from "@material-ui/icons";
 import { CricDreamTabs, setTab }from "CustomComponents/CricDreamTabs"
 import axios from "axios";
+
+import Tournament from "views/SuperUser/Tournament";
+
 //import SignIn from "views/Login/SignIn.js";
 //import SignUp from "views/Login/SignUp.js";
 //import Welcome from "views/APL/Welcome";
@@ -82,7 +91,10 @@ function checkResetPasswordRequest() {
 
 function AppRouter() {
   //let history={hist}
-	
+	const gClasses = globalStyles();
+
+  const [currentSelection, setCurrentSelection] = useState("Tournament");
+
   const [user, setUser] = useState(null);
 	const [fireToken, setFireToken] = useState("");
 	
@@ -130,7 +142,7 @@ function AppRouter() {
 
 
 
-if (process.env.REACT_APP_DEVICE === "WEB") {
+if (process.env.REACT_APP_DEVICE === "WEBNOT") {
 	const config ={
 		apiKey: "AIzaSyBqJAEVFJOsrztnMrIqO0tfGmisU95Plrk",
 		authDomain: "aplclient.firebaseapp.com",
@@ -166,6 +178,35 @@ if (process.env.REACT_APP_DEVICE === "WEB") {
 		*/
   }
 
+  async function setSelection(item) {
+		setCurrentSelection(item);
+	}
+
+  function DisplayFunctionItem(props) {
+		let itemName = props.item;
+		return (
+		<Grid key={"BUT"+itemName} item xs={4} sm={4} md={2} lg={2} >	
+			<Typography onClick={() => setSelection(itemName)}>
+				<span 
+					className={(itemName === currentSelection) ? gClasses.functionSelected : gClasses.functionUnselected}>
+				{itemName}
+				</span>
+			</Typography>
+		</Grid>
+	)}
+
+
+  function DisplayFunctionHeader() {
+    console.log("In display func");
+    return (
+    <Grid className={gClasses.noPadding} key="AllPatients" container align="center">
+      <Grid item xs={false} sm={false} md={2} lg={2} />
+      <DisplayFunctionItem item="Tournament" />
+      <DisplayFunctionItem item="Group" />
+      <Grid item xs={false} sm={false} md={2} lg={2} />
+    </Grid>	
+    )}
+
 
   return (
     <Router history={hist}> 
@@ -173,7 +214,7 @@ if (process.env.REACT_APP_DEVICE === "WEB") {
     {/* <Route path="/apl/walletdetails" component={Dummy} /> */}
     {/* <Route path="/apl/walletadd" component={Dummy} /> */}
     </UserContext.Provider>
-    <DispayTabs />
+    <CricDreamTabs />
     </Router>
   );
 

@@ -9,6 +9,22 @@ import { makeStyles } from '@material-ui/core/styles';
 
 
 const globalStyles = makeStyles((theme) => ({
+  noPadding: {
+    padding: "none", 
+  },
+  functionSelected: {
+		fontSize: theme.typography.pxToRem(20),
+		fontWeight: theme.typography.fontWeightBold,
+		//color: "blue",
+		borderBottom: "3px solid",
+    //width: "100%"
+		
+	},
+	functionUnselected: {
+		fontSize: theme.typography.pxToRem(20),
+		fontWeight: theme.typography.fontWeightBold,
+		color: "#BDBDBD",
+	},
 	filterRadio: {
 		fontSize: theme.typography.pxToRem(14),
 		fontWeight: theme.typography.fontWeightBold,

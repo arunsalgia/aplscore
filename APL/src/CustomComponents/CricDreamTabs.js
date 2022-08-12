@@ -31,6 +31,8 @@ import Match from "views/SuperUser/Match.js"
 import Score from "views/SuperUser/Score.js" 
 import PlayerInfo from "views/SuperUser/PlayerInfo.js" 
 
+import SU_Group from "views/SuperUser/Group";
+
 import Modal from 'react-modal';
 // import download from 'js-file-downloader';
 import { BlankArea } from './CustomComponents';
@@ -212,7 +214,8 @@ export function CricDreamTabs() {
 	const handleMatch = () => { setMenuValue(4);  }
   const handleScore = () => { setMenuValue(5) };
 	const handlePlayerInfo = () => { setMenuValue(6) };
-	
+
+  const handleSuGroup = () => { setMenuValue(11); }
 	
   const handleLogout = () => {
     handleClose();
@@ -229,6 +232,8 @@ export function CricDreamTabs() {
 			case 4: return <Match />;
 			case 5: return <Score />;
 			case 6: return <PlayerInfo />;
+
+      case 11: return <SU_Group />;
       default: return  null;
     }
   }
@@ -289,6 +294,7 @@ export function CricDreamTabs() {
             </div>
           )}
 					<Button color="inherit" className={classes.dashButton} onClick={handleSuTournament}>Tournament</Button>
+					<Button color="inherit" className={classes.dashButton} onClick={handleSuGroup}>Group</Button>
        </Toolbar>
       </AppBar>
       <DisplayCdItems/>

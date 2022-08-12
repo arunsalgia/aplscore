@@ -93,9 +93,9 @@ router.get('/auction/:tournamentName/:teamName', async function(req, res, next) 
 	
 	// first get all the group which have subscribed to the given tournament
 	let allRecs = await IPLGroup.find({tournament: tournamentName}, {gid: 1, _id: 0});
-	//console.log(allRecs);
+	console.log(allRecs);
 	let myGroups = _.map(allRecs, 'gid');
-	//console.log(myGroups);
+	console.log(myGroups);
 	
 	// now get all player id of the group auction (for the given team)
 	allRecs = await Auction.find({team: teamName, gid: {$in: myGroups}}, {pid: 1, _id: 0});
@@ -336,6 +336,19 @@ router.get('/setkey/:myPid/:myKey', async function(req, res, next) {
 	myRec.key = myKey;
 	myRec.save();
 	sendok(res, myRec); 
+});
+
+router.get('/test', async function(req, res, next) {
+  // PlayerRes = res;
+  setHeader(res);
+  
+	let tmp = await Player.find({ role: /Allrounder/ });
+	for(let i=0; i<tmp.length; ++i) {
+		tmp[i].role = "AllRounder";
+		await tmp[i].save();
+	}
+	console.log(tmp);
+  sendok(res, {count: tmp.length});
 });
 
 async function publish_players(res, filter_players)

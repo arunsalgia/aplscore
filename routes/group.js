@@ -1045,6 +1045,23 @@ async function tournament_started(mygroup) {
   **/
 }
 
+router.get('/list', async function(req, res, next) {  
+
+  let myGroup = await IPLGroup.find({enable: true}).sort({gid: -1});
+  sendok(res, myGroup);
+});
+
+router.get('/ownernames', async function(req, res, next) {  
+
+  let myOwner = await IPLGroup.find({enable: true}, {owner: 1});
+  let allUids = _.map(myOwner, 'owner');
+  allUids = _.uniqBy(allUids);
+
+  let allNames = await User.find({uid: {$in: allUids}}, {uid: 1, displayName: 1});
+  sendok(res, allNames);
+});
+
+
 function senderr(res, errcode, msg) { res.status(errcode).send(msg); }
 function sendok(res, msg) { 
   res.send(msg); 
