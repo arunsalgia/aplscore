@@ -137,12 +137,21 @@ router.get('/orgsetscore/:tournamentName/:mid/:scoreList', async function(req, r
   sendok(res, "Done");
 });
 
-router.get('/setscore/:tournamentName/:mid/:scoreList', async function(req, res) {
+router.get('/setscore/:tournamentName/:mid/:matchType/:scoreList', async function(req, res) {
   setHeader(res);
-  var {tournamentName, mid, scoreList} = req.params;
+  var {tournamentName, mid, matchType, scoreList} = req.params;
 	tournamentName = tournamentName.toUpperCase();
 	mid = Number(mid);
-	const matchType = "T20";
+	//const matchType = "T20";
+	console.log(matchType);
+	console.log(matchType);
+	console.log(matchType);	
+	console.log(matchType);
+	console.log(matchType);
+	console.log(matchType);
+	console.log(matchType);	
+	console.log(matchType);
+	return;
 	
 	// declare as started
 	let myMatch = await CricapiMatch.findOne({mid: mid});
@@ -177,8 +186,8 @@ router.get('/setscore/:tournamentName/:mid/:scoreList', async function(req, res)
 	
 	await matchStat.deleteMany({mid: mid, pid: {$in: pidList } });
 	//let newScore = [];
-	for(let i=0; i<scoreList.length; ++i) {
-		let s = scoreList[i];
+	for(let scr=0; scr<scoreList.length; ++scr) {
+		let s = scoreList[scr];
 		let myRec = getBlankStatRecord(matchStat);
 		myRec.mid = s.mid;
 		myRec.pid = s.pid;
@@ -190,15 +199,15 @@ router.get('/setscore/:tournamentName/:mid/:scoreList', async function(req, res)
 		myRec.six = s.six;
 		myRec.fifty = ((s.run >= 50) && (s.run < 100)) ? 1 : 0;
 		myRec.hundred = (s.run >= 100) ? 1 : 0;
-		//myRec.ballsPlayed = Number,
+		myRec.ballsPlayed = s.ballsPlayed;
 		// bowling details
-		myRec.wicket = s.wicket
+		myRec.wicket = s.wicket;
 		myRec.wicket3 = ((s.wicket >= Wicket3[matchType]) && 
       (s.wicket < Wicket5[matchType])) ? 1 : 0;
 		myRec.wicket5 = (s.wicket >= Wicket5[matchType]) ? 1 : 0;
-		//myRec.hattrick = Number,
+		myRec.hattrick = s.hattrick;
 		myRec.maiden = s.maiden;
-		//myRec.oversBowled = Number,
+		myRec.oversBowled = s.oversBowled,
 		//myRec.maxTouramentRun = Number,
 		//myRec.maxTouramentWicket = Number,
 		// fielding details
@@ -207,8 +216,39 @@ router.get('/setscore/:tournamentName/:mid/:scoreList', async function(req, res)
 		//myRec.bowled = s.bowled;
 		//myRec.lbw = Number,
 		myRec.catch = s.catch;
+		myRec.catch3 = (s.catch >= 3) ? 1 : 0;
 		myRec.duck = s.duck;
-		myRec.economy = s.economy;
+		
+		// now update economy value and economy points
+		myRec.economyValue = s.economyValue;
+		if (myRec.oversBowled >= MinOvers[matchType]) {
+			myRec.economy = -100;
+			for(var i=0; i<BonusEconomyRange.length; ++i) {
+				if (myRec.economyValue <= BonusEconomyRange[i].value) {
+					myRec.economy = BonusEconomyRange[i][matchType];
+					break;
+				}
+			}
+		} 
+		else {
+			myRec.economy = 0;
+		}
+
+		// now update the strike rate and strike rate points
+		myRec.strikeRateValue = s.strikeRateValue
+		if (myRec.ballsPlayed >= MinBallsPlayed[matchType]) {
+			myRec.strikeRate = -100;
+			for(var i=0; i<BonusStrikeRateRange.length; ++i) {
+				if (myRec.strikeRateValue >= BonusStrikeRateRange[i].value) {
+					myRec.strikeRate = BonusStrikeRateRange[i][matchType];
+					break;
+				}
+			}
+		} 
+		else {
+			myRec.economy = 0;
+		}
+		
   // overall performance
 		myRec.manOfTheMatch = s.manOfTheMatch;
 		myRec.score = calculateScore(myRec, matchType);
@@ -502,16 +542,24 @@ function calculateScore(mystatrec, type) {
     (mystatrec.fifty * Bonus50[type]) +
     (mystatrec.hundred * Bonus100[type]) +
     (mystatrec.wicket * BonusWkt[type]) +
-    (mystatrec.wicket3 * BonusWkt3[type]) +
-    (mystatrec.wicket5 * BonusWkt5[type]) +
     (mystatrec.maiden * BonusMaiden[type]) +
     //((mystatrec.wicket == 0) ? BonusDuck : 0) +
     ((mystatrec.manOfTheMatch) ? BonusMOM[type] : 0) + 
     ((mystatrec.maxTouramentRun > 0) ? BonusMaxRun[type] : 0) +
     ((mystatrec.maxTouramentWicket > 0) ?  BonusMaxWicket[type] : 0);
 
+	if (mystatrec.hattrick) {
+		mysum += (mystatrec.hattrick * BonusHattrick[type]);
+	}
+	else {
+    mysum += (mystatrec.wicket3 * BonusWkt3[type]) +
+			(mystatrec.wicket5 * BonusWkt5[type]);
+	}
+		
+
   mysum += 
     (mystatrec.catch * BonusCatch[type]) + 
+    (mystatrec.catch3 * BonusCatch3[type]) + 
     (mystatrec.runout * BonusRunOut[type]) + 
     (mystatrec.stumped * BonusStumped[type]);
 
@@ -520,6 +568,9 @@ function calculateScore(mystatrec, type) {
 
   // now add for economy
   mysum += (mystatrec.economy * BonusEconomy[type]);
+
+  // now add for strike rate
+  mysum += (mystatrec.strikeRate * BonusStrikeRate[type]);
 
   return  mysum
 }
@@ -548,7 +599,10 @@ async function calculateBrief(tournamentName) {
       mybrief.six = _.sumBy(myData, x => x.six);
       mybrief.fifty = _.sumBy(myData, x => x.fifty);
       mybrief.hundred =  _.sumBy(myData, x => x.hundred);
+      mybrief.strikeRate =  _.sumBy(myData, x => x.strikeRate);
+      mybrief.strikeRateValue =  _.sumBy(myData, x => x.strikeRateValue);
       mybrief.ballsPlayed = _.sumBy(myData, x => x.ballsPlayed);
+
       // bowling details
       mybrief.wicket = _.sumBy(myData, x => x.wicket);
       mybrief.wicket3 = _.sumBy(myData, x => x.wicket3);
@@ -556,14 +610,18 @@ async function calculateBrief(tournamentName) {
       mybrief.hattrick = _.sumBy(myData, x => x.hattrick);
       mybrief.maiden = _.sumBy(myData, x => x.maiden);
       mybrief.oversBowled = _.sumBy(myData, x => x.oversBowled);
+      mybrief.economy = _.sumBy(myData, x => x.economy);
+      mybrief.economyValue = _.sumBy(myData, x => x.economyValue);
+
       // fielding detail
       mybrief.runout = _.sumBy(myData, x => x.runout);
       mybrief.stumped = _.sumBy(myData, x => x.stumped);
       mybrief.bowled = _.sumBy(myData, x => x.bowled);
       mybrief.lbw = _.sumBy(myData, x => x.lbw);
       mybrief.catch = _.sumBy(myData, x => x.catch);
+      mybrief.catch3 = _.sumBy(myData, x => x.catch3);
       mybrief.duck = _.sumBy(myData, x => x.duck);
-      mybrief.economy = _.sumBy(myData, x => x.economy);
+
       // overall performance
       mybrief.manOfTheMatch = _.filter(myData, x => x.manOfTheMatch === true).length;
       mybrief.maxTouramentRun = 0;

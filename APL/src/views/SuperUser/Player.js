@@ -33,6 +33,7 @@ import { useAlert } from 'react-alert'
 import { confirmAlert } from 'react-confirm-alert';
 import VsButton from "CustomComponents/VsButton";
 import VsCancel from "CustomComponents/VsCancel"
+import VsTextSearch from "CustomComponents/VsTextSearch";
 import globalStyles from "assets/globalStyles";
 import sortBy from "lodash/sortBy";
 import IconButton from '@material-ui/core/IconButton';
@@ -148,6 +149,9 @@ export default function Team() {
 	const [isCancel, setIsCancel] = useState(false);
 	
 	const [teamData, setTeamData] = useState({});
+
+	const [searchText, setSearchText] = useState("");
+
   const classes = useStyles();
 	const gClasses = globalStyles();
 	
@@ -185,6 +189,7 @@ export default function Team() {
 		try {
 			 let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/uniquelist`);
 			 setAllPlayerList(resp.data);
+			 setFilterPlayerList(resp.data);
 		} catch(e) {
 			console.log(e)
 			alert.error("error fetching all player list");
@@ -409,7 +414,11 @@ export default function Team() {
     console.log(`All done `)
   }
 
-  
+	function handleBack() {
+		//sessionStorage.setItem("shareTournament", JSON.stringify(t));
+		setTab(2);
+	}
+	
   function handleAddNewTeam() {
     let clone = [].concat(newTeamList);  
     let tmp = {label: "", existingTeam: true, name: ""}
@@ -522,6 +531,8 @@ export default function Team() {
 	}
 	
 	async function addEditTeamSubmit() {
+		console.log("In addEditTeamSubmit");
+		return;
 		if (isDrawerOpened === "ADD") {
 			try {
 				// add tournament
@@ -751,6 +762,7 @@ export default function Team() {
 	
 	function selectExistingPlayer() {
 		setFilter("");
+		setSearchText("");
 		setFilterPlayerList(allPlayerList);
 		setIsListDrawer("PLAYERLIST");
 		console.log("In select")
@@ -773,6 +785,19 @@ export default function Team() {
 	</div>
 	)}
 
+	function updateFilterPlayerList(playerInfo) {
+		let tmp = playerInfo.toLowerCase()
+		setSearchText(tmp);
+		//console.log(tmp);
+		if (tmp != "") {
+			setFilterPlayerList(allPlayerList.filter(x => x.name.toLowerCase().includes(tmp)));
+		} 
+		else  {
+			console.log("BLANK");
+			setFilterPlayerList(allPlayerList);
+		}
+	}
+	
   return (
   <div className={classes.paper} align="center" key="groupinfo">
 	<DisplayPageHeader headerName={`Configure players of team ${teamName} (Tournament: ${tournamentName})`} groupName="" tournament=""/>
@@ -783,7 +808,16 @@ export default function Team() {
 	}
 	{(teamName !== "") &&
 	<div>
-	<VsButton align="right" name="Add new Player" onClick={handleAdd} />
+	<div align="right">
+		<Grid container justify="center" alignItems="center" >
+			<GridItem xs={6} sm={6} md={6} lg={6} >
+				<VsButton name="Back" align="left" onClick={handleBack} />
+			</GridItem>
+			<GridItem xs={6} sm={6} md={6} lg={6} >
+				<VsButton align="right" name="Add new Player" onClick={handleAdd} />
+			</GridItem>
+		</Grid>
+	</div>
 	<DisplayPlayerList />
 	<Drawer className={classes.drawer}
 		anchor="right"
@@ -793,10 +827,10 @@ export default function Team() {
 	<VsCancel align="right" onClick={() => {setIsDrawerOpened("")}} />
 	{((isDrawerOpened === "ADD") || (isDrawerOpened === "EDIT")) &&
 		<div align="center">
-		<ValidatorForm className={gClasses.form} onSubmit={addEditTeamSubmit}>
+		<ValidatorForm className={gClasses.form}>
 		<Typography className={classes.title}>{(isDrawerOpened === "ADD") ?"New Player" : "Edit Player"}</Typography>
 		{(isDrawerOpened === "ADD") &&
-			<VsButton name="Select Existing Player" align="right" onClick={selectExistingPlayer} />
+			<VsButton name="Select Existing Player" onClick={selectExistingPlayer} />
 		}
 		<BlankArea />
 		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
@@ -835,7 +869,7 @@ export default function Team() {
 			validators={['noSpecialCharacters']}
 			errorMessages={['Special characters not permitted', ]}
 		/>
-		<VsButton name={(isDrawerOpened === "ADD") ? "Add" : "Update"} type="submit" align="center" />
+		<VsButton name={(isDrawerOpened === "ADD") ? "Add" : "Update"} onClick={addEditTeamSubmit} />
 		<ValidComp />
 		</ValidatorForm>
 		</div>
@@ -847,10 +881,23 @@ export default function Team() {
 		open={isListDrawer !== ""}
 	>
 		<VsCancel align="right" onClick={() => setIsListDrawer("")} />
+		<VsTextSearch label="Filter Player" value={searchText}
+			onChange={(event) => updateFilterPlayerList(event.target.value)}
+			onClear={(event) => updateFilterPlayerList("")}
+		/>
 		<br />
-		<DisplayFilter />
-		<br />   
-		<PlayerMenuItem />
+		{/*<DisplayFilter />*/}		 
+		{/*<PlayerMenuItem />*/}
+		<Table>
+			<TableBody>
+			{filterPlayerList.map( (p) => 
+				<TableRow key={"PLR"+p.pid} className={gClasses.td} align="center">
+					<TableCell className={gClasses.td} onClick={() => selectPlayer(p) } >{p.name} (Pid: {p.pid})</TableCell> 
+						{/*<TableCell className={gClasses.td} ><VisibilityIcon className={gClasses.blue} size="small" onClick={() => handleSelectUser(m) }  /></TableCell>*/}
+				</TableRow>
+			)}
+			</TableBody>
+		</Table>
 	</Drawer>
 	</div>
 	}

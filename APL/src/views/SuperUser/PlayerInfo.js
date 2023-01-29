@@ -50,6 +50,8 @@ import { LeakRemoveTwoTone, LensTwoTone } from '@material-ui/icons';
 import {setTab} from "CustomComponents/CricDreamTabs.js"
 
 
+
+
 const useStyles = makeStyles((theme) => ({
 	title: {
 		fontSize: theme.typography.pxToRem(20),
@@ -155,32 +157,25 @@ export default function PlayerInfo() {
 			const tournament = async () => {
 				try {
 					let tRec = JSON.parse(sessionStorage.getItem("shareTournament"));
-					console.log(tRec);
+					//console.log(tRec);
 					setTournamentName(tRec.name);
-					console.log("1");
-					//setTournamentDesc(tRec.desc);
-					console.log("2");
-					//setTournamentType(tRec.type);
-					console.log("3");
 					getAllPlayers(tRec.name);
-					console.log("4");
 				} catch (e) {
 					alert.error("Tournament name not specified");
 				}
 			}
-      //a();
 			tournament();
   }, [])
 
 
 	
 	async function getAllPlayers(tournament) {
-		console.log("Get players of "+tournament);
+		//console.log("Get players of "+tournament);
 		try {
 			 let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/tournament/${tournament}`);
 			 setPlayerList(resp.data);
 			 setMasterPlayerList(resp.data);
-			 console.log(resp.data);
+			 //console.log(resp.data);
 		} catch(e) {
 			console.log(e)
 			alert.error("error fetching all player list");
@@ -283,12 +278,17 @@ export default function PlayerInfo() {
 		setSearchText(txt);
 	}
 	
+	function handleBack() {
+		//sessionStorage.setItem("shareTournament", JSON.stringify(t));
+		setTab(1);
+	}
   return (
   <div className={classes.paper} align="center" key="groupinfo">
 	<DisplayPageHeader headerName={`Player information of Tournament: ${tournamentName}`} groupName="" tournament=""/>
 	<Container component="main" maxWidth="md">
 	<CssBaseline />
 	<div>
+	<VsButton name="Back" align="right" onClick={handleBack} />
 	<Grid className={gClasses.vgSpacing} key="PatientFilter" container alignItems="center" >
 		<Grid key={"F1"} item xs={false} sm={false} md={2} lg={2} />
 		<Grid key={"F2"} item xs={12} sm={12} md={6} lg={6} >

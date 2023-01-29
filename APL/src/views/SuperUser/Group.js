@@ -708,9 +708,7 @@ export default function SU_Group() {
 			<TableBody>  
 			{groupList.map( (t, index) => {
 				let myClass = classes.tdPending;
-        console.log(t.owner);
         let tmp = ownerNames.find(x => x.uid === t.owner);
-        console.log(tmp);
         let myName = (tmp != null) ? tmp.displayName : "Err";
 				return(
 					<TableRow key={"TROW"+index}>
@@ -806,14 +804,26 @@ export default function SU_Group() {
 	)}
 	
 
-	
+	function handleBack() {
+		//sessionStorage.setItem("shareTournament", JSON.stringify(t));
+		setTab(1);
+	}
 	
   return (
   <div className={classes.paper} align="center" key="groupinfo">
 	<DisplayPageHeader headerName="Group List" groupName="" tournament=""/>
 	<Container component="main" maxWidth="lg">
 	<CssBaseline />
+	<div align="right">
+		<Grid container justify="center" alignItems="center" >
+			<GridItem xs={6} sm={6} md={6} lg={6} >
+				<VsButton name="Back" align="left" onClick={handleBack} />
+			</GridItem>
+			<GridItem xs={6} sm={6} md={6} lg={6} >
 	<VsButton name="Add new Group" align="right" onClick={handleAdd} />
+			</GridItem>
+		</Grid>
+	</div>
 	<DisplayGroupList />
 	<Drawer className={classes.drawer}
 		anchor="top"

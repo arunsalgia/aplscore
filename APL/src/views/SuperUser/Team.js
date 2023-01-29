@@ -486,7 +486,10 @@ export default function Team() {
     setNewTeamList(clone);
   }
 
-  
+	function handleBack() {
+		//sessionStorage.setItem("shareTournament", JSON.stringify(t));
+		setTab(1);
+	}
   async function handleTournament() {
     console.log("get tournament");
     if (tournamentName.length === 0) return;
@@ -723,7 +726,14 @@ export default function Team() {
 	{(tournamentName !== "") &&
 	<div>
 	<div align="right">
-	<VsButton name="Add new team" align="right" onClick={handleAdd} />
+	<Grid container justify="center" alignItems="center" >
+		<GridItem xs={6} sm={6} md={6} lg={6} >
+			<VsButton name="Back" align="left" onClick={handleBack} />
+		</GridItem>
+		<GridItem xs={6} sm={6} md={6} lg={6} >
+			<VsButton name="Add new team" align="right" onClick={handleAdd} />
+		</GridItem>
+	</Grid>
 	</div>
 	<DisplayTeamList />
 	<Drawer className={classes.drawer}

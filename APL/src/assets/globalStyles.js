@@ -217,11 +217,14 @@ const globalStyles = makeStyles((theme) => ({
     fontWeight: theme.typography.fontWeightBold,
   },
   td : {
-    spacing: 0,
-    // border: 5,
+    border: 5,
     align: "center",
-    padding: "none",
-    height: 10,
+    paddingBottom: "1px",
+    paddingTop: "1px",
+    backgroundColor: blue[100],
+    borderWidth: 1,
+    borderColor: 'black',
+    borderStyle: 'solid', 
   },
   upArrowCardCategory: {
     width: "16px",

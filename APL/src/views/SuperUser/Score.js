@@ -175,8 +175,16 @@ export default function Score() {
 	const [duck, setDucks] = useState(0);
 	
 	const [wicket, setWickets] = useState(0);
+	const [hattrick, setHattrick] = useState(0);
 	const [maiden, setMaidens] = useState(0);
 	const [economy, setEconomy] = useState(0);
+	const [economyValue, setEconomyValue] = useState(0);
+
+	const [strikeRate, setStrikeRate] = useState(0);
+	const [strikeRateValue, setStrikeRateValue] = useState(0);
+
+	const [oversBowled, setOversBowled] = useState(0);
+	const [ballsPlayed, setBallsPlayed] = useState(0);
 	
 	const [stumped, setStumped] = useState(0);
 	const [runout, setRunOuts] = useState(0);
@@ -239,14 +247,14 @@ export default function Score() {
 			console.log(e)
 			alert.error("error fetching team list of "+myTeam1+" and "+myTeam2);
 		}
-		console.log(myPlayers);
+		//console.log(myPlayers);
 		setPlayerList(_.sortBy(myPlayers, 'name'));
 	}
 
 	async function getScore(myTournament, myMid) {
 		try {
 			let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/match/score/${myTournament}/${myMid}`);
-			console.log(resp.data);
+			//console.log(resp.data);
 			setScoreList(resp.data);
 		} catch(e) {
 			console.log(e)
@@ -381,12 +389,18 @@ export default function Score() {
 		setDucks(0);
 		
 		setWickets(0);
+		setHattrick(0);
+		
 		setMaidens(0);
-		setEconomy(0);
+		setEconomyValue(0);
+		setStrikeRateValue(0);
 		
 		setStumped(0);
 		setCatches(0);
 		setRunOuts(0);
+		
+		setBallsPlayed(0);
+		setOversBowled(0);
 		
 		setMom(0);
 		setIsDrawerOpened("ADD");
@@ -403,11 +417,34 @@ export default function Score() {
 		
 		setWickets(t.wicket);
 		setMaidens(t.maiden);
-		setEconomy(t.economy);
+		//setEconomy(t.economy);
+		if (typeof t.economyValue === 'undefined') {
+			setEconomyValue(0);
+		}
+		else {
+			setEconomyValue(t.economyValue);
+		}
 		
+		if (typeof t.strikeRateValue === 'undefined') {
+			setStrikeRateValue(0);
+		}
+		else {
+			setStrikeRateValue(t.strikeRateValue);
+		}
+		
+		if (typeof t.hattrick === 'undefined') {
+			setHattrick(0);
+		}
+		else {
+			setHattrick(t.hattrick);
+		}
+
 		setStumped(t.stumped);
 		setCatches(t.catch);
 		setRunOuts(t.runout);
+		
+		setOversBowled(t.oversBowled);
+		setBallsPlayed(t.ballsPlayed);
 		
 		setMom((t.manOfTheMatch) ? 1 : 0);
 		setIsDrawerOpened("EDIT");
@@ -420,9 +457,11 @@ export default function Score() {
 		if (run < six*6) return alert.error("Invalid six");
 		if (run < (four*4 + six*6)) return alert.error("Invalid run/four/six");
 		if ((run > 0) && (duck > 0)) return alert.error("Duck not allowed if run greater than 0");
+		if ((hattrick > 0) && (wicket < 3)) return alert.error("Invalid Hat trick or wickets");
 		
 		console.log(runout + stumped , runout + catches, stumped + catches, runout + stumped + catches);
 		if ((runout + stumped + catches) > 10) return alert.error("Invalid run outs/stumped/catch");
+		
 		
 		let playerData;
 		
@@ -433,7 +472,8 @@ export default function Score() {
 			if (tmp) return alert.error(`Duplicate player ${playerName}`);
 			playerData = {};
 		}
-			
+					
+		
 		playerData = {
 			mid: mid,
 			pid: pid, 
@@ -445,12 +485,19 @@ export default function Score() {
 			duck: duck,
 			
 			wicket: wicket,
+			hattrick: hattrick,
+			
 			maiden: maiden,
-			economy: economy,
+			economyValue: economyValue,
+			strikeRateValue: strikeRateValue,
 			
 			runout: runout,
 			stumped: stumped,
 			catch: catches,
+			
+			ballsPlayed: ballsPlayed,
+			oversBowled: oversBowled,
+			
 			manOfTheMatch: (manOfTheMatch == 1)
 		}
 
@@ -522,7 +569,7 @@ export default function Score() {
 						<VsButton name={`Add ${team1}`} onClick={() => {addTeamPlayer(team1)}} />
 					</TableCell>
 					<TableCell key={"TH01"} component="th" scope="row" align="center" padding="none"
-					className={classes.th} colSpan={11}>
+					className={classes.th} colSpan={15}>
 					{`Score of match ${mid} between ${team1} and ${team2}`}
 					</TableCell>
 					<TableCell key={"TH02"} component="th" scope="row" align="center" padding="none"
@@ -541,11 +588,11 @@ export default function Score() {
 					</TableCell>
 					<TableCell key={"TH23"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
-					Runs
+					Run
 					</TableCell>
 					<TableCell key={"TH24"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
-					Fours
+					Four
 					</TableCell>
 					<TableCell key={"TH25"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
@@ -557,23 +604,23 @@ export default function Score() {
 					</TableCell>
 					<TableCell key={"TH27"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
-					Wickets
+					Wkt
 					</TableCell>
 					<TableCell key={"TH28"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
-					Economy
+					Eco
 					</TableCell>
 					<TableCell key={"TH29"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
-					Maidens
+					Maiden
 					</TableCell>
 					<TableCell key={"TH30"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
-					RunOut
+					RO
 					</TableCell>
 					<TableCell key={"TH31"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
-					Stumped
+					Stump
 					</TableCell>
 					<TableCell key={"TH32"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
@@ -582,6 +629,22 @@ export default function Score() {
 					<TableCell key={"TH33"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
 					Mom
+					</TableCell>
+					<TableCell key={"TH34"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					SR
+					</TableCell>
+					<TableCell key={"TH35"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					HT
+					</TableCell>
+					<TableCell key={"TH36"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					BP
+					</TableCell>
+					<TableCell key={"TH37"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					OB
 					</TableCell>
 					<TableCell key={"TH91"} component="th" colSpan={2} scope="row" align="center" padding="none"
 					className={classes.th} >
@@ -592,6 +655,7 @@ export default function Score() {
 			<TableBody>  
 			{scoreList.map( (t, index) => {
 				let myClass = classes.tdPending;
+				//if (t.pid === 2022021639)  console.log("Eco is: ",t.economyValue);
 				return(
 					<TableRow key={"TROW"+index}>
 					<TableCell key={"TD1"+index} align="center" component="td" scope="row" align="center" padding="none"
@@ -639,7 +703,7 @@ export default function Score() {
 					<TableCell key={"TD8"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
-							{t.economy}
+							{ (typeof t.economyValue === 'undefined') ? '-' : t.economyValue}
 						</Typography>
 					</TableCell>
 					<TableCell key={"TD9"+index} align="center" component="td" scope="row" align="center" padding="none"
@@ -670,6 +734,30 @@ export default function Score() {
 						className={myClass}>
 						<Typography className={classes.apptName}>
 							{(t.manOfTheMatch) ? 1 : 0}
+						</Typography>
+					</TableCell>
+					<TableCell key={"TD14"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{(typeof t.strikeRateValue === 'undefined') ? "-" : t.strikeRateValue }
+						</Typography>
+					</TableCell>
+					<TableCell key={"TD15"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{(typeof t.hattrick === 'undefined') ? "-" : t.hattrick }
+						</Typography>
+					</TableCell>
+					<TableCell key={"TD16"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.ballsPlayed }
+						</Typography>
+					</TableCell>
+					<TableCell key={"TD17"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.oversBowled }
 						</Typography>
 					</TableCell>
 					<TableCell key={"TD91"+index} align="center" component="td" scope="row" align="center" padding="none"
@@ -708,12 +796,14 @@ export default function Score() {
 	async function handleUpdate() {
 		try {
 			let tmp = encodeURIComponent(JSON.stringify(scoreList));
-			//let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/match/setscore/${tournamentName}/${mid}/${tmp}`);
+			//let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/match/setscore/${tournamentName}/${mid}/${localStorage.getItem('MatchType')}/${tmp}`);
 			let loopCount = Math.floor(scoreList.length / 10);
 			if ((scoreList.length % 10) > 0) ++loopCount;
 			for(let i=0; i<loopCount; ++i) {
 				let tmp = encodeURIComponent(JSON.stringify(scoreList.slice(i*10, (i+1)*10)));
-				await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/match/setscore/${tournamentName}/${mid}/${tmp}`);
+				let mType = localStorage.getItem('MatchType');
+				console.log(mType);
+				await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/match/setscore/${tournamentName}/${mid}/${mType}/${tmp}`);
 				alert.success(`Score update success of set ${i+1}`);
 			}
 			// finally update brief
@@ -734,6 +824,12 @@ export default function Score() {
 			alert.error("error updating score list of match"+mid);
 		}
 	}
+
+
+	function handleBack() {
+		//sessionStorage.setItem("shareTournament", JSON.stringify(t));
+		setTab(4);
+	}
 	
   return (
   <div className={classes.paper} align="center" key="groupinfo">
@@ -746,9 +842,19 @@ export default function Score() {
 	{(tournamentName !== "") &&
 	<div>
 		<div align="right">
+		<Grid container justify="center" alignItems="center" >
+			<GridItem xs={6} sm={6} md={6} lg={6} >
+				<VsButton name="Back" align="left" onClick={handleBack} />
+			</GridItem>
+			<GridItem align="right" xs={6} sm={6} md={6} lg={6} >
 			<VsButton name="Add new player" onClick={handleAdd} />
 			<VsButton name="Update match score" onClick={handleUpdate} />
 			<VsButton name="Set match Close" onClick={handleClose} />	
+			</GridItem>
+		</Grid>
+	</div>
+
+		<div align="right">
 		</div>
 		<DisplayScoreList />
 	<Drawer className={classes.drawer}
@@ -785,6 +891,14 @@ export default function Score() {
 			errorMessages={['Invalid Runs' ]}
 		/>
 		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
+			label="Balls Played" 
+			value={ballsPlayed}
+			disabled={pid===0}
+			onChange={() => { setBallsPlayed(Number(event.target.value)) }}
+			validators={['minNumber:0']}
+			errorMessages={['Invalid Balls Played' ]}
+		/>
+		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
 			label="Fours" 
 			value={four}
 			disabled={pid===0}
@@ -801,6 +915,14 @@ export default function Score() {
 			errorMessages={['Invalid Sixes' ]}
 		/>
 		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
+			label="StrikeRate" 
+			value={strikeRateValue}
+			disabled={pid===0}
+			onChange={() => { setStrikeRateValue(Number(event.target.value)) }}
+			validators={['minNumber:0']}
+			errorMessages={['Invalid Strike Rate' ]}
+		/>
+		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
 			label="Duck" 
 			value={duck}
 			disabled={pid===0}
@@ -815,6 +937,22 @@ export default function Score() {
 			onChange={() => { setWickets(Number(event.target.value)) }}
 			validators={['minNumber:0', 'maxNumber:10']}
 			errorMessages={['Invalid Wicket','Invalid Wicket' ]}
+		/>
+		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
+			label="Overs Bowled" 
+			value={oversBowled}
+			disabled={pid===0}
+			onChange={() => { setOversBowled(Number(event.target.value)) }}
+			validators={['minNumber:0']}
+			errorMessages={['Invalid Overs bowled' ]}
+		/>
+		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
+			label="Hat-trick Count" 
+			value={hattrick}
+			disabled={pid===0}
+			onChange={() => { setHattrick(Number(event.target.value)) }}
+			validators={['minNumber:0', 'maxNumber:1']}
+			errorMessages={['Invalid Hat trick count','Invalid Hat trick count' ]}
 		/>
 		{/*<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
 			label="Economy" 
@@ -835,11 +973,19 @@ export default function Score() {
 			</RadioGroup>
 			</FormControl>		
 		*/}
-		<div align="left">
+		{/*<div align="left">
 		<Typography>Economy</Typography>
 		<VsRadioGroup value={economy} onChange={() => {setEconomy(Number(event.target.value)); }} 
 			radioList={economyArray} />
-		</div>
+		</div>*/}
+		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
+			label="Eco. Value" 
+			value={economyValue}
+			disabled={pid===0}
+			onChange={() => { setEconomyValue(Number(event.target.value)) }}
+			validators={['minNumber:0']}
+			errorMessages={['Invalid Economy']}
+		/>
 		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
 			label="Maidens" 
 			value={maiden}

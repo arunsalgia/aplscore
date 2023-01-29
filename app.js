@@ -80,7 +80,7 @@ clientUpdateCount=0;
 
 CRICDBCLEANUPINTERVAL = 15;
 dbcleanupCount = 0;
-// maintain list of runnning matches
+// maintain list of running matches
 runningMatchArray = [];
 runningScoreArray = [];
 clentData = [];
@@ -365,6 +365,8 @@ PrizeSchema = mongoose.Schema({
 //   matchTime: Date,
 //   weekDay: String
 // });
+
+
 StatSchema = mongoose.Schema({
   mid: Number,
   pid: Number,
@@ -378,6 +380,8 @@ StatSchema = mongoose.Schema({
   fifty: Number,
   hundred: Number,
   ballsPlayed: Number,
+	strikeRateValue: Number,				// this is actual strike rate
+	strikeRate: Number,							// this is bonus / penalty on strike rate
   // bowling details
   wicket: Number,
   wicket3: Number,
@@ -393,11 +397,14 @@ StatSchema = mongoose.Schema({
   bowled: Number,
   lbw: Number,
   catch: Number,
+	catch3: Number,
   duck: Number,
-  economy: Number,
+  economyValue: Number,  	// This is actual economy 
+  economy: Number,				// This is bonus or penalty on economy
   // overall performance
   manOfTheMatch: Boolean
 });
+
 //--- data available from CRICAPI
 CricapiMatchSchema = mongoose.Schema({
   mid: Number,
@@ -418,9 +425,9 @@ CricapiMatchSchema = mongoose.Schema({
 BriefStatSchema = mongoose.Schema({
   sid: Number,    // 0 => data, 1 => maxRUn, 2 => maxWick
   pid: Number,
-  playerName: String,
   inning: Number,
   score: Number,
+  playerName: String,
   // batting details
   run: Number,
   four: Number,
@@ -428,6 +435,8 @@ BriefStatSchema = mongoose.Schema({
   fifty: Number,
   hundred: Number,
   ballsPlayed: Number,
+	strikeRateValue: Number,				// this is actual strike rate
+	strikeRate: Number,							// this is bonus / penalty on strike rate
   // bowling details
   wicket: Number,
   wicket3: Number,
@@ -435,18 +444,20 @@ BriefStatSchema = mongoose.Schema({
   hattrick: Number,
   maiden: Number,
   oversBowled: Number,
+  maxTouramentRun: Number,
+  maxTouramentWicket: Number,
   // fielding details
   runout: Number,
   stumped: Number,
   bowled: Number,
   lbw: Number,
   catch: Number,
+	catch3: Number,
   duck: Number,
-  economy: Number,
+  economyValue: Number,  	// This is actual economy 
+  economy: Number,				// This is bonus or penalty on economy
   // overall performance
-  maxTouramentRun: Number,
-  maxTouramentWicket: Number,
-  manOfTheMatch: Number
+  manOfTheMatch: Boolean
 });  
 
 PaymentSchema = mongoose.Schema({
@@ -597,6 +608,18 @@ Bonus50 = {"TEST": 10, "ODI": 20, "T20": 20};  //20;
 Bonus100 = {"TEST": 50, "ODI": 50, "T20": 50};  //50;
 Bonus200 = {"TEST": 100, "ODI": 100, "T20": 100};  //50;
 
+BonusStrikeRate = {"TEST": 0, "ODI": 1, "T20": 1};  //50;
+BonusStrikeRateRange = [
+	{"value": 200, "TEST": 0, "ODI": 6, "T20": 6},
+	{"value": 170, "TEST": 0, "ODI": 4, "T20": 4},
+	{"value": 150, "TEST": 0, "ODI": 2, "T20": 2},
+	{"value": 100, "TEST": 0, "ODI": 0, "T20": 0},
+	{"value": 90, "TEST": 0, "ODI": -2, "T20": -2},
+	{"value": 80, "TEST": 0, "ODI": -4, "T20": -4},
+	{"value": -1, "TEST": 0, "ODI": -6, "T20": -6}
+];
+MinBallsPlayed = {"TEST": 1000000.0, "ODI": 10, "T20": 10};  //2.0;
+
 BonusMaiden = {"TEST": 0, "ODI": 10, "T20": 20};  //20;
 BonusWkt = {"TEST": 25, "ODI": 25, "T20": 25};  //25;
 BonusWkt3 = {"TEST": 20, "ODI": 20, "T20": 20};  //20;
@@ -604,17 +627,30 @@ BonusWkt3 = {"TEST": 20, "ODI": 20, "T20": 20};  //20;
 BonusWkt5 = {"TEST": 50, "ODI": 50, "T20": 50};  //50;
 Wicket3 = {"TEST": 4, "ODI": 4, "T20": 3}
 Wicket5 = {"TEST": 5, "ODI": 5, "T20": 5}
+BonusHattrick = {"TEST": 100, "ODI": 100, "T20": 100};  // if hat-trick, the bonus of 3 wkt and 5 wkt
 
 BonusDuck = {"TEST": -2, "ODI": -2, "T20": -2};  //-5;
 BonusNoWkt = {"TEST": 0, "ODI": 0, "T20": 0};  //0;
 BonusMOM = {"TEST": 20, "ODI": 20, "T20": 20};  //20;
 
-BonusEconomy = {"TEST": 0, "ODI": 2, "T20": 2};  //2;
-EconomyGood = {"TEST": 6.0, "ODI": 4.0, "T20": 6.0};  //6.0;
-EconomyBad = {"TEST": 9.0, "ODI": 7.0, "T20": 9.0};  //9.0;
+//BonusEconomy = {"TEST": 0, "ODI": 2, "T20": 2};  //2;
+//EconomyGood = {"TEST": 6.0, "ODI": 4.0, "T20": 6.0};  //6.0;
+//EconomyBad = {"TEST": 9.0, "ODI": 7.0, "T20": 9.0};  //9.0;
+BonusEconomy = {"TEST": 0, "ODI": 1, "T20": 1};  //2;
+BonusEconomyRange = [
+		{"value": 5.0, "TEST": 0, "ODI": 6, "T20": 6},
+		{"value": 6.0, "TEST": 0, "ODI": 4, "T20": 4},
+		{"value": 7.0, "TEST": 0, "ODI": 2, "T20": 2},
+		{"value": 9.0, "TEST": 0, "ODI": 0, "T20": 0},
+		{"value": 10.0, "TEST": 0, "ODI": -2, "T20": -2},
+		{"value": 12.0, "TEST": 0, "ODI": -4, "T20": -4},
+		{"value": 1000000.0, "TEST": 0, "ODI": -6, "T20": -6}
+	];
 MinOvers = {"TEST": 1000000.0, "ODI": 4.0, "T20": 2.0};  //2.0;
 
 BonusCatch = {"TEST": 4, "ODI": 4, "T20": 4};  //4;
+BonusCatch3 = {"TEST": 5, "ODI": 5, "T20": 5};  //4;
+
 BonusRunOut = {"TEST": 4, "ODI": 4, "T20": 4};  //4;
 BonusStumped = {"TEST": 6, "ODI": 6, "T20": 6};  //6;
 

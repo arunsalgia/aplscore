@@ -177,6 +177,7 @@ export default function Match() {
 				setTournamentName(tRec.name);
 				setTournamentDesc(tRec.desc);
 				setTournamentType(tRec.type);
+				localStorage.setItem('MatchType', tRec.type);
 				getAllTeams(tRec.name);
 				getAllMatches(tRec.name);
 			} catch (e) {
@@ -630,6 +631,11 @@ export default function Match() {
 
 	}
 	
+		function handleBack() {
+		//sessionStorage.setItem("shareTournament", JSON.stringify(t));
+		setTab(1);
+	}
+	
 	function handleScore(t) {
 		sessionStorage.setItem("shareMatch", JSON.stringify(t));
 		setTab(5);
@@ -787,7 +793,16 @@ export default function Match() {
 	}
 	{(tournamentName !== "") &&
 	<div>
-	<VsButton name="Add new match" align="right" onClick={handleAdd} />
+	<div align="right">
+		<Grid container justify="center" alignItems="center" >
+			<GridItem xs={6} sm={6} md={6} lg={6} >
+				<VsButton name="Back" align="left" onClick={handleBack} />
+			</GridItem>
+			<GridItem xs={6} sm={6} md={6} lg={6} >
+				<VsButton name="Add new match" align="right" onClick={handleAdd} />
+			</GridItem>
+		</Grid>
+	</div>
 	<DisplayMatchList />
 	<Drawer className={classes.drawer}
 		anchor="right"
