@@ -489,7 +489,7 @@ export default function Score() {
 			
 			maiden: maiden,
 			economyValue: economyValue,
-			strikeRateValue: strikeRateValue,
+			strikeRateValue: (run / ballsPlayed ) * 100,
 			
 			runout: runout,
 			stumped: stumped,
@@ -546,6 +546,12 @@ export default function Score() {
 					runout: 0,
 					stumped: 0,
 					catch: 0,
+					// new data
+					economyValue: 0,
+					strikeRateValue: 0,
+					oversBowled: 0,
+					ballsPlayed: 0,
+					hattrick: 0,
 					manOfTheMatch: 0
 				});
 			} else {
@@ -569,7 +575,7 @@ export default function Score() {
 						<VsButton name={`Add ${team1}`} onClick={() => {addTeamPlayer(team1)}} />
 					</TableCell>
 					<TableCell key={"TH01"} component="th" scope="row" align="center" padding="none"
-					className={classes.th} colSpan={15}>
+					className={classes.th} colSpan={14}>
 					{`Score of match ${mid} between ${team1} and ${team2}`}
 					</TableCell>
 					<TableCell key={"TH02"} component="th" scope="row" align="center" padding="none"
@@ -590,6 +596,10 @@ export default function Score() {
 					className={classes.th} >
 					Run
 					</TableCell>
+					<TableCell key={"TH36"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					BP
+					</TableCell>
 					<TableCell key={"TH24"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
 					Four
@@ -605,6 +615,10 @@ export default function Score() {
 					<TableCell key={"TH27"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
 					Wkt
+					</TableCell>
+					<TableCell key={"TH37"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					OB
 					</TableCell>
 					<TableCell key={"TH28"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
@@ -630,21 +644,9 @@ export default function Score() {
 					className={classes.th} >
 					Mom
 					</TableCell>
-					<TableCell key={"TH34"} component="th" scope="row" align="center" padding="none"
-					className={classes.th} >
-					SR
-					</TableCell>
 					<TableCell key={"TH35"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
 					HT
-					</TableCell>
-					<TableCell key={"TH36"} component="th" scope="row" align="center" padding="none"
-					className={classes.th} >
-					BP
-					</TableCell>
-					<TableCell key={"TH37"} component="th" scope="row" align="center" padding="none"
-					className={classes.th} >
-					OB
 					</TableCell>
 					<TableCell key={"TH91"} component="th" colSpan={2} scope="row" align="center" padding="none"
 					className={classes.th} >
@@ -676,6 +678,12 @@ export default function Score() {
 							{t.run}
 						</Typography>
 					</TableCell>
+					<TableCell key={"TD16"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.ballsPlayed }
+						</Typography>
+					</TableCell>
 					<TableCell key={"TD4"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
@@ -698,6 +706,12 @@ export default function Score() {
 						className={myClass}>
 						<Typography className={classes.apptName}>
 							{t.wicket}
+						</Typography>
+					</TableCell>
+					<TableCell key={"TD17"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.oversBowled }
 						</Typography>
 					</TableCell>
 					<TableCell key={"TD8"+index} align="center" component="td" scope="row" align="center" padding="none"
@@ -736,28 +750,10 @@ export default function Score() {
 							{(t.manOfTheMatch) ? 1 : 0}
 						</Typography>
 					</TableCell>
-					<TableCell key={"TD14"+index} align="center" component="td" scope="row" align="center" padding="none"
-						className={myClass}>
-						<Typography className={classes.apptName}>
-							{(typeof t.strikeRateValue === 'undefined') ? "-" : t.strikeRateValue }
-						</Typography>
-					</TableCell>
 					<TableCell key={"TD15"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
 							{(typeof t.hattrick === 'undefined') ? "-" : t.hattrick }
-						</Typography>
-					</TableCell>
-					<TableCell key={"TD16"+index} align="center" component="td" scope="row" align="center" padding="none"
-						className={myClass}>
-						<Typography className={classes.apptName}>
-							{t.ballsPlayed }
-						</Typography>
-					</TableCell>
-					<TableCell key={"TD17"+index} align="center" component="td" scope="row" align="center" padding="none"
-						className={myClass}>
-						<Typography className={classes.apptName}>
-							{t.oversBowled }
 						</Typography>
 					</TableCell>
 					<TableCell key={"TD91"+index} align="center" component="td" scope="row" align="center" padding="none"
@@ -914,6 +910,7 @@ export default function Score() {
 			validators={['minNumber:0']}
 			errorMessages={['Invalid Sixes' ]}
 		/>
+		{/* Strike rate not required. We have runs and balls played.
 		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
 			label="StrikeRate" 
 			value={strikeRateValue}
@@ -922,6 +919,7 @@ export default function Score() {
 			validators={['minNumber:0']}
 			errorMessages={['Invalid Strike Rate' ]}
 		/>
+		*/}
 		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
 			label="Duck" 
 			value={duck}
@@ -954,30 +952,6 @@ export default function Score() {
 			validators={['minNumber:0', 'maxNumber:1']}
 			errorMessages={['Invalid Hat trick count','Invalid Hat trick count' ]}
 		/>
-		{/*<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
-			label="Economy" 
-			value={economy}
-			disabled={pid===0}
-			onChange={() => { setEconomy(Number(event.target.value)) }}
-			//validators={['minNumber:-1', 'maxNumber:1']}
-			//errorMessages={['Invalid Economy', 'Invalid Economy']}
-		/>*/}
-		{/*<Typography>Economy</Typography>
-		<FormControl component="fieldset">
-			<RadioGroup row aria-label="timeSelect" name="timeSelect" value={economy} 
-				onChange={() => {setEconomy(Number(event.target.value)); }}
-			>
-			{economyArray.map ( r =>
-			<FormControlLabel className={gClasses.filterRadio} value={r} control={<Radio color="primary"/>} label={r} />
-			)}
-			</RadioGroup>
-			</FormControl>		
-		*/}
-		{/*<div align="left">
-		<Typography>Economy</Typography>
-		<VsRadioGroup value={economy} onChange={() => {setEconomy(Number(event.target.value)); }} 
-			radioList={economyArray} />
-		</div>*/}
 		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
 			label="Eco. Value" 
 			value={economyValue}

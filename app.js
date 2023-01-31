@@ -601,6 +601,7 @@ defaultMaxPlayerCount = 15;
 // Point scroring
 ViceCaptain_MultiplyingFactor = 1.5;
 Captain_MultiplyingFactor = 2;
+
 BonusRun = {"TEST": 1, "ODI": 1, "T20": 1};  //1;
 Bonus4 = {"TEST": 1, "ODI": 1, "T20": 1};  //1;
 Bonus6 = {"TEST": 2, "ODI": 2, "T20": 2};  //2;
@@ -657,7 +658,7 @@ BonusStumped = {"TEST": 6, "ODI": 6, "T20": 6};  //6;
 BonusMaxRun = {"TEST": 100, "ODI": 100, "T20": 100};  //100;
 BonusMaxWicket = {"TEST": 100, "ODI": 100, "T20": 100};  //100;
 
-// variables rreuiqred by timer
+// variables required by timer
 sendDashboard = false;
 sendMyStat = false;
 myStatGroup = [];
