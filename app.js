@@ -457,7 +457,7 @@ BriefStatSchema = mongoose.Schema({
   economyValue: Number,  	// This is actual economy 
   economy: Number,				// This is bonus or penalty on economy
   // overall performance
-  manOfTheMatch: Boolean
+  manOfTheMatch: Number,
 });  
 
 PaymentSchema = mongoose.Schema({

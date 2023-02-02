@@ -223,6 +223,7 @@ router.get('/setscore/:tournamentName/:mid/:matchType/:scoreList', async functio
 		} 
 		else {
 			myRec.economy = 0;
+			myRec.economyValue = 0;
 		}
 
 		// now update the strike rate and strike rate points
@@ -238,12 +239,13 @@ router.get('/setscore/:tournamentName/:mid/:matchType/:scoreList', async functio
 		} 
 		else {
 			myRec.strikeRate = 0;
+			myRec.strikeRateValue = 0;
 		}
 		
   // overall performance
 		myRec.manOfTheMatch = s.manOfTheMatch;
-		console.log(matchType);
-		console.log(myRec);
+		//console.log(matchType);
+		//console.log(myRec);
 		myRec.score = calculateScore(myRec, matchType);
 		await myRec.save();
 	};
@@ -541,7 +543,7 @@ function calculateScore(mystatrec, type) {
     ((mystatrec.maxTouramentRun > 0) ? BonusMaxRun[type] : 0) +
     ((mystatrec.maxTouramentWicket > 0) ?  BonusMaxWicket[type] : 0);
 
-	console.log("Stage1: ", mysum);
+	//console.log("Stage1: ", mysum);
 	
 	if (mystatrec.hattrick) {
 		mysum += (mystatrec.hattrick * BonusHattrick[type]);
@@ -557,19 +559,19 @@ function calculateScore(mystatrec, type) {
     (mystatrec.catch3 * BonusCatch3[type]) + 
     (mystatrec.runout * BonusRunOut[type]) + 
     (mystatrec.stumped * BonusStumped[type]);
-	console.log("Stage2: ", mysum);
+	//console.log("Stage2: ", mysum);
 	
   // now add penalty for duck
   mysum += (mystatrec.duck * BonusDuck[type]);
 
   // now add for economy
   mysum += (mystatrec.economy * BonusEconomy[type]);
-	console.log("Stage3: ", mysum);
+	//console.log("Stage3: ", mysum);
 	
   // now add for strike rate
   mysum += (mystatrec.strikeRate * BonusStrikeRate[type]);
-	console.log(mystatrec.strikeRate, type);
-	console.log(BonusStrikeRate);
+	//console.log(mystatrec.strikeRate, type);
+	//console.log(BonusStrikeRate);
 	
   console.log("score is: ", mysum);
   return  mysum
