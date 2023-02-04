@@ -55,88 +55,6 @@ router.get('/score/:tournamentName/:mid', async function(req, res) {
   sendok(res, matchScore);
 });
 
-router.get('/orgsetscore/:tournamentName/:mid/:scoreList', async function(req, res) {
-  setHeader(res);
-  var {tournamentName, mid, scoreList} = req.params;
-	tournamentName = tournamentName.toUpperCase();
-	mid = Number(mid);
-	const matchType = "T20";
-	
-	// declare as started
-	let myMatch = await CricapiMatch.findOne({mid: mid});
-	myMatch.matchStarted = true;
-	myMatch.save();
-
-	// now update player stats
-	let matchStat = mongoose.model(tournamentName, StatSchema);
-	
-	scoreList = JSON.parse(scoreList);
-	let pidList = _.map(scoreList, 'pid');
-	pidList = _.uniqBy(pidList);
-	//console.log(pidList);
-	//console.log(scoreList);
-	/*
-	    mid: 12110171,
-    pid: 9968001,
-    playerName: 'Aqib Ilyas',
-    run: 0,
-    four: 0,
-    six: 0,
-    duck: 0,
-    wicket: 0,
-    maiden: 0,
-    economy: 0,
-    runout: 0,
-    stumped: 0,
-    catch: 0,
-    manOfTheMatch: false
-
-	*/
-	
-	await matchStat.deleteMany({mid: mid, pid: {$in: pidList } });
-	//let newScore = [];
-	for(let i=0; i<scoreList.length; ++i) {
-		let s = scoreList[i];
-		let myRec = getBlankStatRecord(matchStat);
-		myRec.mid = s.mid;
-		myRec.pid = s.pid;
-		myRec.inning = 1;
-		myRec.playerName = s.playerName;
-		// batting details
-		myRec.run = s.run;
-		myRec.four = s.four;
-		myRec.six = s.six;
-		myRec.fifty = ((s.run >= 50) && (s.run < 100)) ? 1 : 0;
-		myRec.hundred = (s.run >= 100) ? 1 : 0;
-		//myRec.ballsPlayed = Number,
-		// bowling details
-		myRec.wicket = s.wicket
-		myRec.wicket3 = ((s.wicket >= Wicket3[matchType]) && 
-      (s.wicket < Wicket5[matchType])) ? 1 : 0;
-		myRec.wicket5 = (s.wicket >= Wicket5[matchType]) ? 1 : 0;
-		//myRec.hattrick = Number,
-		myRec.maiden = s.maiden;
-		//myRec.oversBowled = Number,
-		//myRec.maxTouramentRun = Number,
-		//myRec.maxTouramentWicket = Number,
-		// fielding details
-		myRec.runout = s.runout;
-		myRec.stumped = s.stumped;
-		//myRec.bowled = s.bowled;
-		//myRec.lbw = Number,
-		myRec.catch = s.catch;
-		myRec.duck = s.duck;
-		myRec.economy = s.economy;
-  // overall performance
-		myRec.manOfTheMatch = s.manOfTheMatch;
-		myRec.score = calculateScore(myRec, matchType);
-		await myRec.save();
-	};
-	
-	await calculateBrief(tournamentName);
-  sendok(res, "Done");
-});
-
 router.get('/setscore/:tournamentName/:mid/:matchType/:scoreList', async function(req, res) {
   setHeader(res);
   var {tournamentName, mid, matchType, scoreList} = req.params;
@@ -175,7 +93,7 @@ router.get('/setscore/:tournamentName/:mid/:matchType/:scoreList', async functio
 
 	*/
 	
-	await matchStat.deleteMany({mid: mid, pid: {$in: pidList } });
+	await matchStat.deleteMany({mid: mid });
 	//let newScore = [];
 	for(let scr=0; scr<scoreList.length; ++scr) {
 		let s = scoreList[scr];
@@ -188,69 +106,81 @@ router.get('/setscore/:tournamentName/:mid/:matchType/:scoreList', async functio
 		myRec.run = s.run;
 		myRec.four = s.four;
 		myRec.six = s.six;
-		myRec.fifty = ((s.run >= 50) && (s.run < 100)) ? 1 : 0;
-		myRec.hundred = (s.run >= 100) ? 1 : 0;
-		myRec.ballsPlayed = s.ballsPlayed;
 		// bowling details
 		myRec.wicket = s.wicket;
-		myRec.wicket3 = ((s.wicket >= Wicket3[matchType]) && 
-      (s.wicket < Wicket5[matchType])) ? 1 : 0;
-		myRec.wicket5 = (s.wicket >= Wicket5[matchType]) ? 1 : 0;
+		myRec.ballsPlayed = s.ballsPlayed;
 		myRec.hattrick = s.hattrick;
 		myRec.maiden = s.maiden;
-		myRec.oversBowled = s.oversBowled,
-		//myRec.maxTouramentRun = Number,
-		//myRec.maxTouramentWicket = Number,
+		myRec.oversBowled = s.oversBowled;
 		// fielding details
 		myRec.runout = s.runout;
 		myRec.stumped = s.stumped;
-		//myRec.bowled = s.bowled;
-		//myRec.lbw = Number,
 		myRec.catch = s.catch;
 		myRec.catch3 = (s.catch >= 3) ? 1 : 0;
 		myRec.duck = s.duck;
+		// overall performance
+		myRec.manOfTheMatch = s.manOfTheMatch;
 		
+		
+
+		// update for century, 
+		var dataRange = BonusRunRange.find( x => x.matchType === matchType).range;
+		for(i=0; i<dataRange.length; ++i) {
+			//console.log("data: ", s.run, dataRange[i].runs, dataRange[i].field);
+			if (s.run >= dataRange[i].runs) {
+				myRec[dataRange[i].field] = 1;
+				break;
+			}
+		}
+		
+		
+		if (myRec.hattrick === 0) {
+		var dataRange = BonusWicketRange.find( x => x.matchType === matchType).range;
+			for(i=0; i<dataRange.length; ++i) {
+				//console.log("data: ", s.run, dataRange[i].runs, dataRange[i].field);
+				if (s.wicket >= dataRange[i].wickets) {
+					myRec[dataRange[i].field] = 1;
+					break;
+				}
+			}
+		}
+
 		// now update economy value and economy points
 		myRec.economyValue = s.economyValue;
+		myRec.economy = 0;
 		if (myRec.oversBowled >= MinOvers[matchType]) {
-			myRec.economy = -100;
-			for(var i=0; i<BonusEconomyRange.length; ++i) {
-				if (myRec.economyValue <= BonusEconomyRange[i].value) {
-					myRec.economy = BonusEconomyRange[i][matchType];
+			var dataRange = BonusEconomyRange.find( x => x.matchType === matchType).range;
+			for(var i=0; i<dataRange.length; ++i) {
+				if (myRec.economyValue <= dataRange[i].economyValue) {
+					myRec.economy = dataRange[i].points;
 					break;
 				}
 			}
 		} 
-		else {
-			myRec.economy = 0;
-			myRec.economyValue = 0;
-		}
 
 		// now update the strike rate and strike rate points
 		myRec.strikeRateValue = s.strikeRateValue
+		myRec.strikeRate = 0;
 		if (myRec.ballsPlayed >= MinBallsPlayed[matchType]) {
-			myRec.strikeRate = -100;
-			for(var i=0; i<BonusStrikeRateRange.length; ++i) {
-				if (myRec.strikeRateValue >= BonusStrikeRateRange[i].value) {
-					myRec.strikeRate = BonusStrikeRateRange[i][matchType];
+			console.log("Calculating SR points for "+myRec.strikeRateValue);
+			var dataRange = BonusStrikeRateRange.find(x => x.matchType === matchType).range;
+			for(var i=0; i<dataRange.length; ++i) {
+				console.log(dataRange[i].strikeRate);
+				if (myRec.strikeRateValue >= dataRange[i].strikeRate) {
+					myRec.strikeRate = dataRange[i].points;
 					break;
 				}
 			}
 		} 
-		else {
-			myRec.strikeRate = 0;
-			myRec.strikeRateValue = 0;
-		}
 		
-  // overall performance
-		myRec.manOfTheMatch = s.manOfTheMatch;
+		
 		//console.log(matchType);
 		//console.log(myRec);
 		myRec.score = calculateScore(myRec, matchType);
 		await myRec.save();
 	};
 	
-	//await calculateBrief(tournamentName);
+	await calculateBrief(tournamentName);
   sendok(res, "Done");
 });
 
@@ -534,23 +464,33 @@ function calculateScore(mystatrec, type) {
     (mystatrec.run * BonusRun[type]) +
     (mystatrec.four * Bonus4[type]) +
     (mystatrec.six * Bonus6[type]) +
-    (mystatrec.fifty * Bonus50[type]) +
-    (mystatrec.hundred * Bonus100[type]) +
     (mystatrec.wicket * BonusWkt[type]) +
     (mystatrec.maiden * BonusMaiden[type]) +
-    //((mystatrec.wicket == 0) ? BonusDuck : 0) +
     ((mystatrec.manOfTheMatch) ? BonusMOM[type] : 0) + 
     ((mystatrec.maxTouramentRun > 0) ? BonusMaxRun[type] : 0) +
     ((mystatrec.maxTouramentWicket > 0) ?  BonusMaxWicket[type] : 0);
 
+	// Bonus for 50, 75, 100 etc. runs
+	
+	var dataRange = BonusRunRange.find( x => x.matchType === type).range
+	for(i=0; i<dataRange.length; ++i) {
+		//console.log(dataRange[i].field, dataRange[i].points)
+		//console.log(mystatrec[dataRange[i].field],  dataRange[i].points);
+		mysum += mystatrec[dataRange[i].field] * dataRange[i].points ;
+	}
 	//console.log("Stage1: ", mysum);
 	
 	if (mystatrec.hattrick) {
 		mysum += (mystatrec.hattrick * BonusHattrick[type]);
 	}
 	else {
-    mysum += (mystatrec.wicket3 * BonusWkt3[type]) +
-			(mystatrec.wicket5 * BonusWkt5[type]);
+		var dataRange = BonusWicketRange.find( x => x.matchType === type).range
+		for(i=0; i<dataRange.length; ++i) {
+			//console.log(dataRange[i].field, dataRange[i].points)
+			//console.log(mystatrec[dataRange[i].field],  dataRange[i].points);
+			mysum += mystatrec[dataRange[i].field] * dataRange[i].points ;
+		}
+		//console.log("Stage1: ", mysum);
 	}
 		
 
@@ -570,10 +510,8 @@ function calculateScore(mystatrec, type) {
 	
   // now add for strike rate
   mysum += (mystatrec.strikeRate * BonusStrikeRate[type]);
-	//console.log(mystatrec.strikeRate, type);
-	//console.log(BonusStrikeRate);
 	
-  console.log("score is: ", mysum);
+  console.log("score of "+mystatrec.pid+" is: ", mysum);
   return  mysum
 }
 
@@ -600,7 +538,10 @@ async function calculateBrief(tournamentName) {
       mybrief.four = _.sumBy(myData, x => x.four);
       mybrief.six = _.sumBy(myData, x => x.six);
       mybrief.fifty = _.sumBy(myData, x => x.fifty);
+      mybrief.run75 = _.sumBy(myData, x => x.run75);
       mybrief.hundred =  _.sumBy(myData, x => x.hundred);
+      mybrief.run150 = _.sumBy(myData, x => x.run150);
+      mybrief.run200 = _.sumBy(myData, x => x.run200);
       mybrief.strikeRate =  _.sumBy(myData, x => x.strikeRate);
       mybrief.strikeRateValue =  _.sumBy(myData, x => x.strikeRateValue);
       mybrief.ballsPlayed = _.sumBy(myData, x => x.ballsPlayed);

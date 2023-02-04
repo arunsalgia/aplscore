@@ -473,7 +473,6 @@ export default function Score() {
 			playerData = {};
 		}
 					
-		
 		playerData = {
 			mid: mid,
 			pid: pid, 
@@ -500,6 +499,7 @@ export default function Score() {
 			
 			manOfTheMatch: (manOfTheMatch == 1)
 		}
+		console.log(run, ballsPlayed, playerData.strikeRateValue);
 
 		let tmpArray = scoreList.filter(x => x.pid !== pid);
 		tmpArray.push(playerData);

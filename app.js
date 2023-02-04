@@ -378,13 +378,17 @@ StatSchema = mongoose.Schema({
   four: Number,
   six: Number,
   fifty: Number,
+	run75: Number,
   hundred: Number,
+	run150: Number,
+	run200: Number,
   ballsPlayed: Number,
 	strikeRateValue: Number,				// this is actual strike rate
 	strikeRate: Number,							// this is bonus / penalty on strike rate
   // bowling details
   wicket: Number,
   wicket3: Number,
+  wicket4: Number,
   wicket5: Number,
   hattrick: Number,
   maiden: Number,
@@ -433,13 +437,17 @@ BriefStatSchema = mongoose.Schema({
   four: Number,
   six: Number,
   fifty: Number,
+	run75: Number,
   hundred: Number,
+	run150: Number,
+	run200: Number,
   ballsPlayed: Number,
 	strikeRateValue: Number,				// this is actual strike rate
 	strikeRate: Number,							// this is bonus / penalty on strike rate
   // bowling details
   wicket: Number,
   wicket3: Number,
+  wicket4: Number,
   wicket5: Number,
   hattrick: Number,
   maiden: Number,
@@ -605,49 +613,117 @@ Captain_MultiplyingFactor = 2;
 BonusRun = {"TEST": 1, "ODI": 1, "T20": 1};  //1;
 Bonus4 = {"TEST": 1, "ODI": 1, "T20": 1};  //1;
 Bonus6 = {"TEST": 2, "ODI": 2, "T20": 2};  //2;
+
+BonusRunRange = [
+	{ matchType: "T20", 
+		range: [
+			{ runs: 150, points: 100,  field: "run150" },
+			{ runs: 100, points: 50,   field: "hundred" },
+			{ runs: 50,  points: 20,   field: "fifty" }
+		]
+	},
+	{ matchType: "ODI", 
+		range: [
+			{ runs: 200, points: 100,  field: "run200"  },
+			{ runs: 100, points: 50,   field: "hundred"  },
+			{ runs: 75,  points: 20,   field: "75" },
+			{ runs: 50,  points: 10,   field: "fifty" },
+		]
+	}
+];
+
+
 Bonus50 = {"TEST": 10, "ODI": 20, "T20": 20};  //20;
 Bonus100 = {"TEST": 50, "ODI": 50, "T20": 50};  //50;
 Bonus200 = {"TEST": 100, "ODI": 100, "T20": 100};  //50;
 
-BonusStrikeRate = {"TEST": 0, "ODI": 1, "T20": 1};  //50;
-BonusStrikeRateRange = [
-	{"value": 200, "TEST": 0, "ODI": 6, "T20": 6},
-	{"value": 170, "TEST": 0, "ODI": 4, "T20": 4},
-	{"value": 150, "TEST": 0, "ODI": 2, "T20": 2},
-	{"value": 100, "TEST": 0, "ODI": 0, "T20": 0},
-	{"value": 90, "TEST": 0, "ODI": -2, "T20": -2},
-	{"value": 80, "TEST": 0, "ODI": -4, "T20": -4},
-	{"value": -1, "TEST": 0, "ODI": -6, "T20": -6}
-];
-MinBallsPlayed = {"TEST": 1000000.0, "ODI": 10, "T20": 10};  //2.0;
 
-BonusMaiden = {"TEST": 0, "ODI": 10, "T20": 20};  //20;
+BonusStrikeRate = {"TEST": 0, "ODI": 1, "T20": 1};
+MinBallsPlayed = {"TEST": 1000000.0, "ODI": 20, "T20": 10};  //2.0;
+BonusStrikeRateRange = [
+	{ matchType: "T20", 
+		range: [
+			{ strikeRate: 200, points: 6},
+			{ strikeRate: 170, points: 4},
+			{ strikeRate: 150, points: 2},
+			{ strikeRate: 100, points: 0},
+			{ strikeRate: 90,  points: -2},
+			{ strikeRate: 80,  points: -4},
+			{ strikeRate:  0,  points: -6}
+		]
+	},
+	{ matchType: "ODI", 
+		range: [
+			{ strikeRate: 150, points: 6},
+			{ strikeRate: 120, points: 4},
+			{ strikeRate: 100, points: 2},
+			{ strikeRate: 70,  points: 0},
+			{ strikeRate: 50,  points: -2},
+			{ strikeRate: 30,  points: -4},
+			{ strikeRate:  0,  points: -6}
+		]
+	}
+];
+
 BonusWkt = {"TEST": 25, "ODI": 25, "T20": 25};  //25;
-BonusWkt3 = {"TEST": 20, "ODI": 20, "T20": 20};  //20;
-//BonusWkt4 = {"TEST": 20, "ODI": 20, "T20": 20};  //20;
-BonusWkt5 = {"TEST": 50, "ODI": 50, "T20": 50};  //50;
-Wicket3 = {"TEST": 4, "ODI": 4, "T20": 3}
-Wicket5 = {"TEST": 5, "ODI": 5, "T20": 5}
+BonusMaiden = {"TEST": 0, "ODI": 10, "T20": 20};  //20;
 BonusHattrick = {"TEST": 100, "ODI": 100, "T20": 100};  // if hat-trick, the bonus of 3 wkt and 5 wkt
+
+
+//BonusWkt3 = {"TEST": 20, "ODI": 20, "T20": 20};  //20;
+//BonusWkt4 = {"TEST": 20, "ODI": 20, "T20": 20};  //20;
+//BonusWkt5 = {"TEST": 50, "ODI": 50, "T20": 50};  //50;
+//Wicket3 = {"TEST": 4, "ODI": 4, "T20": 3}
+//Wicket5 = {"TEST": 5, "ODI": 5, "T20": 5}
+
+BonusWicketRange = [
+	{ matchType: "T20", 
+		range: [
+			{ wickets: 5, points: 50,  field: "wicket5" },
+			{ wickets: 3, points: 20,  field: "wicket3" }
+		]
+	},
+	{ matchType: "ODI", 
+		range: [
+			{ wickets: 5, points: 50,  field: "wicket5" },
+			{ wickets: 4, points: 20,  field: "wicket4" },
+			{ wickets: 3, points: 10,  field: "wicket3" }
+		]
+	}
+];
+
+
 
 BonusDuck = {"TEST": -2, "ODI": -2, "T20": -2};  //-5;
 BonusNoWkt = {"TEST": 0, "ODI": 0, "T20": 0};  //0;
 BonusMOM = {"TEST": 20, "ODI": 20, "T20": 20};  //20;
 
-//BonusEconomy = {"TEST": 0, "ODI": 2, "T20": 2};  //2;
-//EconomyGood = {"TEST": 6.0, "ODI": 4.0, "T20": 6.0};  //6.0;
-//EconomyBad = {"TEST": 9.0, "ODI": 7.0, "T20": 9.0};  //9.0;
 BonusEconomy = {"TEST": 0, "ODI": 1, "T20": 1};  //2;
-BonusEconomyRange = [
-		{"value": 5.0, "TEST": 0, "ODI": 6, "T20": 6},
-		{"value": 6.0, "TEST": 0, "ODI": 4, "T20": 4},
-		{"value": 7.0, "TEST": 0, "ODI": 2, "T20": 2},
-		{"value": 9.0, "TEST": 0, "ODI": 0, "T20": 0},
-		{"value": 10.0, "TEST": 0, "ODI": -2, "T20": -2},
-		{"value": 12.0, "TEST": 0, "ODI": -4, "T20": -4},
-		{"value": 1000000.0, "TEST": 0, "ODI": -6, "T20": -6}
-	];
 MinOvers = {"TEST": 1000000.0, "ODI": 4.0, "T20": 2.0};  //2.0;
+BonusEconomyRange = [
+	{ matchType: "T20", 
+		range: [
+			{ economyValue: 5, points: 6},
+			{ economyValue: 6, points: 4},
+			{ economyValue: 7, points: 2},
+			{ economyValue: 9, points: 0},
+			{ economyValue: 19,  points: -2},
+			{ economyValue: 12,  points: -4},
+			{ economyValue: 10000000000,  points: -6}
+		]
+	},
+	{ matchType: "ODI", 
+		range: [
+			{ economyValue: 3, points: 6},
+			{ economyValue: 4, points: 4},
+			{ economyValue: 5, points: 2},
+			{ economyValue: 6,  points: 0},
+			{ economyValue: 7,  points: -2},
+			{ economyValue: 8,  points: -4},
+			{ economyValue:  10000000000,  points: -6}
+		]
+	}
+];
 
 BonusCatch = {"TEST": 4, "ODI": 4, "T20": 4};  //4;
 BonusCatch3 = {"TEST": 5, "ODI": 5, "T20": 5};  //4;
@@ -890,11 +966,15 @@ getBlankStatRecord = function(tournamentStat) {
     four: 0,
     six: 0,
     fifty: 0,
+		run75: 0,
     hundred:  0,
+		run150: 0,
+		run200: 0,
     ballsPlayed: 0,
     // bowling details
     wicket: 0,
     wicket3: 0,
+    wicket4: 0,
     wicket5: 0,
     hattrick: 0,
     maiden: 0,
@@ -926,11 +1006,15 @@ getBlankBriefRecord = function(tournamentStat) {
     four: 0,
     six: 0,
     fifty: 0,
+		run75: 0,
     hundred:  0,
+		run150: 0,
+		run2000: 0,
     ballsPlayed: 0,
     // bowling details
     wicket: 0,
     wicket3: 0,
+    wicket4: 0,
     wicket5: 0,
     hattrick: 0,
     maiden: 0,
