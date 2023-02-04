@@ -549,6 +549,7 @@ async function calculateBrief(tournamentName) {
       // bowling details
       mybrief.wicket = _.sumBy(myData, x => x.wicket);
       mybrief.wicket3 = _.sumBy(myData, x => x.wicket3);
+      mybrief.wicket4 = _.sumBy(myData, x => x.wicket4);
       mybrief.wicket5 = _.sumBy(myData, x => x.wicket5);
       mybrief.hattrick = _.sumBy(myData, x => x.hattrick);
       mybrief.maiden = _.sumBy(myData, x => x.maiden);
