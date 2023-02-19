@@ -532,7 +532,6 @@ export default function Team() {
 	
 	async function addEditTeamSubmit() {
 		console.log("In addEditTeamSubmit");
-		return;
 		if (isDrawerOpened === "ADD") {
 			try {
 				// add tournament
