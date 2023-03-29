@@ -34,6 +34,8 @@ import { confirmAlert } from 'react-confirm-alert';
 import VsButton from "CustomComponents/VsButton";
 import VsCancel from "CustomComponents/VsCancel"
 import VsTextSearch from "CustomComponents/VsTextSearch";
+import VsSelect from "CustomComponents/VsSelect";
+
 import globalStyles from "assets/globalStyles";
 import sortBy from "lodash/sortBy";
 import IconButton from '@material-ui/core/IconButton';
@@ -52,6 +54,9 @@ import {red, blue, deepOrange } from '@material-ui/core/colors';
 import { LeakRemoveTwoTone, LensTwoTone } from '@material-ui/icons';
 import {setTab} from "CustomComponents/CricDreamTabs.js"
 
+var RoleOptions = ["Batsman", "Bowler", "AllRounder", "Wk"];
+var BattingOptions = ["NA", "Left-handed", "Right-handed" ]
+var BowlingOptions = ["NA", "Left arm medium", "Right arm medium", "Left arm orthodox", "Right arm orthodox" , "Left arm offbreak", "Right arm offbreak", "Left arm legbreak", "Right arm legbreak", "Left arm fast-medium", "Right arm fast-medium"]
 
 const useStyles = makeStyles((theme) => ({
 	title: {
@@ -141,7 +146,7 @@ export default function Team() {
 	
 	const [pid, setPid] = useState(0);
 	const [playerName, setPlayerName] = useState("");
-	const [role, setRole] = useState("NA");
+	const [role, setRole] = useState("AllRounder");
 	const [battingStyle, setBattingStyle] = useState("NA");
 	const [bowlingStyle, setBowlingStyle] = useState("NA");
 	
@@ -515,7 +520,7 @@ export default function Team() {
 	async function handleAdd() {
 		setPid(0);
 		setPlayerName("");
-		setRole("NA");
+		setRole("AllRounder");
 		setBowlingStyle("NA");
 		setBattingStyle("NA")
 		setIsDrawerOpened("ADD");
@@ -608,13 +613,26 @@ export default function Team() {
 	}
 	
 	function selectPlayer(pRec) {
-		
+		var tmp = ""
 		setIsListDrawer("");
 		setPid(pRec.pid);
-		setPlayerName(pRec.name);
-		setRole(pRec.role);
-		setBattingStyle(pRec.battingStyle);
-		setBowlingStyle(pRec.bowlingStyle);
+		setPlayerName(pRec.name.trim());
+    tmp = pRec.role.trim().toLowerCase();
+    console.log(tmp);
+    if (tmp.includes("wk")) 
+      tmp = "Wk";
+    else if  (tmp.includes("rounder"))
+      tmp = "AllRounder";
+    else if  (tmp.includes("bats"))
+      tmp = "Batsman";
+    else if  (tmp.includes("bow"))
+      tmp = "Bowler";
+    else
+      tmp = "AllRounder";
+		setRole(tmp);
+    
+		setBattingStyle(pRec.battingStyle.trim());
+		setBowlingStyle(pRec.bowlingStyle.trim());
 	}
 	
 	function handlePlayerFilter(playerName) {
@@ -847,6 +865,8 @@ export default function Team() {
 			validators={['noSpecialCharacters']}
 			errorMessages={['Special characters not permitted', ]}
 		/>
+    <br />
+    {/*
 		<TextValidator fullWidth  required className={gClasses.vgSpacing}
 			label="Role" 
 			value={role}
@@ -854,13 +874,20 @@ export default function Team() {
 			validators={['noSpecialCharacters']}
 			errorMessages={['Special characters not permitted', ]}
 		/>
+    */}
+    <VsSelect label="Role" fullWidth options={RoleOptions} value={role}  onChange={(event) => setRole(event.target.value) }/>
+    <br />
+    {/*
 		<TextValidator fullWidth  required className={gClasses.vgSpacing}
 			label="Batting Style" 
 			value={battingStyle}
 			onChange={() => { setBattingStyle(event.target.value) }}
 			validators={['noSpecialCharacters']}
 			errorMessages={['Special characters not permitted', ]}
-		/>
+		/>*/}
+    <VsSelect label="Batting Style" fullWidth options={BattingOptions} value={battingStyle}  onChange={(event) => setBattingStyle(event.target.value) }/>
+    <br />
+    {/*
 		<TextValidator fullWidth  required className={gClasses.vgSpacing}
 			label="Bowling Style" 
 			value={bowlingStyle}
@@ -868,6 +895,9 @@ export default function Team() {
 			validators={['noSpecialCharacters']}
 			errorMessages={['Special characters not permitted', ]}
 		/>
+    */}
+    <VsSelect label="Bowling Style" fullWidth options={BowlingOptions} value={bowlingStyle}  onChange={(event) => setBowlingStyle(event.target.value) }/>
+    <br />    
 		<VsButton name={(isDrawerOpened === "ADD") ? "Add" : "Update"} onClick={addEditTeamSubmit} />
 		<ValidComp />
 		</ValidatorForm>
