@@ -7,6 +7,7 @@ import Checkbox from '@material-ui/core//Checkbox';
 export default function VsCheckBox(props) {
 const gClasses = globalStyles();
 let _align = (props.align == null) ? 'center' : props.align;
+let _labelPos = (props.labelPos == null) ? 'left' : props.labelPos;
 return (
 	<div align={_align} >
 	 <FormControlLabel 

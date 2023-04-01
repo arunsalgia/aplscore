@@ -128,6 +128,7 @@ export function setTab(num) {
   cdRefresh();
 }
 
+var firstTime = true;
 export function CricDreamTabs() {
   const history = useHistory();
   const classes = useStyles();
@@ -171,8 +172,11 @@ export function CricDreamTabs() {
       } else if (checkIdle()) {
         localStorage.setItem("menuValue", process.env.REACT_APP_HOME);
       } 
-      setValue(parseInt(localStorage.getItem("menuValue")));
+      //if (!firstTime)
+        setValue(parseInt(localStorage.getItem("menuValue")));
+      
       setIdle(false);
+      firstTime = false;
     }
     // Version check is now done in Home component
     // if (value === parseInt(process.env.REACT_APP_HOME))
@@ -255,6 +259,7 @@ export function CricDreamTabs() {
   function closeModal(){ setIsOpen(false); }
 
 
+  console.log(value);
     
   let mylogo = `${process.env.PUBLIC_URL}/APLLOGO1.ICO`;
   let groupCharacter="G";

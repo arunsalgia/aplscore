@@ -207,7 +207,7 @@ if (process.env.REACT_APP_DEVICE === "WEBNOT") {
     </Grid>	
     )}
 
-
+  //localStorage.setItem("menuValue", 1);
   return (
     <Router history={hist}> 
     <UserContext.Provider value={value}>

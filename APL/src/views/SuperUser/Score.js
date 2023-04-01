@@ -4,6 +4,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import Switch from "@material-ui/core/Switch";
 import Container from '@material-ui/core/Container';
 import CssBaseline from '@material-ui/core/CssBaseline';
+import Divider from '@material-ui/core/Divider';
 import { ValidatorForm, TextValidator} from 'react-material-ui-form-validator';
 import Select from "@material-ui/core/Select";
 import MenuItem from '@material-ui/core/MenuItem';
@@ -38,6 +39,7 @@ import Radio from '@material-ui/core/Radio';
 import VsButton from "CustomComponents/VsButton";
 import VsCancel from "CustomComponents/VsCancel"
 import VsRadioGroup from "CustomComponents/VsRadioGroup"
+import VsCheckBox from "CustomComponents/VsCheckBox"
 
 import globalStyles from "assets/globalStyles";
 import _ from "lodash";
@@ -153,6 +155,8 @@ const useStyles = makeStyles((theme) => ({
 const economyArray=[-1, 0, 1];
 const zeroOneArray=[0, 1];
 
+var selectPlayerCheckBoxArray = [];
+
 export default function Score() {
 	const [isDrawerOpened, setIsDrawerOpened] = useState("");
 	const [isListDrawer, setIsListDrawer] = useState("");
@@ -160,7 +164,7 @@ export default function Score() {
   const [tournamentName, setTournamentName] = useState("");
   const [tournamentType, setTournamentType] = useState("T20");
   const [tournamentDesc, setTournamentDesc] = useState("");
-	
+	const [tmp, setTmp] = useState(true);
 	const [mid, setMid] = useState(0);
 	const [team1, setTeam1] = useState("");
 	const [team2, setTeam2] = useState("");
@@ -775,17 +779,99 @@ export default function Score() {
 		</Box>		
 	)}
 	
+  		/*<MenuItem key={p.name} value={p.name}>
+        <Typography onClick={() => { setPid(p.pid); setPlayerName(p.name); setIsListDrawer(""); } }>
+				{p.name}
+			</Typography>
+      onClick={() => updateSelectOlayerCheckBox(index) }
+        </MenuItem>*/
+       
+  function updateSelectOlayerCheckBox(index) {
+    selectPlayerCheckBoxArray[index] = !selectPlayerCheckBoxArray[index];
+    //console.log(selectPlayerCheckBoxArray[index] );
+    setTmp(!tmp);
+    
+  }
+
+  function clearAll() {
+    selectPlayerCheckBoxArray = [];
+    for(var i=0; i<playerList.length; ++i) {
+      selectPlayerCheckBoxArray.push(false);
+    }
+    setTmp(!tmp);
+  }
+  
+    function setAll() {
+    selectPlayerCheckBoxArray = [];
+    for(var i=0; i<playerList.length; ++i) {
+      selectPlayerCheckBoxArray.push(true);
+    }
+    setTmp(!tmp);
+  }
+ 
+  function addSelectedPlayers() {
+		//let myList = [].concat(playerList);
+    let newScorelist = [].concat(scoreList);
+    for(var i=0; i <playerList.length; ++i) {
+      if (selectPlayerCheckBoxArray[i]) {
+        //console.log(playerList[i].name);
+        let tmp = newScorelist.find(x => x.pid === playerList[i].pid);
+        //console.log(tmp);
+        if (!tmp) {
+          newScorelist.push( {
+            mid: mid,
+            pid: playerList[i].pid, 
+            playerName: playerList[i].name,
+            run: 0,
+            four: 0,
+            six: 0,
+            duck: 0,
+            wicket: 0,
+            maiden: 0,
+            economy: 0,
+            runout: 0,
+            stumped: 0,
+            catch: 0,
+            // new data
+            economyValue: 0,
+            strikeRateValue: 0,
+            oversBowled: 0,
+            ballsPlayed: 0,
+            hattrick: 0,
+            manOfTheMatch: 0
+          });
+        } else {
+          //console.log(`already present ${i}`);
+        }
+      }
+    }
+    //console.log(newScorelist);
+    setScoreList(_.sortBy(newScorelist, 'playerName'))
+    alert.info(`Added selected players `);
+    setIsListDrawer("");
+  }
+  
+  
 	function DisplayPlayerMenu() {
 	return (	
 		<div>
 		<VsCancel align="right" onClick={() => setIsListDrawer("")} />
+    <Grid container justify="center" alignItems="center" >
+      <GridItem xs={6} sm={6} md={6} lg={6} >
+        <VsButton align="center" name="Clear All" onClick={clearAll} /> 
+      </GridItem>
+      <GridItem xs={6} sm={6} md={6} lg={6} >
+        <VsButton align="left" name="set All" onClick={setAll} /> 
+      </GridItem>
+    </Grid>
 		{playerList.map( (p, index) =>
-			<MenuItem key={p.name} value={p.name}>
-			<Typography onClick={() => { setPid(p.pid); setPlayerName(p.name); setIsListDrawer(""); } }>
-				{p.name}
-			</Typography>
-			</MenuItem>
+      <VsCheckBox 
+        align="left" label={p.name} checked={selectPlayerCheckBoxArray[index]} 
+        onClick={() => updateSelectOlayerCheckBox(index)}
+       />
 		)}
+    <br />
+    <VsButton align="center" name="Submit" onClick={addSelectedPlayers} /> 
 		</div>
 	)}
 	
@@ -847,7 +933,7 @@ export default function Score() {
 				<VsButton name="Back" align="left" onClick={handleBack} />
 			</GridItem>
 			<GridItem align="right" xs={6} sm={6} md={6} lg={6} >
-			<VsButton name="Add new player" onClick={handleAdd} />
+			<VsButton name="Add players" onClick={ () => setIsListDrawer("LIST") } /> 
 			<VsButton name="Update match score" onClick={handleUpdate} />
 			<VsButton name="Set match Close" onClick={handleClose} />	
 			</GridItem>
@@ -865,7 +951,7 @@ export default function Score() {
 	<VsCancel align="right" onClick={() => {setIsDrawerOpened("")}} />
 	{((isDrawerOpened === "ADD") || (isDrawerOpened === "EDIT")) &&
 		<div align="center">
-		{(isDrawerOpened === "ADD") &&
+		{(isDrawerOpened === "ADD NOT TO BE SUPPORTED") &&
 			<VsButton name="Select Player" align="right" onClick={() => setIsListDrawer("LIST") } />
 		}
 		<ValidatorForm className={gClasses.form} onSubmit={addEditScoreSubmit}>
@@ -932,6 +1018,7 @@ export default function Score() {
 			validators={['minNumber:0', 'maxNumber:1']}
 			errorMessages={['Invalid Duck','Invalid Duck' ]}
 		/>
+    <Divider />
 		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
 			label="Wickets" 
 			value={wicket}
@@ -949,14 +1036,6 @@ export default function Score() {
 			errorMessages={['Invalid Overs bowled' ]}
 		/>
 		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
-			label="Hat-trick Count" 
-			value={hattrick}
-			disabled={pid===0}
-			onChange={() => { setHattrick(Number(event.target.value)) }}
-			validators={['minNumber:0', 'maxNumber:1']}
-			errorMessages={['Invalid Hat trick count','Invalid Hat trick count' ]}
-		/>
-		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
 			label="Eco. Value" 
 			value={economyValue}
 			disabled={pid===0}
@@ -972,6 +1051,15 @@ export default function Score() {
 			validators={['minNumber:0']}
 			errorMessages={['Invalid Maidens']}
 		/>
+		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
+			label="Hat-trick Count" 
+			value={hattrick}
+			disabled={pid===0}
+			onChange={() => { setHattrick(Number(event.target.value)) }}
+			validators={['minNumber:0', 'maxNumber:1']}
+			errorMessages={['Invalid Hat trick count','Invalid Hat trick count' ]}
+		/>
+    <Divider />
 		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
 			label="Run Outs" 
 			value={runout}

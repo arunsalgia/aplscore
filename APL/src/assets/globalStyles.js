@@ -12,6 +12,13 @@ const globalStyles = makeStyles((theme) => ({
   noPadding: {
     padding: "none", 
   },
+  blueCheckBox: {
+    color: 'blue',
+  }, 
+  blueCheckBoxLabel: {
+    fontSize: theme.typography.pxToRem(18),
+		fontWeight: theme.typography.fontWeightBold,
+  },
   functionSelected: {
 		fontSize: theme.typography.pxToRem(20),
 		fontWeight: theme.typography.fontWeightBold,
