@@ -61,13 +61,12 @@ router.get('/setscore/:tournamentName/:mid/:matchType/:scoreList', async functio
 	tournamentName = tournamentName.toUpperCase();
 	mid = Number(mid);
 
-	
 	// declare as started
 	let myMatch = await CricapiMatch.findOne({mid: mid});
 	myMatch.matchStarted = true;
 	myMatch.save();
 
-	// now update player stats
+	// now update player statistics
 	let matchStat = mongoose.model(tournamentName, StatSchema);
 	
 	scoreList = JSON.parse(scoreList);
@@ -93,7 +92,7 @@ router.get('/setscore/:tournamentName/:mid/:matchType/:scoreList', async functio
 
 	*/
 	
-	await matchStat.deleteMany({mid: mid });
+	await matchStat.deleteMany({mid: mid, pid: {$in: pidList } });
 	//let newScore = [];
 	for(let scr=0; scr<scoreList.length; ++scr) {
 		let s = scoreList[scr];

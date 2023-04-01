@@ -789,16 +789,20 @@ export default function Score() {
 		</div>
 	)}
 	
+  const PLAYERS_PER_COUNT = 5;
 	async function handleUpdate() {
+    
 		try {
 			let tmp = encodeURIComponent(JSON.stringify(scoreList));
 			//let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/match/setscore/${tournamentName}/${mid}/${localStorage.getItem('MatchType')}/${tmp}`);
-			let loopCount = Math.floor(scoreList.length / 10);
-			if ((scoreList.length % 10) > 0) ++loopCount;
+			let loopCount = Math.floor(scoreList.length / PLAYERS_PER_COUNT);
+			if ((scoreList.length % PLAYERS_PER_COUNT) > 0) ++loopCount;
+      console.log(loopCount, scoreList.length);
 			for(let i=0; i<loopCount; ++i) {
-				let tmp = encodeURIComponent(JSON.stringify(scoreList.slice(i*10, (i+1)*10)));
+      //for(let i=0; i<2; ++i) {
+				let tmp = encodeURIComponent(JSON.stringify(scoreList.slice(i*PLAYERS_PER_COUNT, (i+1)*PLAYERS_PER_COUNT)));
 				let mType = localStorage.getItem('MatchType');
-				console.log(mType);
+				console.log("Updateing set "+i+" of match "+mid);
 				await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/match/setscore/${tournamentName}/${mid}/${mType}/${tmp}`);
 				alert.success(`Score update success of set ${i+1}`);
 			}

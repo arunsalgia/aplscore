@@ -90,7 +90,8 @@ router.get('/auction/:tournamentName/:teamName', async function(req, res, next) 
   var {tournamentName, teamName}=req.params;
 	tournamentName = tournamentName.toUpperCase();
 	teamName = teamName.toUpperCase();
-	
+	console.log(teamName);
+  
 	// first get all the group which have subscribed to the given tournament
 	let allRecs = await IPLGroup.find({tournament: tournamentName}, {gid: 1, _id: 0});
 	console.log(allRecs);
@@ -113,7 +114,7 @@ router.get('/tteam/:tournamentName/:teamName', async function(req, res, next) {
   var {tournamentName, teamName}=req.params;
 	tournamentName = tournamentName.toUpperCase();
 	teamName = teamName.toUpperCase();
-		
+	//console.log(teamName);
   await publish_players(res, { tournament: tournamentName, Team: teamName } );
 });
 
@@ -356,7 +357,7 @@ async function publish_players(res, filter_players)
 	//console.log("About to publish");
   //console.log(filter_players);
   var plist = await Player.find(filter_players).sort({'name': 1});
-  //console.log(plist.length);
+  console.log("Players count", plist);
   //plist = _.sortBy(plist, 'name');
   sendok(res, plist);
 }
