@@ -306,6 +306,7 @@ TournamentSchema = mongoose.Schema({
   type: String,
   started: Boolean,
   over: Boolean,
+  seriesId: String,
   enabled: Boolean
 })
 
@@ -412,6 +413,7 @@ StatSchema = mongoose.Schema({
 //--- data available from CRICAPI
 CricapiMatchSchema = mongoose.Schema({
   mid: Number,
+  apiMatchId: String,
   tournament: String,
   team1: String,
   team2: String,
@@ -694,7 +696,7 @@ BonusWicketRange = [
 
 
 
-BonusDuck = {"TEST": -2, "ODI": -2, "T20": -2};  //-5;
+BonusDuck = {"TEST": -10, "ODI": -10, "T20": -10};  //-5;
 BonusNoWkt = {"TEST": 0, "ODI": 0, "T20": 0};  //0;
 BonusMOM = {"TEST": 20, "ODI": 20, "T20": 20};  //20;
 

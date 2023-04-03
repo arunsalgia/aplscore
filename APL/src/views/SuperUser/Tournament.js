@@ -128,6 +128,7 @@ export default function SU_Tournament() {
   const [tournamentList, setTournamentList] = useState([]);
   const [tournamentType, setTournamentType] = useState("T20");
   const [tournamentDesc, setTournamentDesc] = useState("");
+  const [tournamentId, setTournamentId] = useState("");
   const [tournamentData, setTournamentData] = useState(["T20", "ODI", "TEST"]);
   const [teamList, setTeamList] = useState([]);
   const [registerStatus, setRegisterStatus] = useState(0);
@@ -137,6 +138,8 @@ export default function SU_Tournament() {
     // {label: "TEAM2", existingTeam: true, name: "ENGLAND"},
     // // {label: "TEAM3", existingTeam: false, name: ""},
     // ]);
+  const [newTournamentList, setNewTournamentList] = useState([]);
+    
   const classes = useStyles();
 	const gClasses = globalStyles();
 	
@@ -543,13 +546,23 @@ export default function SU_Tournament() {
 	}
 
 	async function handleAdd() {
+    setTournamentId("");
 		setTournamentName("");
 		setTournamentDesc("")
 		setTournamentType("")
 		setIsDrawerOpened("ADD");
 	}
 	
+  async function handleAddNewTournament(idx) {
+    setTournamentId(newTournamentList[idx].id);
+		setTournamentName(newTournamentList[idx].name);
+		setTournamentDesc(newTournamentList[idx].name)
+		setTournamentType("T20")
+		setIsDrawerOpened("ADDNEW");
+	}
+  
 	async function handleEdit(t) {
+    setTournamentId(t.seriesId);
 		setTournamentName(t.name);
 		setTournamentDesc(t.desc)
 		setTournamentType(t.type)
@@ -585,6 +598,21 @@ export default function SU_Tournament() {
 			}
 		}
 
+	}
+	
+  
+  async function addNewTournamentSubmit() {
+    try {
+      // add tournament
+      let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/add/${tournamentName}/${tournamentDesc}/${tournamentType}/${tournamentId}`);
+      alert.show("Successfully added new tournament "+tournamentName);
+      let tmpArray = [resp.data].concat(tournamentList);
+      tmpArray = sortBy(tmpArray, 'name');
+      setTournamentList(tmpArray);
+      setIsDrawerOpened("")
+    } catch {
+      alert.error("Error adding tournament "+tournamentName);
+    }
 	}
 	
 	function handleTeam(t) {
@@ -711,30 +739,159 @@ export default function SU_Tournament() {
 		</Box>		
 	)}
 	
-
+	function DisplayNewTournamentList() {
+	let colCount = 7;
+	return (
+		<Box className={classes.allAppt} border={1} width="100%">
+			<TableContainer>
+			<Table style={{ width: '100%' }}>
+			<TableHead>
+				<TableRow align="center">
+					<TableCell key={"THN1"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} colSpan={colCount}>
+					{"New Tournament List"}
+					</TableCell>
+				</TableRow>
+				<TableRow align="center">
+					<TableCell key={"THN21"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Id
+					</TableCell>
+					<TableCell key={"THN22"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Name
+					</TableCell>
+					<TableCell key={"THN23"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Start Date
+					</TableCell>
+					<TableCell key={"THN35"} component="th"  scope="row" align="center" padding="none"
+					className={classes.th} >
+					T20 Match
+					</TableCell>
+					<TableCell key={"THN32"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					ODI Match
+					</TableCell>
+					<TableCell key={"THN33"} component="th"  scope="row" align="center" padding="none"
+					className={classes.th} >
+					Test Match
+					</TableCell>
+					<TableCell key={"THN34"} component="th"  scope="row" align="center" padding="none"
+					className={classes.th} >
+					Cmd
+					</TableCell>
+				</TableRow>
+			</TableHead>
+			<TableBody>  
+			{newTournamentList.map( (t, index) => {
+				let myClass = classes.tdPending;
+        let xxx = tournamentList.find(x => x.seriesId === t.id);
+        if (xxx) return null;
+				return(
+					<TableRow key={"TROWN"+index}>
+					<TableCell key={"TDN1"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.id}
+						</Typography>
+					</TableCell>
+					<TableCell key={"TDN2"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.name}
+						</Typography>
+					</TableCell>
+					<TableCell key={"TDN3"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.startDate}
+						</Typography>
+					</TableCell>
+					<TableCell key={"TDN4"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.t20}
+						</Typography>
+					</TableCell>
+					<TableCell key={"TDN5"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.odi}
+						</Typography>
+					</TableCell>
+					<TableCell key={"TDN6"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.test}
+						</Typography>
+					</TableCell>
+					<TableCell key={"TDN7"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.link}>
+						<Link href="#" variant="body2" onClick={() => { handleAddNewTournament(index);}}>Add</Link>
+						</Typography>
+					</TableCell>
+					</TableRow>
+				)}
+			)}
+			</TableBody> 
+			</Table>
+			</TableContainer>
+		</Box>		
+	)}
 	
+	async function handlefetch() {
+    var justNow = new Date().getTime();
+    
+    try {
+      let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/newtournaments`);
+      alert.show("Successfully added tournament "+tournamentName);
+      let tmpArray = resp.data.newTouraments;
+      let dataArray = [];
+      for(var i=0; i<tmpArray.length; ++i) {
+        let matchDate = new Date(tmpArray[i].startDate);
+        if (matchDate.getTime() > justNow) {
+          let xxx = tournamentList.find(x => x.seriesId === tmpArray[i].id);
+          if (!xxx)
+            dataArray.push(tmpArray[i]);
+        }
+      }
+      dataArray = sortBy(dataArray, 'startDate');
+      setNewTournamentList(dataArray);
+    } catch {
+      alert.error("Error adding tournament "+tournamentName);
+      setNewTournamentList([]);
+    }   
+  }
 	
   return (
   <div className={classes.paper} align="center" key="groupinfo">
 	<DisplayPageHeader headerName="Tournament List" groupName="" tournament=""/>
 	<Container component="main" maxWidth="lg">
 	<CssBaseline />
-	<VsButton name="Add new tournament" align="right" onClick={handleAdd} />
+	{/*<VsButton name="Add new tournament" align="right" onClick={handleAdd} />*/}
 	<DisplayTournamentList />
+  <br />
+  <VsButton name="Fetch new tournament" align="right" onClick={handlefetch} />
+  <DisplayNewTournamentList />
 	<Drawer className={classes.drawer}
-		anchor="top"
+		anchor="right"
 		variant="temporary"
-		open={isDrawerOpened !== ""}
+		open={isDrawerOpened === "EDIT"}
 	>
 	<VsCancel align="right" onClick={() => {setIsDrawerOpened("")}} />
 	{((isDrawerOpened === "ADD") || (isDrawerOpened === "EDIT")) &&
-		<div align="center">
+		<div align="center" style={{margin: "20px" }}>
 		<ValidatorForm className={gClasses.form} onSubmit={addEditTournamentSubmit}>
-		<Grid key="ADDEDIT" container justify="center" alignItems="center" >
-		<Grid item xs={12} sm={12} md={12} lg={12} >
 		<Typography className={classes.title}>{(isDrawerOpened === "ADD") ?"New Tournament" : "Edit Tournament"}</Typography>
-		</Grid>
-		<Grid item xs={4} sm={4} md={4} lg={4} >
+    <br />
+		<TextValidator fullWidth  required className={gClasses.vgSpacing}
+			label="Tournament Id" 
+			value={tournamentId}
+			disabled={true}
+		/>
+    <br />
 		<TextValidator fullWidth  required className={gClasses.vgSpacing}
 			label="Tournament Name" 
 			value={tournamentName}
@@ -743,8 +900,7 @@ export default function SU_Tournament() {
 			validators={['noSpecialCharacters']}
 			errorMessages={['Special characters not permitted', ]}
 		/>
-		</Grid>
-		<Grid item xs={4} sm={4} md={4} lg={4} >
+    <br />
 		<TextValidator fullWidth  required className={gClasses.vgSpacing}
 			label="Tournament description" 
 			value={tournamentDesc}
@@ -752,21 +908,64 @@ export default function SU_Tournament() {
 			validators={['noSpecialCharacters']}
 			errorMessages={['Special characters not permitted', ]}
 		/>
-		</Grid>
-		<Grid item xs={3} sm={3} md={3} lg={3} >
-			<Select labelId='team' id='team' variant="outlined" required fullWidth label="Tournament type"
-        value={tournamentType}
-        onChange={(event) => setTournamentType(event.target.value)}
-			>
-			{tournamentData.map(x =>
-        <MenuItem key={x} value={x}>{x}</MenuItem>)
-			}
-      </Select>
-		</Grid>
-		<Grid item xs={1} sm={1} md={1} lg={1} >
-			<VsButton type="submit" name={(isDrawerOpened === "ADD") ? "Add" : "Update"} />
-		</Grid>
-		</Grid>
+    <br />
+    <Select labelId='team' id='team' variant="outlined" required fullWidth label="Tournament type"
+      value={tournamentType}
+      onChange={(event) => setTournamentType(event.target.value)}
+    >
+    {tournamentData.map(x =>
+      <MenuItem key={x} value={x}>{x}</MenuItem>)
+    }
+    </Select>
+    <br />
+    <VsButton type="submit" name={(isDrawerOpened === "ADD") ? "Add" : "Update"} />
+		<ValidComp />
+		</ValidatorForm>
+		</div>
+	}
+	</Drawer>
+	<Drawer className={classes.drawer}
+		anchor="right"
+		variant="temporary"
+		open={isDrawerOpened === "ADDNEW"}
+	>
+	<VsCancel align="right" onClick={() => {setIsDrawerOpened("")}} />
+		<div align="center" style={{margin: "20px" }}>
+		<ValidatorForm className={gClasses.form} onSubmit={addNewTournamentSubmit}>
+		<Typography className={classes.title}>{"Add New Tournament"}</Typography>
+    <br />
+		<TextValidator fullWidth  required className={gClasses.vgSpacing}
+			label="Tournament Id" 
+			value={tournamentId}
+			disabled={true}
+		/>
+    <br />
+		<TextValidator fullWidth  required className={gClasses.vgSpacing}
+			label="Tournament Name" 
+			value={tournamentName}
+			onChange={() => { setTournamentName(event.target.value) }}
+			validators={['noSpecialCharacters']}
+			errorMessages={['Special characters not permitted', ]}
+		/>
+    <br />
+		<TextValidator fullWidth  required className={gClasses.vgSpacing}
+			label="Tournament description" 
+			value={tournamentDesc}
+			onChange={() => { setTournamentDesc(event.target.value) }}
+			validators={['noSpecialCharacters']}
+			errorMessages={['Special characters not permitted', ]}
+		/>
+    <br />
+    <Select labelId='team' id='team' variant="outlined" required fullWidth label="Tournament type"
+      value={tournamentType}
+      onChange={(event) => setTournamentType(event.target.value)}
+    >
+    {tournamentData.map(x =>
+      <MenuItem key={x} value={x}>{x}</MenuItem>)
+    }
+    </Select>
+    <br />
+    <VsButton type="submit" name={"Add New"} />
 		<ValidComp />
 		</ValidatorForm>
 		</div>

@@ -1,6 +1,10 @@
 const { GroupMemberCount, akshuGetGroup, akshuUpdGroup, akshuUpdGroupMember, 
 		akshuUpdUser, akshuGetUser, akshuGetTournament } = require('./cricspecial'); 
 var router = express.Router();
+const { 
+  cricapi_get_new_matches,
+} = require('./cricapifunctions'); 
+
 
 
 // modified on 17th October 2021
@@ -38,6 +42,19 @@ router.use('/', function(req, res, next) {
 	console.log(req.url);
   
   next('route');
+});
+
+
+router.use('/newmatches/:tournamentId', async function(req, res, next) {
+  setHeader(res);
+ var {tournamentId} = req.params;
+  console.log("Hello=============");
+  
+  let myData = await cricapi_get_new_matches(tournamentId);
+  //console.log(myData);
+  console.log(myData);
+  
+  sendok(res, {newMatches: myData } );
 });
 
 router.get('/score/:tournamentName/:mid', async function(req, res) {
@@ -252,6 +269,61 @@ router.get('/add/:tournamentName/:type/:mid/:team1/:team2/:matchTime', async fun
 	
 	matchRec = new CricapiMatch();
 	matchRec.mid = mid;
+	matchRec.tournament = tournamentName;
+	matchRec.team1 = team1;
+	matchRec.team2 = team2;
+  matchRec.weekDay = weekDays[myDateTime.getDay()]
+	matchRec.squad = true;
+	matchRec.type = type;
+	matchRec.matchStarted = false;
+	matchRec.matchEnded = false;
+	matchRec.matchStartTime = myDateTime;
+	let endTime = _.cloneDeep(myDateTime);
+	switch (type) {
+		case "T20": endTime.setHours(endTime.getHours()+5); break;
+		case "ODI": endTime.setHours(endTime.getHours()+9); break;
+		case "TEST":
+			endTime.setDate(endTime.getDate()+5); 
+			endTime.setHours(endTime.getHours()+9);
+			break;
+	}
+	matchRec.matchEndTime = endTime;
+	matchRec.save();
+	sendok(res, matchRec);
+});
+
+
+router.get('/add/:tournamentName/:type/:mid/:team1/:team2/:matchTime/:cricApiId', async function(req, res, next) {  
+  setHeader(res);
+	var {tournamentName, type, mid, team1, team2, matchTime, cricApiId} = req.params;
+	tournamentName = tournamentName.toUpperCase();
+	type = type.toUpperCase();
+	team1 = team1.toUpperCase();
+	team2 = team2.toUpperCase();
+	mid = Number(mid);
+	let myDateTime = new Date(Number(matchTime))
+	/*
+	CricapiMatchSchema = mongoose.Schema({
+  mid: Number,
+  tournament: String,
+  team1: String,
+  team2: String,
+  weekDay: String,
+  type: String,
+  matchStarted: Boolean,
+  matchEnded: Boolean,
+  matchStartTime: Date,
+  matchEndTime: Date,
+  squad: Boolean
+	*/
+  
+	
+	let matchRec = await CricapiMatch.findOne({mid : mid});
+	if (matchRec) return senderr(res, 601, "Duplicate Match");
+	
+	matchRec = new CricapiMatch();
+	matchRec.mid = mid;
+  matchRec.apiMatchId = cricApiId;
 	matchRec.tournament = tournamentName;
 	matchRec.team1 = team1;
 	matchRec.team2 = team2;

@@ -150,10 +150,13 @@ export default function Match() {
   const [tournamentName, setTournamentName] = useState("");
   const [tournamentType, setTournamentType] = useState("T20");
   const [tournamentDesc, setTournamentDesc] = useState("");
+  const [tournamentSeriesId, setTournamentSeriesId] = useState("");
   const [teamName, setTeamName] = useState("");
 	const [newTeamName, setNewTeamName] = useState("");
 	const [teamList, setTeamList] = useState([]);
   const [matchList, setMatchList] = useState([]);
+  const [newMatchList, setNewMatchList] = useState([]);
+  const [matchName, setMatchName] = useState("");
 	
   const [registerStatus, setRegisterStatus] = useState(0);
   const [labelNumber, setLabelNumber] = useState(0);
@@ -164,7 +167,8 @@ export default function Match() {
 	const [team2, setTeam2] = useState("");
 	const [startDate, setStartDate] = useState(new Date());
 	const [startTime, setStartTime] = useState(new Date());
-	
+	const [cricApiId, setCricApiId] = useState("");
+  
   const classes = useStyles();
 	const gClasses = globalStyles();
 	
@@ -177,6 +181,7 @@ export default function Match() {
 				setTournamentName(tRec.name);
 				setTournamentDesc(tRec.desc);
 				setTournamentType(tRec.type);
+        setTournamentSeriesId(tRec.seriesId);
 				localStorage.setItem('MatchType', tRec.type);
 				getAllTeams(tRec.name);
 				getAllMatches(tRec.name);
@@ -581,6 +586,25 @@ export default function Match() {
 		setIsDrawerOpened("ADD");
 	}
 	
+  async function handleAddNew(idx) {
+    setMatchName(newMatchList[idx].name);
+    setCricApiId(newMatchList[idx].id);
+    let d = new Date(newMatchList[idx].dateTimeGMT);
+    d.setMinutes(d.getMinutes() + 330);
+    
+    let xxx = d.getFullYear().toString() +
+      ("0" +(d.getMonth()+1)).slice(-2) +
+      ("0" +(d.getDate())).slice(-2) +
+      ("0" +d.getHours()).slice(-2) +
+      ("0" +d.getMinutes()).slice(-2);
+		setMid(Number(xxx));
+		setTeam1(newMatchList[idx].teams[0]);
+		setTeam2(newMatchList[idx].teams[1]);
+		setStartDate(d);
+    setStartTime(d);
+		setIsDrawerOpened("ADDNEW");
+	}
+  
 	async function handleEdit(t) {
 		setMid(t.mid);
 		setTeam1(t.team1);
@@ -631,7 +655,35 @@ export default function Match() {
 
 	}
 	
-		function handleBack() {
+  	
+	async function addNewMatchSubmit() {
+    console.log("in add new");
+		if (team1 === team2) {
+			return alert.error("Team1 and Team2 are same");
+		}
+		
+    console.log("t1 t2 diff");
+    try {
+      console.log("Add");
+      let myDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(),
+        startTime.getHours(), startTime.getMinutes());
+        console.log(myDate);
+      let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/match/add/${tournamentName}/${tournamentType}/${mid}/${team1}/${team2}/${myDate.getTime()}/${cricApiId}`);
+      alert.show("Successfully added new match "+cricApiId);
+      let tmpArray = [resp.data].concat(matchList);
+      tmpArray = sortBy(tmpArray, 'matchStartTime');
+      setMatchList(tmpArray);
+      setIsDrawerOpened("")
+    } 
+    catch {
+      alert.error("Error adding tournament "+tournamentName);
+    }
+	}
+	
+
+  
+  
+  function handleBack() {
 		//sessionStorage.setItem("shareTournament", JSON.stringify(t));
 		setTab(1);
 	}
@@ -660,7 +712,7 @@ export default function Match() {
 	}
 	
 	function DisplayMatchList() {
-	let colCount = 9;
+	let colCount = 10;
 	return (
 		<Box className={classes.allAppt} border={1} width="100%">
 			<TableContainer>
@@ -676,6 +728,10 @@ export default function Match() {
 					<TableCell key={"TH21"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
 					Date
+					</TableCell>
+					<TableCell key={"TH121"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Time
 					</TableCell>
 					<TableCell key={"TH24"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
@@ -711,12 +767,20 @@ export default function Match() {
 					MONTHNUMBERSTR[ttt.getMonth()] + "/" + ttt.getFullYear();
 		
 				let myTime=HOURSTR[ttt.getHours()] + ":" + MINUTESTR[ttt.getMinutes()];
+        
+        //console.log(t.apiMatchId);
 				return(
 					<TableRow key={"TROW"+index}>
 					<TableCell key={"TD1"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
-							{myDate+" "+myTime}
+							{myDate}
+						</Typography>
+					</TableCell>
+					<TableCell key={"TD101"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{myTime}
 						</Typography>
 					</TableCell>
 					<TableCell key={"TD4"+index} align="center" component="td" scope="row" align="center" padding="none"
@@ -775,6 +839,95 @@ export default function Match() {
 	)}
 	
 
+	
+	function DisplayNewMatchList() {
+	let colCount = 5;
+  //let justNow = new Date().getTime();
+	return (
+		<Box className={classes.allAppt} border={1} width="100%">
+			<TableContainer>
+			<Table style={{ width: '100%' }}>
+			<TableHead>
+				<TableRow align="center">
+					<TableCell key={"THN1"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} colSpan={colCount}>
+					{`New Matches of ${tournamentName} (${tournamentType})`}
+					</TableCell>
+				</TableRow>
+				<TableRow align="center">
+					<TableCell key={"THN121"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Match API Id
+					</TableCell>
+					<TableCell key={"THN21"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Date
+					</TableCell>
+					<TableCell key={"THN22"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Team1
+					</TableCell>
+					<TableCell key={"THN23"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Team2
+					</TableCell>
+					<TableCell key={"THN31"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					cmds
+					</TableCell>
+				</TableRow>
+			</TableHead>
+			<TableBody>  
+			{newMatchList.map( (t, index) => {
+        let tmp = matchList.find(x => x.apiMatchId === t.id);
+        if (index < 3) {
+          console.log(t.id);
+          console.log(tmp);
+        }
+        //if (tmp) return null;
+				let myClass = classes.tdPending;
+				return(
+					<TableRow key={"TROWN"+index}>
+					<TableCell key={"TDN1"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.id}
+						</Typography>
+					</TableCell>
+					<TableCell key={"TDN2"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.dateTimeGMT}
+						</Typography>
+					</TableCell>
+					<TableCell key={"TDN3"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.teams[0]}
+						</Typography>
+					</TableCell>
+					<TableCell key={"TDN4"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.teams[1]}
+						</Typography>
+					</TableCell>
+					<TableCell key={"TDN5"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.link}>
+						<Link href="#" variant="body2" onClick={() => handleAddNew(index)}>Add</Link>
+						</Typography>
+					</TableCell>
+					</TableRow>
+				)}
+			)}
+			</TableBody> 
+			</Table>
+			</TableContainer>
+		</Box>		
+	)}
+	
+
 	function handleDate(d) {
 		setStartDate(d.toDate());
 	}
@@ -783,10 +936,27 @@ export default function Match() {
 		setStartTime(d.toDate());
 	}
 	
+  async function handlefetch() {
+    var justNow = new Date().getTime();
+    
+    try {
+      let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/match/newmatches/${tournamentSeriesId}`);
+      alert.show("Successfully added matches of "+tournamentName);
+      let dataArray = resp.data.newMatches;
+      dataArray = sortBy(dataArray, 'dateTimeGMT');
+      
+      console.log(dataArray.length+" matches");
+      setNewMatchList(dataArray);
+    } catch {
+      alert.error("Error fetching new matches of "+tournamentName);
+      setNewTournamentList([]);
+    }   
+  }
+	
   return (
   <div className={classes.paper} align="center" key="groupinfo">
 	<DisplayPageHeader headerName={`Configure Match of ${tournamentName}`} groupName="" tournament=""/>
-	<Container component="main" maxWidth="md">
+	<Container component="main" maxWidth="lg">
 	<CssBaseline />
 	{(tournamentName === "") &&
 		<Typography>Tournament not selected"</Typography>
@@ -794,20 +964,17 @@ export default function Match() {
 	{(tournamentName !== "") &&
 	<div>
 	<div align="right">
-		<Grid container justify="center" alignItems="center" >
-			<GridItem xs={6} sm={6} md={6} lg={6} >
-				<VsButton name="Back" align="left" onClick={handleBack} />
-			</GridItem>
-			<GridItem xs={6} sm={6} md={6} lg={6} >
-				<VsButton name="Add new match" align="right" onClick={handleAdd} />
-			</GridItem>
-		</Grid>
+    <VsButton name="Back" align="left" onClick={handleBack} />
+    {/*<VsButton name="Add new match" align="right" onClick={handleAdd} />*/}
 	</div>
 	<DisplayMatchList />
+   <br />
+   <VsButton name="Get New Match" align="right" onClick={handlefetch} />
+	<DisplayNewMatchList />
 	<Drawer className={classes.drawer}
 		anchor="right"
 		variant="temporary"
-		open={isDrawerOpened !== ""}
+		open={isDrawerOpened === "EDIT"}
 	>
 	<VsCancel align="right" onClick={() => {setIsDrawerOpened("")}} />
 	{((isDrawerOpened === "ADD") || (isDrawerOpened === "EDIT")) &&
@@ -861,7 +1028,71 @@ export default function Match() {
 		</div>
 	}
 	</Drawer>
-	</div>
+	<Drawer className={classes.drawer}
+		anchor="right"
+		variant="temporary"
+		open={isDrawerOpened === "ADDNEW"}
+	>
+	<VsCancel align="right" onClick={() => {setIsDrawerOpened("")}} />
+		<div align="center">
+		<ValidatorForm className={gClasses.form} onSubmit={addNewMatchSubmit}>
+    <Typography className={gClasses.title}>{"Add New Match"}</Typography>
+    <Typography className={gClasses.info18Bold}>{matchName}</Typography>
+    <br />
+		<TextValidator fullWidth  className={gClasses.vgSpacing}
+			label="Match API Id" 
+			value={cricApiId}
+			disabled={true}
+		/>		
+    <br />
+		<TextValidator fullWidth  type="number" className={gClasses.vgSpacing}
+			label="Match ID" 
+			value={mid}
+			disabled={true}
+		/>
+    <br />
+		<Typography className={classes.title}>{"Team 1"}</Typography>
+		<Select variant="outlined" required fullWidth label="Team 1" className={gClasses.vgSpacing}
+			value={team1} onChange={(event) => setTeam1(event.target.value)}
+		>
+		{teamList.map(x =>
+			<MenuItem key={x.name} value={x.name}>{x.name}</MenuItem>)}
+		</Select>
+    <br />
+		<Typography className={classes.title}>{"Team 2"}</Typography>
+		<Select variant="outlined" required fullWidth label="Team 2" className={gClasses.vgSpacing}
+			value={team2} onChange={(event) => setTeam2(event.target.value)}
+		>
+		{teamList.map(x =>
+			<MenuItem key={x.name} value={x.name}>{x.name}</MenuItem>)}
+		</Select>		
+    <br />
+		<Typography className={classes.title}>{"Match Date"}</Typography>
+		<Datetime 
+			className={classes.dateTimeBlock}
+			inputProps={{className: classes.dateTimeNormal}}
+			timeFormat={false} 
+			initialValue={startDate}
+			dateFormat="DD/MM/yyyy"
+			isValidDate={disablePastDt}
+			onClose={handleDate}
+		/>
+    <br />
+		<Typography className={classes.title}>{"Match Time"}</Typography>
+		<Datetime 
+			className={classes.dateTimeBlock}
+			inputProps={{className: classes.dateTimeNormal}}
+			dateFormat={false} 
+			timeFormat="HH:mm"
+			initialValue={startTime}
+			onClose={handleTime}
+		/>
+		<VsButton type="submit" name={"Add New"} />
+		<ValidComp />
+		</ValidatorForm>
+		</div>
+	}
+	</Drawer>	</div>
 	}
 	</Container>
   </div>

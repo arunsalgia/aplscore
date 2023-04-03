@@ -1,6 +1,10 @@
 var router = express.Router();
 // let TournamentRes;
 
+const { 
+  cricapi_get_new_tournaments,
+} = require('./cricapifunctions'); 
+
 /* GET users listing. */
 router.use('/', function(req, res, next) {
   // TournamentRes = res;
@@ -21,6 +25,17 @@ router.use('/info/:tournamentName', function(req, res, next) {
   var {tournamentName} = req.params;
   tournamentName = tournamentName.toUpperCase();
   publishTournament(res, {name: tournamentName});
+});
+
+router.use('/newtournaments', async function(req, res, next) {
+  setHeader(res);
+ 
+  console.log("Hello=============");
+  
+  let myData = await cricapi_get_new_tournaments();
+  //console.log(myData);
+  
+  sendok(res, {newTouraments: myData } );
 });
 
 router.get('/allfilter/:partTournamentName', async function(req, res, next) {
@@ -199,12 +214,12 @@ router.get(`/statusupdate/:tournamentName`, async function(req, res, next) {
     senderr(res, 741, `Invalid tournament name ${tournamentName}`);
 });
 
-router.get('/add/:tournamentName/:tournamentDesc/:tournamentType', async function(req, res, next) {
+router.get('/add/:tournamentName/:tournamentDesc/:tournamentType/:tournamentId', async function(req, res, next) {
     // TournamentRes = res;
     setHeader(res);
     if (!db_connection) { senderr(res, DBERROR, ERR_NODB); return; }
 
-    var {tournamentName, tournamentDesc, tournamentType} = req.params;
+    var {tournamentName, tournamentDesc, tournamentType, tournamentId} = req.params;
     tournamentType = tournamentType.toUpperCase();
     if (!["TEST", "ODI", "T20"].includes(tournamentType)) {
       senderr(res, 743, `Invalid tournament type ${tournamentType}. Has be be either TEST, ODI or T20`);
@@ -218,6 +233,7 @@ router.get('/add/:tournamentName/:tournamentDesc/:tournamentType', async functio
         myrec.desc = tournamentDesc;
         myrec.type = tournamentType;
 				myrec.started = false;
+        myrec.seriesId = tournamentId;
         myrec.over = false;
 				myrec.enabled = true;
         myrec.save();
