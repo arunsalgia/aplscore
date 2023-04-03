@@ -841,8 +841,9 @@ export default function Match() {
 
 	
 	function DisplayNewMatchList() {
+  //return null;
 	let colCount = 5;
-  //let justNow = new Date().getTime();
+  let justNow = new Date().getTime();
 	return (
 		<Box className={classes.allAppt} border={1} width="100%">
 			<TableContainer>
@@ -880,10 +881,13 @@ export default function Match() {
 			<TableBody>  
 			{newMatchList.map( (t, index) => {
         let tmp = matchList.find(x => x.apiMatchId === t.id);
+        if (tmp) return null;
+        if (t.startTime.getTime() < justNow) return null;
         if (index < 3) {
           console.log(t.id);
           console.log(tmp);
         }
+  
         //if (tmp) return null;
 				let myClass = classes.tdPending;
 				return(
@@ -944,7 +948,12 @@ export default function Match() {
       alert.show("Successfully added matches of "+tournamentName);
       let dataArray = resp.data.newMatches;
       dataArray = sortBy(dataArray, 'dateTimeGMT');
-      
+      for(var i=0; i<dataArray.length; ++i) {
+        var tmp = new Date(dataArray[i].dateTimeGMT);
+        //console.log(i, tmp);
+        dataArray[i]["startTime"] = tmp;
+        //console.log(dataArray[i]);
+      }
       console.log(dataArray.length+" matches");
       setNewMatchList(dataArray);
     } catch {
