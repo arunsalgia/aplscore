@@ -3,6 +3,7 @@ const { GroupMemberCount, akshuGetGroup, akshuUpdGroup, akshuUpdGroupMember,
 var router = express.Router();
 const { 
   cricapi_get_new_matches,
+  cricapi_get_score,
 } = require('./cricapifunctions'); 
 
 
@@ -56,6 +57,20 @@ router.use('/newmatches/:tournamentId', async function(req, res, next) {
   
   sendok(res, {newMatches: myData } );
 });
+
+
+router.use('/runningscore/:matchId', async function(req, res, next) {
+  setHeader(res);
+ var {matchId} = req.params;
+  console.log("Hello=============");
+  
+  let myData = await cricapi_get_score(matchId);
+  //console.log(myData);
+  console.log(myData);
+  
+  sendok(res, {score: myData } );
+});
+
 
 router.get('/score/:tournamentName/:mid', async function(req, res) {
   setHeader(res);
@@ -323,7 +338,7 @@ router.get('/add/:tournamentName/:type/:mid/:team1/:team2/:matchTime/:cricApiId'
 	
 	matchRec = new CricapiMatch();
 	matchRec.mid = mid;
-  matchRec.apiMatchId = cricApiId;
+  matchRec.cricMid = cricApiId;
 	matchRec.tournament = tournamentName;
 	matchRec.team1 = team1;
 	matchRec.team2 = team2;
@@ -434,6 +449,101 @@ router.get('/list/tournament/:tournamentName', async function(req, res, next) {
 	console.log(matchRecs[0]);
 	sendok(res, matchRecs);
 });
+
+
+router.get('/checkeconomy', async function (req, res, next) {
+  // AplRes = res;
+  setHeader(res);
+  let tournamentName="IPL 2023";
+  let matchType = "T20";
+  
+  let minOverRrequired = MinOvers[matchType];
+  console.log(minOverRrequired);
+  
+  let myEconomyRange = BonusEconomyRange.find(x => x.matchType === matchType);
+  console.log(myEconomyRange);
+  
+  let matchStat= mongoose.model(tournamentName, StatSchema);
+  //let briefStat =  mongoose.model(tournamentName+BRIEFSUFFIX, BriefStatSchema);
+
+  let allScores = await matchStat.find( {oversBowled: {$gte: minOverRrequired} } );
+  console.log("Total record: "+allScores.length);
+
+  var msg=""
+  let ecoPoints = 0;
+  let chnagesDone = false;
+  console.log("Total Range " + myEconomyRange.range.length);
+  for(var i=0; i<allScores.length; ++i) {
+    for(var r=0; r<myEconomyRange.range.length; ++r) {
+      //console.log("Mid: " + allScores[i].mid + "   Pid: " + allScores[i].pid );
+      //console.log(allScores[i].economyValue, allScores[i].economyValue);
+      if (allScores[i].economyValue <= myEconomyRange.range[r].economyValue) {
+        ecoPoints = myEconomyRange.range[r].points;
+        //console.log(ecoPoints, allScores[i].economy );
+        break;
+      }
+    }
+    if (ecoPoints != allScores[i].economy) {
+      allScores[i].economy = ecoPoints;
+      await allScores[i].save();
+      chnagesDone = true;
+      msg = msg + "\n" + "Mid: " + allScores[i].mid + "   Pid: " + allScores[i].pid  + "  in DB: " +    allScores[i].economy + "   Actual:  " + ecoPoints;
+      //console.log("Mid: " + allScores[i].mid + "   Pid: " + allScores[i].pid  + "  in DB: " +    allScores[i].economy + "   Actual:  " + ecoPoints);
+    }
+  }
+  if (chnagesDone) {
+    calculateBrief(tournamentName);
+    console.log("updated bried");
+  }
+  
+  msg += "\nAll Done";
+  sendok(res, msg);
+});
+
+
+router.get('/checkeconomy/:pid', async function (req, res, next) {
+  // AplRes = res;
+  setHeader(res);
+  var {pid} = req.params;
+
+
+  let tournamentName="IPL 2023";
+  let matchType = "T20";
+  
+  let minOverRrequired = MinOvers[matchType];
+  console.log(minOverRrequired);
+  
+  let myEconomyRange = BonusEconomyRange.find(x => x.matchType === matchType);
+  console.log(myEconomyRange);
+  
+  let matchStat= mongoose.model(tournamentName, StatSchema);
+  //let briefStat =  mongoose.model(tournamentName+BRIEFSUFFIX, BriefStatSchema);
+
+  let allScores = await matchStat.find( {oversBowled: {$gte: minOverRrequired}, pid: pid } );
+  console.log("Total record: "+allScores.length);
+
+  var msg=""
+  let ecoPoints = 0;
+  console.log("Total Range " + myEconomyRange.range.length);
+  for(var i=0; i<allScores.length; ++i) {
+    for(var r=0; r<myEconomyRange.range.length; ++r) {
+      //console.log("Mid: " + allScores[i].mid + "   Pid: " + allScores[i].pid );
+      //console.log(allScores[i].economyValue, allScores[i].economyValue);
+      if (allScores[i].economyValue <= myEconomyRange.range[r].economyValue) {
+        ecoPoints = myEconomyRange.range[r].points;
+        console.log(ecoPoints, allScores[i].economy );
+        break;
+      }
+    }
+    if (ecoPoints != allScores[i].economy) {
+      msg = msg + "\n" + "Mid: " + allScores[i].mid + "   Pid: " + allScores[i].pid  + "  in DB: " +    allScores[i].economy + "   Actual:  " + ecoPoints;
+      console.log("Mid: " + allScores[i].mid + "   Pid: " + allScores[i].pid  + "  in DB: " +    allScores[i].economy + "   Actual:  " + ecoPoints);
+    }
+  }
+  msg += "\nAll Done";
+  sendok(res, msg);
+});
+
 
 async function orgsendMatchInfoToClient(res, igroup, doSendWhat) {
   // var igroup = _group;
@@ -658,3 +768,9 @@ function setHeader(res) {
 } 
 
 module.exports = router;
+/*
+module.exports = {
+  router,
+  calculateScore,
+}; 
+*/

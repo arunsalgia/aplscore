@@ -1,4 +1,9 @@
 router = express.Router();
+const { 
+  cricapi_get_new_tournaments,
+  cricapi_get_tournament_squad,
+} = require('./cricapifunctions'); 
+
 // var PlayerRes;
 
 /* GET users listing. */
@@ -47,6 +52,32 @@ router.get('/namechange', async function(req, res, next) {
   console.log(tot);
   sendok(res, numList);
 });
+
+router.get('/cricapi/:tournamentId', async function(req, res, next) {
+  // PlayerRes = res;
+  setHeader(res);
+  var {tournamentId}=req.params;
+  
+  console.log("============= cricapl start");
+  console.log(tournamentId);
+  let myData = await cricapi_get_tournament_squad(tournamentId);
+  let allPlayers=[];
+  let teamPlayers=[];
+  let myIdx = 0;
+  for(var tidx=0; tidx<myData.length; ++tidx) {
+    for(var pidx=0; pidx < myData[tidx].players.length; ++pidx) {
+      allPlayers.push(myData[tidx].players[pidx]);
+      allPlayers[myIdx++]["teamName"] = myData[tidx].teamName;
+      //console.log(myData[tidx].teamName);
+      //teamPlayers.push(myData[tidx].teamName);
+    }
+  }
+  console.log("============= cricapl ends");
+  
+  sendok(res, {players: allPlayers} );
+ 
+});
+
 
 router.get('/detail/:myPid', async function(req, res, next) {
   // PlayerRes = res;
@@ -190,6 +221,43 @@ router.get('/add/:pid/:name/:tournamentName/:teamName/:role/:batStyle/:bowlStyle
   pRec.role = role;
   pRec.battingStyle = batStyle;
   pRec.bowlingStyle = bowlStyle;
+  pRec.save();
+  sendok(res, pRec);
+});
+
+// delete all the players of the team (of given tournament)
+router.get('/add/:pid/:name/:tournamentName/:teamName/:role/:batStyle/:bowlStyle/:cricPid', async function(req, res, next) {
+  // PlayerRes = res;
+  setHeader(res);
+  var {pid, name, tournamentName, teamName, 
+      role, batStyle, bowlStyle,
+      cricPid,
+    }=req.params;
+  console.log(name);
+  console.log(tournamentName);
+  console.log(teamName);
+  console.log(role);
+  console.log(batStyle);
+  console.log(bowlStyle);
+  tournamentName = tournamentName.toUpperCase();
+  teamName = teamName.toUpperCase();
+  let pRec = await Player.findOne({pid: pid, tournament: tournamentName, Team: teamName});
+	if (pRec) return senderr(res, 601, "Duplicate player");
+	
+
+	console.log("New Player");
+	pRec = new Player();
+	pRec.pid = pid;
+	pRec.tournament = tournamentName;
+	pRec.Team = teamName;
+
+  console.log(pRec);
+  pRec.name = name;
+  pRec.fullName = name;
+  pRec.role = role;
+  pRec.battingStyle = batStyle;
+  pRec.bowlingStyle = bowlStyle;
+  pRec.cricPid =  cricPid;
   pRec.save();
   sendok(res, pRec);
 });

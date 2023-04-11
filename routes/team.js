@@ -1,4 +1,10 @@
 const { encrypt, decrypt, dbencrypt, dbdecrypt, dbToSvrText, svrToDbText, getLoginName, getDisplayName, sendCricMail, } = require('./cricspecial'); 
+const { 
+  cricapi_get_new_tournaments,
+  cricapi_get_tournament_squad,
+} = require('./cricapifunctions'); 
+
+
 router = express.Router();
 // let TeamRes;
 
@@ -10,6 +16,25 @@ router.get('/', function (req, res, next) {
   if (!db_connection) { senderr(res, DBERROR, ERR_NODB); return; }
   next('route');
 }); 
+
+
+router.use('/squad/:tid', async function(req, res, next) {
+  setHeader(res);
+  var {tid} = req.params;
+  
+  //console.log("Hello=============");
+  
+  let myData = await cricapi_get_tournament_squad(tid);
+  //console.log(myData);
+
+  let tealList = _.map(myData, o => _.pick(o, ['teamName', 'img']));   //"teamName");
+  //console.log(myData);
+  
+  sendok(res, {tealList: tealList } );
+});
+
+
+
 
 router.get('/detail/:myTeam', async function(req, res, next) {
   // TeamRes = res;

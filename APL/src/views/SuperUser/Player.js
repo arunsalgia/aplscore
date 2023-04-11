@@ -36,6 +36,7 @@ import VsCancel from "CustomComponents/VsCancel"
 import VsTextSearch from "CustomComponents/VsTextSearch";
 import VsSelect from "CustomComponents/VsSelect";
 
+
 import globalStyles from "assets/globalStyles";
 import sortBy from "lodash/sortBy";
 import IconButton from '@material-ui/core/IconButton';
@@ -134,6 +135,7 @@ export default function Team() {
 	const [isListDrawer, setIsListDrawer] = useState("");
 	
   const [tournamentName, setTournamentName] = useState("");
+  const [tournamentId, setTournamentId] = useState("");
   const [teamName, setTeamName] = useState("");
 
 	const [newPlayer, setNewPlayer] = useState(false);
@@ -142,6 +144,10 @@ export default function Team() {
 	const [filterPlayerList, setFilterPlayerList] = useState([]);
 	const [filter, setFilter] = useState("");
 
+  const [filterTeam, setFilterTeam] = useState("");
+  const [filterName, setFilterName] = useState("");
+  const [filterRole, setFilterRole] = useState("");
+  
 	const [selPlayerName, setSelPlayerName] = useState([]);
 	
 	const [pid, setPid] = useState(0);
@@ -149,6 +155,8 @@ export default function Team() {
 	const [role, setRole] = useState("AllRounder");
 	const [battingStyle, setBattingStyle] = useState("NA");
 	const [bowlingStyle, setBowlingStyle] = useState("NA");
+  const [cricPlayerId, setCricPlayerId] = useState("");
+  
 	
 	const [cancelPlayerRec, setCancelPlayerRec] = useState({});
 	const [isCancel, setIsCancel] = useState(false);
@@ -157,6 +165,13 @@ export default function Team() {
 
 	const [searchText, setSearchText] = useState("");
 
+  const [cricPlayerList, setCricPlayerList] = useState([]);
+  const [cricTeamList, setCricTeamList] = useState([]);
+
+  const [masterRole, setMasterRole] = useState("");
+  const [masterBowlStyle, setMasterBowlStyle] = useState("");
+  const [masterBatStyle, setMasterBatStyle] = useState("");
+  
   const classes = useStyles();
 	const gClasses = globalStyles();
 	
@@ -165,9 +180,14 @@ export default function Team() {
   useEffect(() => {
 			const tournament = async () => {
 				try {
-					let tRec = JSON.parse(sessionStorage.getItem("shareTeam"));
+          let myTournmentRec = JSON.parse(sessionStorage.getItem("shareTournament")); 
+          setTournamentId(myTournmentRec.cricTid);
+          
+					let tRec = JSON.parse(sessionStorage.getItem("shareTeam")); 
+          //console.log(tRec);
 					setTeamData(tRec);
 					setTournamentName(tRec.tournament);
+          
 					setTeamName(tRec.name);
 					getTeamPlayers(tRec.tournament, tRec.name);
 					getAllPlayers();
@@ -194,7 +214,7 @@ export default function Team() {
 		try {
 			 let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/uniquelist`);
 			 setAllPlayerList(resp.data);
-			 setFilterPlayerList(resp.data);
+			 //setFilterPlayerList(resp.data);
 		} catch(e) {
 			console.log(e)
 			alert.error("error fetching all player list");
@@ -540,7 +560,7 @@ export default function Team() {
 		if (isDrawerOpened === "ADD") {
 			try {
 				// add tournament
-				let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/add/${pid}/${playerName}/${tournamentName}/${teamName}/${role}/${battingStyle}/${bowlingStyle}`);
+				let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/add/${pid}/${playerName}/${tournamentName}/${teamName}/${role}/${battingStyle}/${bowlingStyle}/${cricPlayerId}`);
 				alert.show("Successfully added Player "+playerName);
 				let tmpArray = [resp.data].concat(playerList);
 				tmpArray = sortBy(tmpArray, 'name');
@@ -767,6 +787,145 @@ export default function Team() {
 		</Box>		
 	)}
 	
+  function updateFilter(team, name, role) {
+    let myTempList = [].concat(cricPlayerList);
+    if (team != "")
+      myTempList = myTempList.filter(x => x.teamName.toLowerCase().includes(team));
+    if (name != "");
+      myTempList = myTempList.filter(x => x.name.toLowerCase().includes(name));
+    if (role != "");
+      myTempList = myTempList.filter(x => x.role.toLowerCase().includes(role));
+    
+    setFilterPlayerList(myTempList);
+  }
+  
+  function handleTeamClear() {
+    setFilterTeam("");
+    updateFilter("", filterName, filterRole);
+  }
+  
+  function handleTeamFilter(txt) {
+    let tmp = txt.toLowerCase();
+    setFilterTeam(tmp);
+    updateFilter(tmp, filterName, filterRole);
+  }
+
+  function handleNameClear() {
+    setFilterName("");
+    updateFilter(filterTeam, "", filterRole);
+  }
+  
+  function handleNameFilter(txt) {
+    let tmp = txt.toLowerCase();
+    setFilterName(tmp);
+    updateFilter(filterTeam, tmp, filterRole);
+  }
+  
+  
+  function handleRoleClear() {
+    setFilterRole("");
+    updateFilter(filterTeam, filterName, "");
+  }
+  
+  function handleRoleFilter(txt) {
+    let tmp = txt.toLowerCase();
+    setFilterRole(tmp);
+    updateFilter(filterTeam, filterName, tmp);
+  }
+  
+  async function handleAddNewPlayer(id) {
+    console.log(id);
+    var tmp = cricPlayerList.find(x => x.id === id);
+    console.log(tmp);
+    var d = new Date();
+    let xxx = (d.getFullYear() % 100).toString() +
+      ("0" +(d.getMonth()+1)).slice(-2) +
+      ("0" +(d.getDate())).slice(-2) +
+      ("0" +d.getHours()).slice(-2) +
+      ("0" +d.getMinutes()).slice(-2) +
+      ("0" +d.getSeconds()).slice(-2);
+      
+    setPid(Number(xxx));
+    setCricPlayerId(tmp.id)
+    setPlayerName(tmp.name);
+    setBattingStyle(tmp.battingStyle);
+    setBowlingStyle(tmp.bowlingStyle);
+    setRole(tmp.role);
+    setIsDrawerOpened("ADD");
+
+    setMasterBatStyle(tmp.battingStyle);
+    setMasterBowlStyle(tmp.bowlingStyle);
+    setMasterRole(tmp.role);
+    
+  }
+  
+	function DisplayNewPlayerList() {
+	let colCount = 5;
+	return (
+		<Box className={classes.allAppt} border={1} width="100%">
+			<TableContainer>
+			<Table style={{ width: '100%' }}>
+			<TableHead>
+				<TableRow align="center">
+					<TableCell key={"THN1"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} colSpan={colCount}>
+					{`Players fetched from Cricapi of (${tournamentName})`}
+					</TableCell>
+				</TableRow>
+				<TableRow align="center">
+					<TableCell key={"THN91"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Team
+					</TableCell>
+					<TableCell key={"THN22"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Name
+					</TableCell>
+					<TableCell key={"THN23"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Role
+					</TableCell>
+					<TableCell key={"THN31"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					cmds
+					</TableCell>
+				</TableRow>
+			</TableHead>
+			<TableBody>  
+			{filterPlayerList.map( (t, index) => {
+        let tmp = playerList.find(x => x.cricPid === t.id);
+        if (tmp) return null;
+				let myClass = classes.tdPending;
+				return(
+					<TableRow key={"TNROW"+index}>
+					<TableCell key={"TDN91"+index} align="center" component="td" scope="row" align="center" padding="none" className={myClass}>
+						<Typography className={classes.apptName}>{t.teamName}</Typography>
+					</TableCell>
+					<TableCell key={"TDN2"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.name}
+						</Typography>
+					</TableCell>
+					<TableCell key={"TDN3"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.role}
+						</Typography>
+					</TableCell>
+					<TableCell key={"TDN11"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Link href="#" variant="body2" onClick={() => { handleAddNewPlayer(t.id);}}>Add</Link>
+					</TableCell>
+					</TableRow>
+				)}
+			)}
+			</TableBody> 
+			</Table>
+			</TableContainer>
+		</Box>		
+	)}
+	
 	function handlePlayerSelect(ppid) {
 		let myPlayer = allPlayerList.find(x => x.pid === ppid);
 		setPid(myPlayer.pid);
@@ -815,6 +974,24 @@ export default function Team() {
 		}
 	}
 	
+
+  async function handleFetch() {
+    var justNow = new Date().getTime();
+    //console.log(tournamentId);
+    try {
+      let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/cricapi/${tournamentId}`);
+      alert.show("Successfully fetched players of tournament "+tournamentName);
+      setCricPlayerList(resp.data.players);
+      setFilterPlayerList(resp.data.players);
+      //setCricTeamList(resp.data.teams);
+    } catch {
+      alert.error("Error fetching teams of "+tournamentName);
+      setCricPlayerList([]);
+      setCricTeamList([]);
+    }   
+  }
+  
+  
   return (
   <div className={classes.paper} align="center" key="groupinfo">
 	<DisplayPageHeader headerName={`Configure players of team ${teamName} (Tournament: ${tournamentName})`} groupName="" tournament=""/>
@@ -836,6 +1013,24 @@ export default function Team() {
 		</Grid>
 	</div>
 	<DisplayPlayerList />
+  <br />
+  <VsButton align="right" name="Fetch Players" onClick={handleFetch} />
+  <Grid container justify="center" alignItems="center" >
+    <GridItem xs={4} sm={4} md={4} lg={4} >
+      <VsTextSearch label="Filter Team" value={filterTeam} onClear={handleTeamClear} 
+        onChange={(event) => handleTeamFilter(event.target.value)} />
+    </GridItem>
+    <GridItem xs={4} sm={4} md={4} lg={4} >
+      <VsTextSearch label="Filter Name" value={filterName} onClear={handleNameClear} 
+      onChange={(event) => handleNameFilter(event.target.value)} />
+    </GridItem>
+    <GridItem xs={4} sm={4} md={4} lg={4} >
+      <VsTextSearch label="Filter Role" value={filterRole} onClear={handleRoleClear} 
+      onChange={(event) => handleRoleFilter(event.target.value)} />
+    </GridItem>
+  </Grid>
+  <br />
+	<DisplayNewPlayerList />
 	<Drawer className={classes.drawer}
 		anchor="right"
 		variant="temporary"
@@ -847,13 +1042,18 @@ export default function Team() {
 		<ValidatorForm className={gClasses.form}>
 		<Typography className={classes.title}>{(isDrawerOpened === "ADD") ?"New Player" : "Edit Player"}</Typography>
 		{(isDrawerOpened === "ADD") &&
-			<VsButton name="Select Existing Player" onClick={selectExistingPlayer} />
+      <Typography style={{padding: "5px"}} className={gClasses.info18} >({masterRole}/{masterBatStyle}/{masterBowlStyle})</Typography>
 		}
 		<BlankArea />
+		<TextValidator fullWidth  required className={gClasses.vgSpacing}
+			label="Cric Id" 
+			value={cricPlayerId}
+			disabled={true}
+		/>
 		<TextValidator fullWidth  required type="number" className={gClasses.vgSpacing}
 			label="Pid" 
 			value={pid}
-			disabled={isDrawerOpened === "EDIT"}
+			disabled={true}
 			onChange={() => { setPid(event.target.value) }}
 			validators={["minNumber:1000)"]}
 			errorMessages={['Invalid PID']}

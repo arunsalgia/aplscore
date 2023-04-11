@@ -133,6 +133,8 @@ export default function Team() {
   const [tournamentName, setTournamentName] = useState("");
   const [tournamentType, setTournamentType] = useState("T20");
   const [tournamentDesc, setTournamentDesc] = useState("");
+  const [tournamentId, setTournamentId] = useState("");
+  
   const [teamName, setTeamName] = useState("");
 	const [newTeamName, setNewTeamName] = useState("");
   const [teamList, setTeamList] = useState([]);
@@ -146,6 +148,7 @@ export default function Team() {
     // {label: "TEAM2", existingTeam: true, name: "ENGLAND"},
     // // {label: "TEAM3", existingTeam: false, name: ""},
     // ]);
+  const [cricTeamList, setCricTeamList] = useState([]);
   const classes = useStyles();
 	const gClasses = globalStyles();
 	
@@ -167,6 +170,8 @@ export default function Team() {
 					setTournamentName(tRec.name);
 					setTournamentDesc(tRec.desc);
 					setTournamentType(tRec.type);
+          setTournamentId(tRec.cricTid);
+          
 					getAllTeams(tRec.name);
 				} catch (e) {
 					alert.error("Tournament name not specified");
@@ -712,7 +717,62 @@ export default function Team() {
 		</Box>		
 	)}
 	
+	function DisplayNewTeamList() {
+	let colCount = 4;
+	return (
+		<Box className={classes.allAppt} border={1} width="100%">
+			<TableContainer>
+			<Table style={{ width: '100%' }}>
+			<TableHead>
+				<TableRow align="center">
+					<TableCell key={"THN1"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} colSpan={colCount}>
+					{"CricApi Team List"}
+					</TableCell>
+				</TableRow>
+				<TableRow align="center">
+					<TableCell key={"THN22"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Name
+					</TableCell>
+				</TableRow>
+			</TableHead>
+			<TableBody>  
+			{cricTeamList.map( (t, index) => {  
+				let myClass = classes.tdPending;
+				return(
+					<TableRow key={"TROWN"+index}>
+					<TableCell key={"TDN2"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.teamName}
+						</Typography>
+					</TableCell>
+					</TableRow>
+				)}
+			)}
+			</TableBody> 
+			</Table>
+			</TableContainer>
+		</Box>		
+	)}
+	
 
+		async function handlefetch() {
+    var justNow = new Date().getTime();
+    
+    try {
+      let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/team/squad/${tournamentId}`);
+      alert.show("Successfully added tournament "+tournamentName);
+      let dataArray = resp.data.tealList;
+      dataArray = sortBy(dataArray, 'teamName');
+      setCricTeamList(dataArray);
+      console.log(dataArray);
+    } catch {
+      alert.error("Error fetching teams of "+tournamentName);
+      setCricTeamList([]);
+    }   
+  }
 	
 	
   return (
@@ -736,6 +796,10 @@ export default function Team() {
 	</Grid>
 	</div>
 	<DisplayTeamList />
+  <br />
+  <VsButton name="Get new team" align="right" onClick={handlefetch} />
+	<DisplayNewTeamList />
+  <br />
 	<Drawer className={classes.drawer}
 		anchor="right"
 		variant="temporary"

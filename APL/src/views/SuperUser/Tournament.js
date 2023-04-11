@@ -845,8 +845,9 @@ export default function SU_Tournament() {
     var justNow = new Date().getTime();
     
     try {
+      //let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/team/squal/${tournamentId}`);
       let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/newtournaments`);
-      alert.show("Successfully added tournament "+tournamentName);
+      alert.show("Successfully fetched team of  "+tournamentName);
       let tmpArray = resp.data.newTouraments;
       let dataArray = [];
       for(var i=0; i<tmpArray.length; ++i) {

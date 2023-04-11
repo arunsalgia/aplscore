@@ -603,6 +603,10 @@ router.get('/firebase/test2', async function (req, res,next)  {
 
 });
 
+
+
+
+
 router.get('/support1', async function (req, res, next) {
   // AplRes = res;
   setHeader(res);
@@ -625,3 +629,6 @@ function setHeader(res) {
 }
 
 module.exports = router;
+
+
+

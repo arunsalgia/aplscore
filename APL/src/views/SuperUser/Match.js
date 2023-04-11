@@ -181,7 +181,7 @@ export default function Match() {
 				setTournamentName(tRec.name);
 				setTournamentDesc(tRec.desc);
 				setTournamentType(tRec.type);
-        setTournamentSeriesId(tRec.seriesId);
+        setTournamentSeriesId(tRec.cricTid);
 				localStorage.setItem('MatchType', tRec.type);
 				getAllTeams(tRec.name);
 				getAllMatches(tRec.name);

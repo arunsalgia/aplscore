@@ -712,7 +712,7 @@ BonusEconomyRange = [
 			{ economyValue: 6, points: 4},
 			{ economyValue: 7, points: 2},
 			{ economyValue: 9, points: 0},
-			{ economyValue: 10,  points: -2},
+			{ economyValue: 19,  points: -2},
 			{ economyValue: 12,  points: -4},
 			{ economyValue: 10000000000,  points: -6}
 		]

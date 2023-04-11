@@ -3,6 +3,7 @@ var router = express.Router();
 
 const { 
   cricapi_get_new_tournaments,
+  cricapi_get_tournament_squad,
 } = require('./cricapifunctions'); 
 
 /* GET users listing. */
@@ -33,10 +34,12 @@ router.use('/newtournaments', async function(req, res, next) {
   console.log("Hello=============");
   
   let myData = await cricapi_get_new_tournaments();
+
   //console.log(myData);
   
   sendok(res, {newTouraments: myData } );
 });
+
 
 router.get('/allfilter/:partTournamentName', async function(req, res, next) {
   // TournamentRes = res;
@@ -233,7 +236,7 @@ router.get('/add/:tournamentName/:tournamentDesc/:tournamentType/:tournamentId',
         myrec.desc = tournamentDesc;
         myrec.type = tournamentType;
 				myrec.started = false;
-        myrec.seriesId = tournamentId;
+        myrec.cricTid = tournamentId;
         myrec.over = false;
 				myrec.enabled = true;
         myrec.save();
