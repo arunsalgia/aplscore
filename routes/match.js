@@ -488,6 +488,23 @@ router.get('/fetchscore/:cricMid', async function(req, res) {
 });
 
 
+router.get('/getscore/:mid', async function(req, res) {
+  setHeader(res);
+  var {mid} = req.params;
+	
+  let myMatch = await CricapiMatch.findOne({mid: mid});
+  if (!myMatch) return senderr(res, 601, "Match not found");
+  
+  var tournamentName = myMatch.tournament;
+	//var matchType = myMatch.type;
+  
+  // now prepare for player statistics
+	let matchStat = mongoose.model(tournamentName, StatSchema);
+  let matchData = await matchStat.find({mid: mid})
+  sendok(res, matchData);
+});
+
+
 
 
 router.get('/calculatescore/:tournamentName', async function(req, res) {

@@ -886,12 +886,7 @@ export default function Match() {
         let tmp = matchList.find(x => x.cricMid === t.id);
         if (tmp) return null;
         if (t.startTime.getTime() < justNow) return null;
-        //if (index < 3) {
-        //  console.log(t.id);
-        //  console.log(tmp);
-        //}
-        
-        //if (tmp) return null;
+
 				let myClass = classes.tdPending;
 				return(
 					<TableRow key={"TROWN"+index}>

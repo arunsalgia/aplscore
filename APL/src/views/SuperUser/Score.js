@@ -230,7 +230,7 @@ export default function Score() {
 				setTeam1(mRec.team1);
 				setTeam2(mRec.team2);
 				setCurrentTeam(mRec.team1)
-				getScore(tRec.name, mRec.cricMid)
+				getScore(tRec.name, mRec.mid)
 				getAllPlayers(tRec.name, mRec.team1, mRec.team2);
 			} catch (e) {
 				alert.error("Tournament / Match not specified");
@@ -257,16 +257,15 @@ export default function Score() {
 		setPlayerList(_.sortBy(myPlayers, 'name'));
 	}
 
-	async function getScore(myTournament, myCricMid) {
+	async function getScore(myTournament, mid) {
 		try {
-			let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/match/fetchscore/${myCricMid}`);
-			console.log(resp.data);
-			setScoreList(resp.data.playerScores);
-      
+			let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/match/getscore/${mid}`);
+			//console.log(resp.data);
+			setScoreList(resp.data);
 		} catch(e) {
 			console.log(e)
 			setScoreList([]);
-			alert.error("error fetching score of match "+myCricMid);
+			alert.error("error fetching score of match "+mid);
 		}
 	}
 
@@ -571,6 +570,7 @@ export default function Score() {
 	}
 	
 	function DisplayScoreList() {
+    //if (scoreList.length === 0) return null;
 	return (
 		<Box className={classes.allAppt} border={1} width="100%">
 			<TableContainer>
@@ -664,103 +664,104 @@ export default function Score() {
 			<TableBody>  
 			{scoreList.map( (t, index) => {
 				let myClass = classes.tdPending;
+        //console.log(t);
 				//if (t.pid === 2022021639)  console.log("Eco is: ",t.economyValue);
 				return(
 					<TableRow key={"TROW"+index}>
 					<TableCell key={"TD1"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
-							{t.record.pid}
+							{t.pid}
 						</Typography>
 					</TableCell>
 					<TableCell key={"TD2"+index} align="left" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
-							{t.record.playerName}
+							{t.playerName}
 						</Typography>
 					</TableCell>
 					<TableCell key={"TD3"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
-							{t.record.run}
+							{t.run}
 						</Typography>
 					</TableCell>
 					<TableCell key={"TD16"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
-							{t.record.ballsPlayed }
+							{t.ballsPlayed }
 						</Typography>
 					</TableCell>
 					<TableCell key={"TD4"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
-							{t.record.four}
+							{t.four}
 						</Typography>
 					</TableCell>
 					<TableCell key={"TD5"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
-							{t.record.six}
+							{t.six}
 						</Typography>
 					</TableCell>
 					<TableCell key={"TD6"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
-							{t.record.duck}
+							{t.duck}
 						</Typography>
 					</TableCell>
 					<TableCell key={"TD7"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
-							{t.record.wicket}
+							{t.wicket}
 						</Typography>
 					</TableCell>
 					<TableCell key={"TD17"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
-							{t.record.oversBowled }
+							{t.oversBowled }
 						</Typography>
 					</TableCell>
 					<TableCell key={"TD8"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
-							{ (typeof t.record.economyValue === 'undefined') ? '-' : t.economyValue}
+							{ (typeof t.economyValue === 'undefined') ? '-' : t.economyValue}
 						</Typography>
 					</TableCell>
 					<TableCell key={"TD9"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
-							{t.record.maiden}
+							{t.maiden}
 						</Typography>
 					</TableCell>
 					<TableCell key={"TD10"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
-							{t.record.runout}
+							{t.runout}
 						</Typography>
 					</TableCell>
 					<TableCell key={"TD11"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
-							{t.record.stumped}
+							{t.stumped}
 						</Typography>
 					</TableCell>
 					<TableCell key={"TD12"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
-							{t.record.catch}
+							{t.catch}
 						</Typography>
 					</TableCell>
 					<TableCell key={"TD13"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
-							{(t.record.manOfTheMatch) ? 1 : 0}
+							{(t.manOfTheMatch) ? 1 : 0}
 						</Typography>
 					</TableCell>
 					<TableCell key={"TD15"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
-							{(typeof t.record.hattrick === 'undefined') ? "-" : t.hattrick }
+							{(typeof t.hattrick === 'undefined') ? "-" : t.hattrick }
 						</Typography>
 					</TableCell>
 					<TableCell key={"TD91"+index} align="center" component="td" scope="row" align="center" padding="none"
