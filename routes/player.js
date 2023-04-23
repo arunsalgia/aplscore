@@ -2,6 +2,7 @@ router = express.Router();
 const { 
   cricapi_get_new_tournaments,
   cricapi_get_tournament_squad,
+  cricapi_find_palyers,
 } = require('./cricapifunctions'); 
 
 // var PlayerRes;
@@ -12,6 +13,17 @@ router.use('/', async function(req, res, next) {
   setHeader(res);
   if (!db_connection) { senderr(res, DBERROR, ERR_NODB); return};
   next('route');
+});
+
+// search players in cricdata
+router.get('/search/:strstr', async function(req, res, next) {
+  // PlayerRes = res;
+  setHeader(res);
+  var {strstr}=req.params;
+  
+  var myData = await cricapi_find_palyers(strstr);
+  myData = _.sortBy(myData, 'name');
+  sendok(res, myData);
 });
 
 router.get('/list', async function(req, res, next) {
@@ -73,7 +85,7 @@ router.get('/cricapi/:tournamentId', async function(req, res, next) {
     }
   }
   console.log("============= cricapl ends");
-  
+  allPlayers = _.sortBy(allPlayers, 'name');
   sendok(res, {players: allPlayers} );
  
 });
@@ -145,7 +157,7 @@ router.get('/tteam/:tournamentName/:teamName', async function(req, res, next) {
   var {tournamentName, teamName}=req.params;
 	tournamentName = tournamentName.toUpperCase();
 	teamName = teamName.toUpperCase();
-	//console.log(teamName);
+	console.log("PlayerCount: " + teamName.length);
   await publish_players(res, { tournament: tournamentName, Team: teamName } );
 });
 
@@ -324,6 +336,17 @@ router.get('/uniquelist', async function(req, res, next) {
 	sendok(res, allPlayer);
 });
 
+router.get('/cricdatauniquelist', async function(req, res, next) {
+  setHeader(res);
+
+  var allPlayer = await Player.find({cricPid: /-/}).sort({name: 1});
+	allPlayer = _.uniqBy(allPlayer, 'pid');
+	allPlayer = _.sortBy(allPlayer, 'name');
+	//console.log(allPlayer)
+	sendok(res, allPlayer);
+});
+
+
 // get list of purchased		 players
 router.get('/sold', async function(req, res, next) {
   // PlayerRes = res;
@@ -425,7 +448,7 @@ async function publish_players(res, filter_players)
 	//console.log("About to publish");
   //console.log(filter_players);
   var plist = await Player.find(filter_players).sort({'name': 1});
-  console.log("Players count", plist);
+  //console.log("Players count", plist);
   //plist = _.sortBy(plist, 'name');
   sendok(res, plist);
 }

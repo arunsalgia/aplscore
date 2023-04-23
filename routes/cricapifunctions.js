@@ -19,6 +19,9 @@ const CricAPI_PostFix_MatchesScore="&id=";
 const CricAPI_Prefix_Squad = CricAPI_BasePrefix + "series_squad" + CricApl_BaseKey;
 const CricAPI_PostFix_Squad="&id=";
 
+const CricAPI_Prefix_FindPlayer = CricAPI_BasePrefix + "players" + CricApl_BaseKey;
+const CricAPI_PostFix_FindPlayer="&offset=0&search=";
+
 
 // https://api.cricapi.com/v1/series?apikey=ef8990f6-8506-41e7-8b3a-55726f58759a&offset=0
 
@@ -111,7 +114,7 @@ async function cricapi_get_tournament_squad(tournamentSeriesId) {
     .then(data => {
         if (data.status === "success") {
           console.log("success");
-          console.log(data);
+          //console.log(data);
           if (data.data) {
             myDataArray = data.data;
           } 
@@ -128,10 +131,36 @@ async function cricapi_get_tournament_squad(tournamentSeriesId) {
   return myDataArray;
 }
 
-
+async function cricapi_find_palyers(searchStr) {
+  var myDataArray = [];
+  let myURL = CricAPI_Prefix_FindPlayer + CricAPI_PostFix_FindPlayer + searchStr.toLowerCase();
+  console.log(myURL);
+  await fetch(myURL)
+    .then(data => data.json())
+    .then(data => {
+        if (data.status === "success") {
+          console.log("success");
+          if (data.data) {
+            myDataArray = data.data;
+          } 
+          else {
+            console.log("Errrrrrrrrrrrrrrrrrrrrrrrrrrr");
+          }
+        } 
+        else {
+          console.log("Error fetching new matches");
+        }
+    })
+    .catch(e => console.log);
+  //console.log("Here==============");
+  return myDataArray;
+}
 module.exports = {
   cricapi_get_new_tournaments,
   cricapi_get_new_matches,
   cricapi_get_score,
   cricapi_get_tournament_squad,
+  cricapi_find_palyers,
 }; 
+
+

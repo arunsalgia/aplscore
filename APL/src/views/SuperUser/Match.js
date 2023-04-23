@@ -880,14 +880,17 @@ export default function Match() {
 			</TableHead>
 			<TableBody>  
 			{newMatchList.map( (t, index) => {
-        let tmp = matchList.find(x => x.apiMatchId === t.id);
+        console.log(t.matchType.toUpperCase(), t.startTime.toString() );
+        if (t.matchType.toUpperCase() !== tournamentType) return null;
+        //console.log(t, t.matchType, tournamentType);
+        let tmp = matchList.find(x => x.cricMid === t.id);
         if (tmp) return null;
         if (t.startTime.getTime() < justNow) return null;
-        if (index < 3) {
-          console.log(t.id);
-          console.log(tmp);
-        }
-  
+        //if (index < 3) {
+        //  console.log(t.id);
+        //  console.log(tmp);
+        //}
+        
         //if (tmp) return null;
 				let myClass = classes.tdPending;
 				return(
@@ -958,7 +961,7 @@ export default function Match() {
       setNewMatchList(dataArray);
     } catch {
       alert.error("Error fetching new matches of "+tournamentName);
-      setNewTournamentList([]);
+      setNewMatchList([]);
     }   
   }
 	

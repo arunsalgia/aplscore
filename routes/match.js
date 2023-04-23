@@ -6,7 +6,7 @@ const {
   cricapi_get_score,
 } = require('./cricapifunctions'); 
 
-
+const testing = true;
 
 // modified on 17th October 2021
 async function update_scores_direct(mid, cricData) {
@@ -214,6 +214,301 @@ router.get('/setscore/:tournamentName/:mid/:matchType/:scoreList', async functio
 	await calculateBrief(tournamentName);
   sendok(res, "Done");
 });
+
+router.get('/fetchscore/:cricMid', async function(req, res) {
+  setHeader(res);
+  var {cricMid} = req.params;
+	
+  let myMatch = await CricapiMatch.findOne({cricMid: cricMid});
+  if (!myMatch) return senderr(res, 601, "Match not found");
+  
+  var tournamentName = myMatch.tournament;
+	var matchType = myMatch.type;
+  
+  // get match score from cricdata
+  var myMatchData = await cricapi_get_score(myMatch.cricMid);
+  if (!myMatchData) return senderr(res, 602, "Data of Match not found from CricData");
+  
+	// now prepare for player statistics
+	let matchStat = mongoose.model(tournamentName, StatSchema);
+	
+  var testpid = 9999999900;
+  var allStats = [];
+  console.log(myMatchData);
+  if (myMatchData.scorecard)
+  for(var sc = 0; sc < myMatchData.scorecard.length; ++sc) {
+    // update batting information
+    if (myMatchData.scorecard[sc].batting) {
+    for (var batIdx = 0;  batIdx < myMatchData.scorecard[sc].batting.length; ++ batIdx) {
+      var batsmanCricRec = myMatchData.scorecard[sc].batting[batIdx];
+      var cricPid = batsmanCricRec.batsman.id;
+      var batsmanStatRec = null;
+      var tmp = allStats.find(x => x.cricPid === cricPid);
+      if (tmp) {
+        batsmanStatRec = tmp.record;
+      }
+      else {
+        batsmanStatRec = getBlankStatRecord(matchStat);
+        allStats.push({cricPid: cricPid, record: batsmanStatRec});
+        if (!testing) {
+          var playerInfo = await Player.findOne({tournament: tournamentName, cricPid: cricPid});
+          batsmanStatRec.pid = playerInfo.pid;
+          batsmanStatRec.playerName = playerInfo.name;
+        } 
+        else {
+          batsmanStatRec.pid = ++testpid;
+          batsmanStatRec.playerName = batsmanCricRec.batsman.name;          
+        }
+        batsmanStatRec.mid = myMatch.mid;
+        batsmanStatRec.inning = 1;
+      }
+      batsmanStatRec.run = batsmanCricRec.r;
+      batsmanStatRec.four = batsmanCricRec["4s"];
+      batsmanStatRec.six = batsmanCricRec["6s"];
+      batsmanStatRec.ballsPlayed = batsmanCricRec["b"];
+      
+      // if non-zero balls played and zero run and out then duck 
+      //console.log(batsmanCricRec);
+      if ( (batsmanStatRec.run === 0) && (batsmanStatRec.ballsPlayed > 0)  && (!batsmanCricRec["dismissal-text"].includes("not")) ) {
+          batsmanStatRec.duck = 1;
+      }
+      
+      // update bonus for 50, 100, 150, 200 
+      var dataRange = BonusRunRange.find( x => x.matchType === matchType).range;
+      for(var i=0; i<dataRange.length; ++i) {
+        //console.log("data: ", s.run, dataRange[i].runs, dataRange[i].field);
+        if (batsmanStatRec.run >= dataRange[i].runs) {
+          batsmanStatRec[dataRange[i].field] = 1;
+          break;
+        }
+      }
+    
+      // update strike rate and its bonus
+      batsmanStatRec.strikeRateValue = batsmanCricRec["sr"];
+      batsmanStatRec.strikeRate = 0;
+      if (batsmanStatRec.ballsPlayed >= MinBallsPlayed[matchType]) {
+        console.log("Calculating SR points for "+batsmanStatRec.strikeRateValue);
+        var dataRange = BonusStrikeRateRange.find(x => x.matchType === matchType).range;
+        for(var i=0; i<dataRange.length; ++i) {
+          //console.log(dataRange[i].strikeRate);
+          if (batsmanStatRec.strikeRateValue >= dataRange[i].strikeRate) {
+            batsmanStatRec.strikeRate = dataRange[i].points;
+            break;
+          }
+        }
+      } 
+		
+    }}
+    
+    // update bowling information
+    if (myMatchData.scorecard[sc].bowling) {
+    for (var bowlIdx = 0;  bowlIdx < myMatchData.scorecard[sc].bowling.length; ++ bowlIdx) {
+      var bowlerCricRec = myMatchData.scorecard[sc].bowling[bowlIdx];
+      var cricPid = bowlerCricRec.bowler.id;
+      var bowlerStatRec = null;
+      var tmp = allStats.find(x => x.cricPid === cricPid);
+      if (tmp) {
+        bowlerStatRec = tmp.record;
+      }
+      else {
+        bowlerStatRec = getBlankStatRecord(matchStat);
+        allStats.push({cricPid: cricPid, record: bowlerStatRec});
+        if (!testing) {
+          var playerInfo = await Player.findOne({tournament: tournamentName, cricPid: cricPid});
+          bowlerStatRec.pid = playerInfo.pid;
+          bowlerStatRec.playerName = playerInfo.name;        
+        }
+        else {
+          bowlerStatRec.pid = ++testpid;
+          bowlerStatRec.playerName = bowlerCricRec.bowler.name;          
+        }
+        bowlerStatRec.inning = 1;
+        bowlerStatRec.mid = myMatch.mid;
+      }
+      bowlerStatRec.wicket = bowlerCricRec["w"];
+      bowlerStatRec.maiden = bowlerCricRec["m"];
+      bowlerStatRec.oversBowled = bowlerCricRec["o"];
+      bowlerStatRec.hattrick = 0;
+      
+      /*
+      DO not do Bonus for wickets here. It will be done after hat trick information is updated in APLSCORE
+      if (bowlerStatRec.hattrick === 0) {
+        var dataRange = BonusWicketRange.find( x => x.matchType === matchType).range;
+        for(var i=0; i<dataRange.length; ++i) {
+          //console.log("data: ", s.run, dataRange[i].runs, dataRange[i].field);
+          if (bowlerStatRec.wicket >= dataRange[i].wickets) {
+            bowlerStatRec[dataRange[i].field] = 1;
+            break;
+          }
+        }
+      }
+      */
+      
+      // now update economy value and economy bonus
+      bowlerStatRec.economyValue = bowlerCricRec["eco"];
+      bowlerStatRec.economy = 0;
+      if (bowlerStatRec.oversBowled >= MinOvers[matchType]) {
+        var dataRange = BonusEconomyRange.find( x => x.matchType === matchType).range;
+        for(var i=0; i<dataRange.length; ++i) {
+          if (bowlerStatRec.economyValue <= dataRange[i].economyValue) {
+            bowlerStatRec.economy = dataRange[i].points;
+            break;
+          }
+        }
+      } 
+      
+    }}
+  
+    // update fielding information
+    if (myMatchData.scorecard[sc].catching) {
+    for (var fldrIdx = 0;  fldrIdx < myMatchData.scorecard[sc].catching.length; ++fldrIdx) {
+      var fielderCricRec = myMatchData.scorecard[sc].catching[fldrIdx];
+      //console.log(fielderCricRec);
+      var cricPid = fielderCricRec.catcher.id;
+      var fielderStatRec = null;
+      var tmp = allStats.find(x => x.cricPid === cricPid);
+      if (tmp) {
+        fielderStatRec = tmp.record;
+      }
+      else {
+        fielderStatRec = getBlankStatRecord(matchStat);
+        allStats.push({cricPid: cricPid, record: fielderStatRec});
+        if (!testing) {
+          var playerInfo = await Player.findOne({tournament: tournamentName, cricPid: cricPid});
+          fielderStatRec.pid = playerInfo.pid;
+          fielderStatRec.playerName = playerInfo.name;        
+        }
+        else {
+          fielderStatRec.pid = ++testpid;
+          fielderStatRec.playerName = fielderCricRec.catcher.name;          
+        }        
+        fielderStatRec.mid = myMatch.mid;
+        fielderStatRec.inning = 1;
+      }
+      fielderStatRec.runout = fielderCricRec.runout;
+      fielderStatRec.stumped = fielderCricRec.stumped;
+      fielderStatRec.catch = fielderCricRec.catch;
+      fielderStatRec.catch3 = (fielderCricRec.catch >= 3) ? 1 : 0;
+      
+    }}
+  }
+	
+  sendok(res, {playerScores: allStats, matchEnded: myMatchData.matchEnded }  );
+  return;
+  
+	await matchStat.deleteMany({mid: mid, pid: {$in: pidList } });
+	//let newScore = [];
+	for(let scr=0; scr<scoreList.length; ++scr) {
+		let s = scoreList[scr];
+		let myRec = getBlankStatRecord(matchStat);
+		myRec.mid = s.mid;
+		myRec.pid = s.pid;
+		myRec.inning = 1;
+		myRec.playerName = s.playerName;
+		// batting details
+		myRec.run = s.run;
+		myRec.four = s.four;
+		myRec.six = s.six;
+		// bowling details
+		myRec.wicket = s.wicket;
+		myRec.ballsPlayed = s.ballsPlayed;
+		myRec.hattrick = s.hattrick;
+		myRec.maiden = s.maiden;
+		myRec.oversBowled = s.oversBowled;
+		// fielding details
+		myRec.runout = s.runout;
+		myRec.stumped = s.stumped;
+		myRec.catch = s.catch;
+		myRec.catch3 = (s.catch >= 3) ? 1 : 0;
+		myRec.duck = s.duck;
+		// overall performance
+		myRec.manOfTheMatch = s.manOfTheMatch;
+		
+		
+
+		// update for century, 
+		var dataRange = BonusRunRange.find( x => x.matchType === matchType).range;
+		for(i=0; i<dataRange.length; ++i) {
+			//console.log("data: ", s.run, dataRange[i].runs, dataRange[i].field);
+			if (s.run >= dataRange[i].runs) {
+				myRec[dataRange[i].field] = 1;
+				break;
+			}
+		}
+		
+		
+		if (myRec.hattrick === 0) {
+		var dataRange = BonusWicketRange.find( x => x.matchType === matchType).range;
+			for(var i=0; i<dataRange.length; ++i) {
+				//console.log("data: ", s.run, dataRange[i].runs, dataRange[i].field);
+				if (s.wicket >= dataRange[i].wickets) {
+					myRec[dataRange[i].field] = 1;
+					break;
+				}
+			}
+		}
+
+		// now update economy value and economy points
+		myRec.economyValue = s.economyValue;
+		myRec.economy = 0;
+		if (myRec.oversBowled >= MinOvers[matchType]) {
+			var dataRange = BonusEconomyRange.find( x => x.matchType === matchType).range;
+			for(var i=0; i<dataRange.length; ++i) {
+				if (myRec.economyValue <= dataRange[i].economyValue) {
+					myRec.economy = dataRange[i].points;
+					break;
+				}
+			}
+		} 
+
+		// now update the strike rate and strike rate points
+		myRec.strikeRateValue = s.strikeRateValue
+		myRec.strikeRate = 0;
+		if (myRec.ballsPlayed >= MinBallsPlayed[matchType]) {
+			console.log("Calculating SR points for "+myRec.strikeRateValue);
+			var dataRange = BonusStrikeRateRange.find(x => x.matchType === matchType).range;
+			for(var i=0; i<dataRange.length; ++i) {
+				console.log(dataRange[i].strikeRate);
+				if (myRec.strikeRateValue >= dataRange[i].strikeRate) {
+					myRec.strikeRate = dataRange[i].points;
+					break;
+				}
+			}
+		} 
+		
+		
+		//console.log(matchType);
+		//console.log(myRec);
+		myRec.score = calculateScore(myRec, matchType);
+		await myRec.save();
+	};
+	
+	await calculateBrief(tournamentName);
+  sendok(res, "Done");
+});
+
+
+
+
+router.get('/calculatescore/:tournamentName', async function(req, res) {
+  setHeader(res);
+  var {tournamentName} = req.params;
+	tournamentName = tournamentName.toUpperCase();
+	
+	// now update player statistics
+	let matchStat = mongoose.model(tournamentName, StatSchema);
+	var matchType = "T20";
+  
+	var allMatchData = await matchStat.find({});
+  console.log(allMatchData.length);
+  for(let scr=0; scr<allMatchData.length; ++scr) {
+    allMatchData[scr].score = calculateScore(allMatchData[scr], matchType);
+    await allMatchData[scr].save();
+  }
+  await calculateBrief(tournamentName);
+  sendok(res, "Done");
+});
+
 
 router.get('/updatebrief/:tournamentName', async function(req, res, next) {
 	setHeader(res);
@@ -445,7 +740,7 @@ router.get('/list/tournament/:tournamentName', async function(req, res, next) {
 	tournamentName = tournamentName.toUpperCase();
 	
 	
-	let matchRecs = await CricapiMatch.find({tournament : tournamentName});
+	let matchRecs = await CricapiMatch.find({tournament : tournamentName}).sort({matchStartTime: 1});
 	console.log(matchRecs[0]);
 	sendok(res, matchRecs);
 });

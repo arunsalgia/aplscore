@@ -35,7 +35,7 @@ import VsButton from "CustomComponents/VsButton";
 import VsCancel from "CustomComponents/VsCancel"
 import VsTextSearch from "CustomComponents/VsTextSearch";
 import VsSelect from "CustomComponents/VsSelect";
-
+import VsRadioGroup from "CustomComponents/VsRadioGroup";
 
 import globalStyles from "assets/globalStyles";
 import sortBy from "lodash/sortBy";
@@ -129,6 +129,7 @@ const useStyles = makeStyles((theme) => ({
     },
   }));
 
+const FETCHTYPES = ["SQUAD", "INFO"];
 
 export default function Team() {
 	const [isDrawerOpened, setIsDrawerOpened] = useState("");
@@ -142,6 +143,7 @@ export default function Team() {
   const [playerList, setPlayerList] = useState([]);
 	const [allPlayerList, setAllPlayerList] = useState([]);
 	const [filterPlayerList, setFilterPlayerList] = useState([]);
+  const [playerInfoList, setPlayerInfoList] = useState([]);
 	const [filter, setFilter] = useState("");
 
   const [filterTeam, setFilterTeam] = useState("");
@@ -156,7 +158,8 @@ export default function Team() {
 	const [battingStyle, setBattingStyle] = useState("NA");
 	const [bowlingStyle, setBowlingStyle] = useState("NA");
   const [cricPlayerId, setCricPlayerId] = useState("");
-  
+
+  const [fetchFrom, setFetchFrom] = useState("SQUAD");
 	
 	const [cancelPlayerRec, setCancelPlayerRec] = useState({});
 	const [isCancel, setIsCancel] = useState(false);
@@ -212,7 +215,7 @@ export default function Team() {
 	
 	async function getAllPlayers() {
 		try {
-			 let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/uniquelist`);
+			 let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/cricdatauniquelist`);
 			 setAllPlayerList(resp.data);
 			 //setFilterPlayerList(resp.data);
 		} catch(e) {
@@ -556,7 +559,7 @@ export default function Team() {
 	}
 	
 	async function addEditTeamSubmit() {
-		console.log("In addEditTeamSubmit");
+		//console.log("In addEditTeamSubmit");
 		if (isDrawerOpened === "ADD") {
 			try {
 				// add tournament
@@ -636,6 +639,7 @@ export default function Team() {
 		var tmp = ""
 		setIsListDrawer("");
 		setPid(pRec.pid);
+    setCricPlayerId(pRec.cricPid);
 		setPlayerName(pRec.name.trim());
     tmp = pRec.role.trim().toLowerCase();
     console.log(tmp);
@@ -653,6 +657,8 @@ export default function Team() {
     
 		setBattingStyle(pRec.battingStyle.trim());
 		setBowlingStyle(pRec.bowlingStyle.trim());
+    
+    setIsDrawerOpened("ADD");
 	}
 	
 	function handlePlayerFilter(playerName) {
@@ -836,7 +842,7 @@ export default function Team() {
   async function handleAddNewPlayer(id) {
     console.log(id);
     var tmp = cricPlayerList.find(x => x.id === id);
-    console.log(tmp);
+    //console.log(tmp);
     var d = new Date();
     let xxx = (d.getFullYear() % 100).toString() +
       ("0" +(d.getMonth()+1)).slice(-2) +
@@ -857,6 +863,28 @@ export default function Team() {
     setMasterBowlStyle(tmp.bowlingStyle);
     setMasterRole(tmp.role);
     
+  }
+  
+    
+  async function handleAddNewPlayerInfo(id) {
+    console.log(id);
+    var tmp = playerInfoList.find(x => x.id === id);
+    //console.log(tmp);
+    var d = new Date();
+    let xxx = (d.getFullYear() % 100).toString() +
+      ("0" +(d.getMonth()+1)).slice(-2) +
+      ("0" +(d.getDate())).slice(-2) +
+      ("0" +d.getHours()).slice(-2) +
+      ("0" +d.getMinutes()).slice(-2) +
+      ("0" +d.getSeconds()).slice(-2);
+      
+    setPid(Number(xxx));
+    setCricPlayerId(tmp.id)
+    setPlayerName(tmp.name);
+    setBattingStyle("");
+    setBowlingStyle("NA");
+    setRole("Batsman");
+    setIsDrawerOpened("ADD");
   }
   
 	function DisplayNewPlayerList() {
@@ -926,6 +954,74 @@ export default function Team() {
 		</Box>		
 	)}
 	
+  
+  function DisplayPlayerInfoList() {
+    let colCount = 4;
+    return (
+		<Box className={classes.allAppt} border={1} width="100%">
+			<TableContainer>
+			<Table style={{ width: '100%' }}>
+			<TableHead>
+				<TableRow key={"THN1"}  align="center">
+					<TableCell component="th" scope="row" align="center" padding="none"
+					className={classes.th} colSpan={colCount}>
+					{`Players Info from Cricapi`}
+					</TableCell>
+				</TableRow>
+				<TableRow align="center">
+					<TableCell component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Id
+					</TableCell>
+					<TableCell component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Country
+					</TableCell>
+					<TableCell component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Name
+					</TableCell>
+					<TableCell component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					cmds
+					</TableCell>
+				</TableRow>
+			</TableHead>
+			<TableBody>  
+			{playerInfoList.map( (t, index) => {
+        let tmp = playerList.find(x => x.cricPid === t.id);
+        if (tmp) return null;
+				let myClass = classes.tdPending;
+				return(
+					<TableRow key={"TNROW"+index}>
+					<TableCell align="center" component="td" scope="row" align="center" padding="none" className={myClass}>
+						<Typography className={classes.apptName}>{t.id}</Typography>
+					</TableCell>
+					<TableCell align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.country}
+						</Typography>
+					</TableCell>
+					<TableCell align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.name}
+						</Typography>
+					</TableCell>
+					<TableCell align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Link href="#" variant="body2" onClick={() => { handleAddNewPlayerInfo(t.id);}}>Add</Link>
+					</TableCell>
+					</TableRow>
+				)}
+			)}
+			</TableBody> 
+			</Table>
+			</TableContainer>
+		</Box>		
+	)}
+	
 	function handlePlayerSelect(ppid) {
 		let myPlayer = allPlayerList.find(x => x.pid === ppid);
 		setPid(myPlayer.pid);
@@ -974,7 +1070,17 @@ export default function Team() {
 		}
 	}
 	
-
+  async function handleFetchPlayerInfo() {
+   try {
+      let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/search/${filterName}`);
+      alert.show("Successfully fetched players");
+      setPlayerInfoList(resp.data);
+    } catch {
+      alert.error("Error fetching player info");
+      setPlayerInfoList([]);
+    }   
+  }
+  
   async function handleFetch() {
     var justNow = new Date().getTime();
     //console.log(tournamentId);
@@ -991,6 +1097,17 @@ export default function Team() {
     }   
   }
   
+  function updatePlayerString(txt) { setFilterName(txt); console.log(txt); }
+  
+  
+  function handleRadioSelection(value) {
+    setFilterPlayerList([]);
+    setPlayerInfoList([]);
+    setFilterName("");
+    setFilterRole("");
+    setFilterTeam("");
+    setFetchFrom(value);
+  }
   
   return (
   <div className={classes.paper} align="center" key="groupinfo">
@@ -1008,29 +1125,54 @@ export default function Team() {
 				<VsButton name="Back" align="left" onClick={handleBack} />
 			</GridItem>
 			<GridItem xs={6} sm={6} md={6} lg={6} >
-				<VsButton align="right" name="Add new Player" onClick={handleAdd} />
+				{/*<VsButton align="right" name="Add new Player" onClick={handleAdd} />*/} 
+        <VsButton align="right" name="Add Player from DB" onClick={selectExistingPlayer} />
 			</GridItem>
 		</Grid>
 	</div>
-	<DisplayPlayerList />
+  <DisplayPlayerList />
   <br />
-  <VsButton align="right" name="Fetch Players" onClick={handleFetch} />
-  <Grid container justify="center" alignItems="center" >
-    <GridItem xs={4} sm={4} md={4} lg={4} >
-      <VsTextSearch label="Filter Team" value={filterTeam} onClear={handleTeamClear} 
-        onChange={(event) => handleTeamFilter(event.target.value)} />
-    </GridItem>
-    <GridItem xs={4} sm={4} md={4} lg={4} >
-      <VsTextSearch label="Filter Name" value={filterName} onClear={handleNameClear} 
-      onChange={(event) => handleNameFilter(event.target.value)} />
-    </GridItem>
-    <GridItem xs={4} sm={4} md={4} lg={4} >
-      <VsTextSearch label="Filter Role" value={filterRole} onClear={handleRoleClear} 
-      onChange={(event) => handleRoleFilter(event.target.value)} />
-    </GridItem>
-  </Grid>
+  <VsRadioGroup value={fetchFrom} radioList={FETCHTYPES} onChange={(event) => handleRadioSelection(event.target.value)}  />
+  {(fetchFrom === "SQUAD") &&
+    <div>
+    <VsButton align="right" name="Fetch Players" onClick={handleFetch} />
+    <Grid container justify="center" alignItems="center" >
+      <GridItem xs={4} sm={4} md={4} lg={4} >
+        <VsTextSearch label="Filter Team" value={filterTeam} onClear={handleTeamClear} 
+          onChange={(event) => handleTeamFilter(event.target.value)} />
+      </GridItem>
+      <GridItem xs={4} sm={4} md={4} lg={4} >
+        <VsTextSearch label="Filter Name" value={filterName} onClear={handleNameClear} 
+        onChange={(event) => handleNameFilter(event.target.value)} />
+      </GridItem>
+      <GridItem xs={4} sm={4} md={4} lg={4} >
+        <VsTextSearch label="Filter Role" value={filterRole} onClear={handleRoleClear} 
+        onChange={(event) => handleRoleFilter(event.target.value)} />
+      </GridItem>
+    </Grid>
+    <br />
+    <DisplayNewPlayerList />
+    </div>
+  }
+  {(fetchFrom != "SQUAD") &&
+    <div>
+      <Grid container justify="center" alignItems="center" >
+        <GridItem xs={8} sm={8} md={8} lg={8} >
+          <TextField fullWidth  className={gClasses.vgSpacing}
+            label="Player Name sub-string" 
+            value={filterName}
+            onChange={() => { setFilterName(event.target.value) }}
+          />
+        </GridItem>
+        <GridItem xs={4} sm={4} md={4} lg={4} >
+          <VsButton align="right" name="Players Info" onClick={handleFetchPlayerInfo} />
+        </GridItem>
+      </Grid>
+      <br />
+      <DisplayPlayerInfoList />
+    </div>
+  }
   <br />
-	<DisplayNewPlayerList />
 	<Drawer className={classes.drawer}
 		anchor="right"
 		variant="temporary"
@@ -1121,7 +1263,7 @@ export default function Team() {
 			<TableBody>
 			{filterPlayerList.map( (p) => 
 				<TableRow key={"PLR"+p.pid} className={gClasses.td} align="center">
-					<TableCell className={gClasses.td} onClick={() => selectPlayer(p) } >{p.name} (Pid: {p.pid})</TableCell> 
+					<TableCell style={{padding: "2px" }} className={gClasses.td} onClick={() => selectPlayer(p) } >{p.name} (CricData Id: {p.cricPid})</TableCell> 
 						{/*<TableCell className={gClasses.td} ><VisibilityIcon className={gClasses.blue} size="small" onClick={() => handleSelectUser(m) }  /></TableCell>*/}
 				</TableRow>
 			)}

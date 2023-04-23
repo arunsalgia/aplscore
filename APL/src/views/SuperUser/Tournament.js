@@ -852,11 +852,12 @@ export default function SU_Tournament() {
       let dataArray = [];
       for(var i=0; i<tmpArray.length; ++i) {
         let matchDate = new Date(tmpArray[i].startDate);
-        if (matchDate.getTime() > justNow) {
-          let xxx = tournamentList.find(x => x.seriesId === tmpArray[i].id);
-          if (!xxx)
-            dataArray.push(tmpArray[i]);
-        }
+        //if (matchDate.getTime() > justNow) {
+        //  let xxx = tournamentList.find(x => x.seriesId === tmpArray[i].id);
+        //  if (!xxx)
+        //    dataArray.push(tmpArray[i]);
+       // }
+       dataArray.push(tmpArray[i]);
       }
       dataArray = sortBy(dataArray, 'startDate');
       setNewTournamentList(dataArray);
