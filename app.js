@@ -631,8 +631,8 @@ BonusRunRange = [
 		range: [
 			{ runs: 200, points: 100,  field: "run200"  },
 			{ runs: 100, points: 50,   field: "hundred"  },
-			{ runs: 75,  points: 20,   field: "75" },
-			{ runs: 50,  points: 10,   field: "fifty" },
+			{ runs: 75,  points: 20,   field: "run75" },
+			{ runs: 50,  points: 10,   field: "fifty" }
 		]
 	}
 ];
