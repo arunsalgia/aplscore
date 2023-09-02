@@ -1,0 +1,14 @@
+import firebase from 'firebase/app'
+
+const config ={
+	apiKey: "AIzaSyBqJAEVFJOsrztnMrIqO0tfGmisU95Plrk",
+	authDomain: "aplclient.firebaseapp.com",
+	projectId: "aplclient",
+	storageBucket: "aplclient.appspot.com",
+	messagingSenderId: "1018469539659",
+	appId: "1:1018469539659:web:102ea6f8c5cf39dda9d2ce",
+	measurementId: "G-4RN59HCLKD"
+}
+firebase.initializeApp(config)
+
+export default firebase
