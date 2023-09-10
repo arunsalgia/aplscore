@@ -127,7 +127,8 @@ router.get('/setscore/:tournamentName/:mid/:matchType/:scoreList', async functio
 	*/
 	console.log("Dlete manu");
 	
-	await matchStat.deleteMany({mid: mid, pid: {$in: pidList } });
+	//await matchStat.deleteMany({mid: mid, pid: {$in: pidList } });
+	await matchStat.deleteMany({mid: mid});
 	//let newScore = [];
 	for(let scr=0; scr<scoreList.length; ++scr) {
 		let s = scoreList[scr];
