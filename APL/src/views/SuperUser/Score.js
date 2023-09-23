@@ -524,8 +524,18 @@ export default function Score() {
 	}
 	
 	async function handleCancelConfirm(t) {
-		let tmpArray = scoreList.filter(x => x.pid !== t.pid);
-		setScoreList(tmpArray);
+		try {
+			// remove the entry from the database
+			resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/match/deleteplayerscore/${tournamentName}/${mid}/${t.pid}`);
+			// successful. Thus remove the entry from array
+			console.log("Success");
+			//let tmpArray = scoreList.filter(x => x.pid !== t.pid);
+			//setScoreList(tmpArray);
+		}
+		catch(e) {
+			console.log(e)
+			alert.error("Error deleting score of player "+t.pid);
+		}
 	}
 	
 	function addTeamPlayer(myTeam) {

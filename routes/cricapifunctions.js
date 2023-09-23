@@ -142,6 +142,7 @@ async function cricapi_find_palyers(searchStr) {
           console.log("success");
           if (data.data) {
             myDataArray = data.data;
+						console.log(myDataArray);
           } 
           else {
             console.log("Errrrrrrrrrrrrrrrrrrrrrrrrrrr");

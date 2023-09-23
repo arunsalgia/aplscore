@@ -25,7 +25,7 @@ router.use('/squad/:tid', async function(req, res, next) {
   //console.log("Hello=============");
   
   let myData = await cricapi_get_tournament_squad(tid);
-  //console.log(myData);
+  console.log(myData);
 
   let tealList = _.map(myData, o => _.pick(o, ['teamName', 'img']));   //"teamName");
   //console.log(myData);

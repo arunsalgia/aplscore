@@ -159,7 +159,7 @@ export default function SU_Tournament() {
 
 	async function getAllTournament() {
 		try {
-			 let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/list`);
+			 let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/list/notover`);
 			 setTournamentList(resp.data);
 		} catch(e) {
 			console.log(e)
@@ -624,6 +624,51 @@ export default function SU_Tournament() {
 		sessionStorage.setItem("shareTournament", JSON.stringify(t));
 		setTab(6);
 	}
+	
+	async function handleSetStart(t) {
+		try {
+			var myUrl = `${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/setstart/${t.name}`;
+			//console.log(myUrl);
+			var resp = await axios.get(myUrl);
+			var myRec = tournamentList.find(x => x.name == t.name);
+			myRec.started = true;
+			var tmpArray = tournamentList.filter(x => x.name != t.name);
+			tmpArray.push(myRec);
+			tmpArray = sortBy(tmpArray, 'name');
+			setTournamentList(tmpArray);
+			alert.info("Successfully Started tournament " + t.name);	
+		}
+		catch (e) {
+			alert.error("error updating tournament for open");
+		}		
+	}
+	
+	async function handleSetClose(t) {
+		try {
+			var myUrl = `${process.env.REACT_APP_AXIOS_BASEPATH}/stat/tournamentover/${t.name}`;
+			var resp = await axios.get(myUrl);
+			console.log(myUrl);
+			var tmpArray = tournamentList.filter(x => x.name != t.name);
+			setTournamentList(tmpArray);
+			alert.info("Successfully closed tournament " + t.name);	
+		}
+		catch (e) {
+			alert.error("error updating tournament open close");
+		}
+		//console.log(t.name, t.started, t.over);
+		
+	}
+	
+	async function handleStartClose(t) {
+		if (t.started)
+			await handleSetClose(t);
+		else
+			await handleSetStart(t);
+		return;
+		
+		console.log("Started");
+	}
+	
 	function handleMatch(t) {
 		sessionStorage.setItem("shareTournament", JSON.stringify(t));
 		setTab(4);
@@ -682,6 +727,8 @@ export default function SU_Tournament() {
 			<TableBody>  
 			{tournamentList.map( (t, index) => {
 				let myClass = classes.tdPending;
+				//console.log(t.name, t.started, t.over);
+				let myCmdText = (t.started) ? "Close" : "Start";
 				return(
 					<TableRow key={"TROW"+index}>
 					<TableCell key={"TD1"+index} align="center" component="td" scope="row" align="center" padding="none"
@@ -717,8 +764,8 @@ export default function SU_Tournament() {
 					<TableCell key={"TD14"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.link}>
-						<Link href="#" variant="body2" onClick={() => { handlePlayerInfo(t);}}>PlayerInfo</Link>
-					</Typography>
+							<Link href="#" variant="body2" onClick={() => { handleStartClose(t);}}>{myCmdText}</Link>
+						</Typography>
 					</TableCell>					
 					<TableCell key={"TD11"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>

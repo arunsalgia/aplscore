@@ -1074,6 +1074,7 @@ export default function Team() {
    try {
       let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/search/${filterName}`);
       alert.show("Successfully fetched players");
+			console.log(resp.data);
       setPlayerInfoList(resp.data);
     } catch {
       alert.error("Error fetching player info");

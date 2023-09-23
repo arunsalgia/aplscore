@@ -85,6 +85,14 @@ router.get(`/list/over`, function(req, res, next) {
   publishTournament(res, {enabled: true, over: true});
 });
 
+router.get(`/list/notover`, function(req, res, next) {
+  // TournamentRes = res;
+  setHeader(res);
+  if (!db_connection) { senderr(res, DBERROR, ERR_NODB); return; }
+  publishTournament(res, {enabled: true, over: false});
+});
+
+
 router.get(`/list/enabled`, function(req, res, next) {
   // TournamentRes = res;
   setHeader(res);
@@ -283,6 +291,28 @@ router.get('/delete/:tournamentName', async function(req, res, next) {
   sendok(res, "Deleted");
 });
 
+router.use('/setstart/:tournamentName', async function(req, res, next) {
+    // TournamentRes = res;
+    setHeader(res);
+    if (!db_connection) { senderr(res, DBERROR, ERR_NODB); return; }
+
+    var {tournamentName} = req.params;
+		
+		tournamentName = tournamentName.toUpperCase();
+    var mytournament = await Tournament.findOne({name: tournamentName});
+		
+    if (!mytournament) {
+        senderr(res, 741, `Invalid tournament name ${tname}`);
+        return;
+    }
+		
+		console.log("Setting start");
+    mytournament.started = true;
+    await mytournament.save();
+
+    console.log("Done all");
+		sendok(res, "Done");
+});
 
 router.use('/start/:tournamentName', function(req, res, next) {
     // TournamentRes = res;

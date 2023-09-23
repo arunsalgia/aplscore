@@ -125,9 +125,11 @@ router.get('/setscore/:tournamentName/:mid/:matchType/:scoreList', async functio
     manOfTheMatch: false
 
 	*/
-	console.log("Dlete manu");
+	console.log("Delete manu");
 	
+	// Delete all the record. Not just the pids.
 	await matchStat.deleteMany({mid: mid, pid: {$in: pidList } });
+	//await matchStat.deleteMany({mid: mid});
 	//let newScore = [];
 	for(let scr=0; scr<scoreList.length; ++scr) {
 		let s = scoreList[scr];
@@ -195,12 +197,12 @@ router.get('/setscore/:tournamentName/:mid/:matchType/:scoreList', async functio
 		// now update the strike rate and strike rate points
 		myRec.strikeRateValue = s.strikeRateValue
 		myRec.strikeRate = 0;
-		console.log("Start", myRec, "end");
+		//console.log("Start", myRec, "end");
 		if (myRec.ballsPlayed >= MinBallsPlayed[matchType]) {
-			console.log("Calculating SR points for ", myRec.strikeRateValue);
+			//console.log("Calculating SR points for ", myRec.strikeRateValue);
 			var dataRange = BonusStrikeRateRange.find(x => x.matchType === matchType).range;
 			for(var i=0; i<dataRange.length; ++i) {
-				console.log(dataRange[i].strikeRate);
+				//console.log(dataRange[i].strikeRate);
 				if (myRec.strikeRateValue >= dataRange[i].strikeRate) {
 					myRec.strikeRate = dataRange[i].points;
 					break;
@@ -210,7 +212,7 @@ router.get('/setscore/:tournamentName/:mid/:matchType/:scoreList', async functio
 		
 		
 		//console.log(matchType);
-		console.log("about to call cal score");
+		//console.log("about to call cal score");
 		myRec.score = calculateScore(myRec, matchType);
 		await myRec.save();
 	};
@@ -218,6 +220,26 @@ router.get('/setscore/:tournamentName/:mid/:matchType/:scoreList', async functio
 	await calculateBrief(tournamentName);
   sendok(res, "Done");
 });
+
+router.get('/deleteplayerscore/:tournamentName/:mid/:pid', async function(req, res) {
+  setHeader(res);
+  var {tournamentName, mid, pid} = req.params;
+	console.log(tournamentName, mid, pid);
+	
+	try {
+		let matchStat = mongoose.model(tournamentName, StatSchema);
+		await matchStat.deleteOne({mid: mid, pid: pid });
+		await calculateBrief(tournamentName);
+		sendok(res, "Done");
+	}
+	catch (e) {
+		senderr(res, 601, "Error dekting score of player");
+	}
+	
+	
+
+});
+
 
 router.get('/fetchscore/:cricMid', async function(req, res) {
   setHeader(res);
@@ -968,17 +990,17 @@ function calculateScore(mystatrec, type) {
     ((mystatrec.maxTouramentWicket > 0) ?  BonusMaxWicket[type] : 0);
 
 	// Bonus for 50, 75, 100 etc. runs
-	console.log("1 ", mysum);
+	//console.log("1 ", mysum);
 	
-	console.log(type);
+	//console.log(type);
 	var dataRange = BonusRunRange.find( x => x.matchType === type).range
-	console.log(dataRange);
+	//console.log(dataRange);
 	for(i=0; i<dataRange.length; ++i) {
-		console.log(dataRange[i].field, dataRange[i].points)
-		console.log(mystatrec[dataRange[i].field],  dataRange[i].points);
+		//console.log(dataRange[i].field, dataRange[i].points)
+		//console.log(mystatrec[dataRange[i].field],  dataRange[i].points);
 		mysum += mystatrec[dataRange[i].field] * dataRange[i].points ;
 	}
-	console.log("Stage1: ", mysum);
+	//console.log("Stage1: ", mysum);
 	
 	if (mystatrec.hattrick) {
 		mysum += (mystatrec.hattrick * BonusHattrick[type]);
@@ -992,7 +1014,7 @@ function calculateScore(mystatrec, type) {
 		}
 		//console.log("Stage1: ", mysum);
 	}
-	console.log("stage2 ", mysum);
+	//console.log("stage2 ", mysum);
 	
 
   mysum += 
@@ -1000,19 +1022,19 @@ function calculateScore(mystatrec, type) {
     (mystatrec.catch3 * BonusCatch3[type]) + 
     (mystatrec.runout * BonusRunOut[type]) + 
     (mystatrec.stumped * BonusStumped[type]);
-	console.log("Stage2: ", mysum);
+	//console.log("Stage2: ", mysum);
 	
   // now add penalty for duck
   mysum += (mystatrec.duck * BonusDuck[type]);
 
   // now add for economy
   mysum += (mystatrec.economy * BonusEconomy[type]);
-	console.log("Stage3: ", mysum);
+	//console.log("Stage3: ", mysum);
 	
   // now add for strike rate
   mysum += (mystatrec.strikeRate * BonusStrikeRate[type]);
 	
-  console.log("score of "+mystatrec.pid+" is: ", mysum);
+  //console.log("score of "+mystatrec.pid+" is: ", mysum);
   return  mysum
 }
 
