@@ -6,7 +6,7 @@ const {
   cricapi_get_score,
 } = require('./cricapifunctions'); 
 
-const testing = true;
+const testing = false;
 
 // modified on 17th October 2021
 async function update_scores_direct(mid, cricData) {
@@ -260,7 +260,7 @@ router.get('/fetchscore/:cricMid', async function(req, res) {
 	
   var testpid = 9999999900;
   var allStats = [];
-  console.log(myMatchData);
+  //console.log(myMatchData);
   if (myMatchData.scorecard)
   for(var sc = 0; sc < myMatchData.scorecard.length; ++sc) {
     // update batting information
@@ -418,7 +418,7 @@ router.get('/fetchscore/:cricMid', async function(req, res) {
       
     }}
   }
-	
+	//console.log(allStats);
   sendok(res, {playerScores: allStats, matchEnded: myMatchData.matchEnded }  );
   return;
   
@@ -784,7 +784,7 @@ router.get('/list/tournament/:tournamentName', async function(req, res, next) {
 	
 	
 	let matchRecs = await CricapiMatch.find({tournament : tournamentName}).sort({matchStartTime: 1});
-	console.log(matchRecs[0]);
+	//console.log(matchRecs[0]);
 	sendok(res, matchRecs);
 });
 

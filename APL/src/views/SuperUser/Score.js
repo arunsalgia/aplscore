@@ -915,10 +915,29 @@ export default function Score() {
 		}
 	}
 	
+	async function handleFetchScore() {
+		console.log(cricMid);
+		//turn;
+		try {
+			let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/match/fetchscore/${cricMid}`);
+			//ert.succes("Match Wfetch success");
+			//console.log(resp.data)
+			var tmp = [];
+			for (let i=0; i < resp.data.playerScores.length; ++i) {
+				tmp.push(resp.data.playerScores[i].record);
+			}
+			setScoreList(tmp);
+		} catch(e) {
+			console.log(e)
+			alert.error("error updating score list of match"+cricMid);
+		}
+		
+	}
+	
 	async function handleClose() {
 		try {
 			let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/match/setclose/${tournamentName}/${mid}`);
-			alert.succes("Match close success");
+			console.log("Match close success");
 		} catch(e) {
 			console.log(e)
 			alert.error("error updating score list of match"+mid);
@@ -948,8 +967,9 @@ export default function Score() {
 			</GridItem>
 			<GridItem align="right" xs={6} sm={6} md={6} lg={6} >
 			<VsButton name="Add players" onClick={ () => setIsListDrawer("LIST") } /> 
-			<VsButton name="Update match score" onClick={handleUpdate} />
+			<VsButton name="Update score" onClick={handleUpdate} />
 			<VsButton name="Set match Close" onClick={handleClose} />	
+			<VsButton name="Fetch Score" onClick={handleFetchScore} />	
 			</GridItem>
 		</Grid>
 	</div>

@@ -133,20 +133,20 @@ router.get('/auction/:tournamentName/:teamName', async function(req, res, next) 
   var {tournamentName, teamName}=req.params;
 	tournamentName = tournamentName.toUpperCase();
 	teamName = teamName.toUpperCase();
-	console.log(teamName);
+	//console.log(teamName);
   
 	// first get all the group which have subscribed to the given tournament
 	let allRecs = await IPLGroup.find({tournament: tournamentName}, {gid: 1, _id: 0});
-	console.log(allRecs);
+	//console.log(allRecs);
 	let myGroups = _.map(allRecs, 'gid');
-	console.log(myGroups);
+	//console.log(myGroups);
 	
 	// now get all player id of the group auction (for the given team)
 	allRecs = await Auction.find({team: teamName, gid: {$in: myGroups}}, {pid: 1, _id: 0});
 	//console.log(allRecs);
 	let allPids = _.map(allRecs, 'pid');
 	allPids = _.uniqBy(allPids);
-	console.log(allPids);
+	//console.log(allPids);
 	
   await publish_players(res, { tournament: tournamentName, Team: teamName, pid: {$in: allPids} } );
 });
