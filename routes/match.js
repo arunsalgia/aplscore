@@ -278,6 +278,10 @@ router.get('/fetchscore/:cricMid', async function(req, res) {
         allStats.push({cricPid: cricPid, record: batsmanStatRec});
         if (!testing) {
           var playerInfo = await Player.findOne({tournament: tournamentName, cricPid: cricPid});
+					if (! playerInfo) {
+						console.log("player", cricPid, batsmanCricRec.batsman.name, " not found");
+						continue;
+					}
           batsmanStatRec.pid = playerInfo.pid;
           batsmanStatRec.playerName = playerInfo.name;
         } 
@@ -341,6 +345,10 @@ router.get('/fetchscore/:cricMid', async function(req, res) {
         allStats.push({cricPid: cricPid, record: bowlerStatRec});
         if (!testing) {
           var playerInfo = await Player.findOne({tournament: tournamentName, cricPid: cricPid});
+					if (! playerInfo) {
+						console.log("player", cricPid, bowlerCricRec.bowler.name, " not found");
+						continue;
+					}
           bowlerStatRec.pid = playerInfo.pid;
           bowlerStatRec.playerName = playerInfo.name;        
         }
@@ -401,6 +409,10 @@ router.get('/fetchscore/:cricMid', async function(req, res) {
         allStats.push({cricPid: cricPid, record: fielderStatRec});
         if (!testing) {
           var playerInfo = await Player.findOne({tournament: tournamentName, cricPid: cricPid});
+					if (! playerInfo) {
+						console.log("player", cricPid, fielderCricRec.catcher.name, " not found");
+						continue;
+					}
           fielderStatRec.pid = playerInfo.pid;
           fielderStatRec.playerName = playerInfo.name;        
         }

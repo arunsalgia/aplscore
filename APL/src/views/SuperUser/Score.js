@@ -921,7 +921,7 @@ export default function Score() {
 		try {
 			let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/match/fetchscore/${cricMid}`);
 			//ert.succes("Match Wfetch success");
-			//console.log(resp.data)
+			console.log(resp.data)
 			var tmp = [];
 			for (let i=0; i < resp.data.playerScores.length; ++i) {
 				tmp.push(resp.data.playerScores[i].record);
