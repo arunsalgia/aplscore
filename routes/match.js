@@ -68,7 +68,7 @@ router.use('/runningscore/:matchId', async function(req, res, next) {
   //console.log(myData);
   console.log(myData);
   
-  sendok(res, {score: myData } );
+  sendok(res, myData );
 });
 
 
@@ -244,6 +244,7 @@ router.get('/deleteplayerscore/:tournamentName/:mid/:pid', async function(req, r
 router.get('/fetchscore/:cricMid', async function(req, res) {
   setHeader(res);
   var {cricMid} = req.params;
+	cbList = [];  // list of caiught and bold
 	
   let myMatch = await CricapiMatch.findOne({cricMid: cricMid});
   if (!myMatch) return senderr(res, 601, "Match not found");
@@ -292,6 +293,10 @@ router.get('/fetchscore/:cricMid', async function(req, res) {
         batsmanStatRec.mid = myMatch.mid;
         batsmanStatRec.inning = 1;
       }
+			// if catch taken then make an entry in cbList
+			if (batsmanCricRec.dismissal == "cb")
+				cbList.push(batsmanCricRec.bowler.id)
+			
       batsmanStatRec.run = batsmanCricRec.r;
       batsmanStatRec.four = batsmanCricRec["4s"];
       batsmanStatRec.six = batsmanCricRec["6s"];
@@ -366,6 +371,10 @@ router.get('/fetchscore/:cricMid', async function(req, res) {
       bowlerStatRec.oversBowled = bowlerCricRec["o"];
       bowlerStatRec.hattrick = 0;
       
+			// add catch count of caught and bowlder
+			var tmpRecs = cbList.filter(x => x === bowlerCricRec.bowler.id)
+			bowlerStatRec.catch = tmpRecs.length;
+			bowlerStatRec.catch3 = (bowlerStatRec.catch >= 3) ? 1 : 0;
       /*
       DO not do Bonus for wickets here. It will be done after hat trick information is updated in APLSCORE
       if (bowlerStatRec.hattrick === 0) {
@@ -427,7 +436,7 @@ router.get('/fetchscore/:cricMid', async function(req, res) {
       }
       fielderStatRec.runout = fielderCricRec.runout;
       fielderStatRec.stumped = fielderCricRec.stumped;
-      fielderStatRec.catch = fielderCricRec.catch;
+      fielderStatRec.catch += fielderCricRec.catch;
       fielderStatRec.catch3 = (fielderCricRec.catch >= 3) ? 1 : 0;
       
     }}
