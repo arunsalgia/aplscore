@@ -90,7 +90,7 @@ async function cricapi_get_score(matchId) {
           console.log("success");
           if (data.data) {
             myDataArray = data.data;
-						console.log(myDataArray);
+						//console.log(myDataArray);
           } 
           else {
             console.log("Errrrrrrrrrrrrrrrrrrrrrrrrrrr");

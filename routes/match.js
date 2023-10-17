@@ -305,8 +305,9 @@ router.get('/fetchscore/:cricMid', async function(req, res) {
       // if non-zero balls played and zero run and out then duck 
       //console.log(batsmanCricRec);
 			// duck not for bowler.
+			console.log(batsmanCricRec["dismissal-text"]);
 			if (playerInfo.role.toLowerCase() != "bowler")
-      if ( (batsmanStatRec.run === 0) && (batsmanStatRec.ballsPlayed > 0)  && (!batsmanCricRec["dismissal-text"].includes("not")) ) {
+      if ( (batsmanStatRec.run === 0) && (batsmanStatRec.ballsPlayed > 0)  && (!batsmanCricRec["dismissal-text"].includes("batting")) ) {
           batsmanStatRec.duck = 1;
       }
       
