@@ -28,14 +28,16 @@ import AccordionSummary from '@material-ui/core/AccordionSummary';
 import AccordionDetails from '@material-ui/core/AccordionDetails';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
-import Avatar from "@material-ui/core/Avatar"
+import Autocomplete from '@material-ui/lab/Autocomplete';
+
 import { useAlert } from 'react-alert'
-import { confirmAlert } from 'react-confirm-alert';
+//import { confirmAlert } from 'react-confirm-alert';
 import VsButton from "CustomComponents/VsButton";
 import VsCancel from "CustomComponents/VsCancel"
 import VsTextSearch from "CustomComponents/VsTextSearch";
 import VsSelect from "CustomComponents/VsSelect";
 import VsRadioGroup from "CustomComponents/VsRadioGroup";
+import VsCheckBox from "CustomComponents/VsCheckBox";
 
 import globalStyles from "assets/globalStyles";
 import sortBy from "lodash/sortBy";
@@ -45,6 +47,7 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
 import CloseIcon from '@material-ui/icons/Close';
+import FindReplaceIcon from '@material-ui/icons/FindReplace';
 
 // import CardAvatar from "components/Card/CardAvatar.js";
 // import { useHistory } from "react-router-dom";
@@ -138,7 +141,10 @@ export default function Team() {
   const [tournamentName, setTournamentName] = useState("");
   const [tournamentId, setTournamentId] = useState("");
   const [teamName, setTeamName] = useState("");
-
+	const [groupList, setGroupList] = useState([]);
+	const [selectedGroup, setSelectedGroup] = useState([]);
+	
+	
 	const [newPlayer, setNewPlayer] = useState(false);
   const [playerList, setPlayerList] = useState([]);
 	const [allPlayerList, setAllPlayerList] = useState([]);
@@ -175,6 +181,9 @@ export default function Team() {
   const [masterBowlStyle, setMasterBowlStyle] = useState("");
   const [masterBatStyle, setMasterBatStyle] = useState("");
   
+	const [originalPlayerRec, setOriginalPlayerRec] = useState(null);
+	const [replacementPlayerRec, setReplacementPlayerRec] = useState(null);
+	
   const classes = useStyles();
 	const gClasses = globalStyles();
 	
@@ -194,6 +203,9 @@ export default function Team() {
 					setTeamName(tRec.name);
 					getTeamPlayers(tRec.tournament, tRec.name);
 					getAllPlayers();
+					
+					getAllGroups(tRec.tournament);
+					
 				} catch (e) {
 					alert.error("Team name not specified");
 				}
@@ -222,6 +234,18 @@ export default function Team() {
 			console.log(e)
 			alert.error("error fetching all player list");
 			setPlayerList([]);
+		}
+	}
+	
+		async function getAllGroups(tname) {
+		try {
+			 let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/group/getgroupbytournament/${tname}`);
+			 setGroupList(resp.data);
+			 //setFilterPlayerList(resp.data);
+		} catch(e) {
+			console.log(e)
+			alert.error("error fetching group list");
+			//setPlayerList([]);
 		}
 	}
 	
@@ -558,6 +582,18 @@ export default function Team() {
 		setIsDrawerOpened("EDIT");
 	}
 	
+	async function handleReplace(t) {
+		//console.log(t);
+		setOriginalPlayerRec(t)
+		setReplacementPlayerRec(null);
+		let arr = new Array(groupList.length).fill(0);
+		//console.log(arr);
+		setSelectedGroup(arr);
+		setIsDrawerOpened("REPLACEMENT");
+	}
+	
+	
+	
 	async function addEditTeamSubmit() {
 		//console.log("In addEditTeamSubmit");
 		if (isDrawerOpened === "ADD") {
@@ -773,14 +809,18 @@ export default function Team() {
 						<Typography className={classes.apptName}>
 							{t.bowlingStyle}
 						</Typography>
-					</TableCell>
+					</TableCell>	
 					<TableCell key={"TD11"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<FindReplaceIcon color="primary" size="small" onClick={() => { handleReplace(t) } } />
+					</TableCell>					
+					<TableCell key={"TD12"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<IconButton color="primary" size="small" onClick={() => { handleEdit(t) } } >
 							<EditIcon	 />
 						</IconButton>
 					</TableCell>
-					<TableCell key={"TD12"+index} align="center" component="td" scope="row" align="center" padding="none"
+					<TableCell key={"TD13"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<VsCancel onClick={() => { handleCancel(t) } } />
 					</TableCell>
@@ -1110,6 +1150,67 @@ export default function Team() {
     setFetchFrom(value);
   }
   
+	/*
+	============= Replace,ent 
+	*/
+	
+	async function handleReplaceSubmit() {
+		if (!replacementPlayerRec ) {
+			alert.error("Replacement player not selected");
+		}
+		else if (selectedGroup.filter(x => x !== 0).length === 0)
+			alert.error("No groups have been selected");
+		else {
+			var myData = {
+				tournament: tournamentName,
+				//team: teamName,
+				originalPlayer: originalPlayerRec,
+				replacementPlayer: replacementPlayerRec,
+				groupList:  selectedGroup.filter(x => x !== 0)
+			};
+			console.log(myData);
+			myData = encodeURIComponent(JSON.stringify(myData));
+			var resp = null;
+			try {
+				// apply for both admin and member
+				let myUrl = `${process.env.REACT_APP_AXIOS_BASEPATH}/player/replace/${myData}`;
+			  resp = await axios.get(myUrl);
+				alert.show(`Successfully added replacement player ${replacementPlayerRec.name}`);
+				setIsDrawerOpened("");
+			} 
+			catch (e) {
+				//console.log(e.response);
+				switch (e.response.status) {
+					case 601:  alert.error("Replacement player already purchased"); break;
+					default:   alert.error("Unable to update the detail"); break;
+				}
+				
+			}	
+		}
+	}
+	
+	function handleSelectAll() {
+		var arr = [].concat(selectedGroup);
+		for(var i=0; i<groupList.length; ++i) {
+			arr[i] = groupList[i].gid;
+		}
+		setSelectedGroup(arr);		
+	}
+	
+	function handleDeselectAll() {
+		var arr = [].concat(selectedGroup);
+		for(var i=0; i<groupList.length; ++i) {
+			arr[i] = 0;
+		}
+		setSelectedGroup(arr);		
+	}
+	
+	function handleSelectGroup(idx) {
+		var arr = [].concat(selectedGroup);
+		arr[idx] = (arr[idx] !== 0) ? 0 : groupList[idx].gid;
+		setSelectedGroup(arr);
+	}
+	
   return (
   <div className={classes.paper} align="center" key="groupinfo">
 	<DisplayPageHeader headerName={`Configure players of team ${teamName} (Tournament: ${tournamentName})`} groupName="" tournament=""/>
@@ -1121,7 +1222,7 @@ export default function Team() {
 	{(teamName !== "") &&
 	<div>
 	<div align="right">
-		<Grid container justify="center" alignItems="center" >
+		<Grid container alignItems="center" >
 			<GridItem xs={6} sm={6} md={6} lg={6} >
 				<VsButton name="Back" align="left" onClick={handleBack} />
 			</GridItem>
@@ -1136,7 +1237,7 @@ export default function Team() {
   <VsRadioGroup value={fetchFrom} radioList={FETCHTYPES} onChange={(event) => handleRadioSelection(event.target.value)}  />
   {(fetchFrom === "SQUAD") &&
     <div>
-    <VsButton align="right" name="Fetch Players" onClick={handleFetch} />
+    <VsButton  name="Fetch Players" onClick={handleFetch} />
     <Grid container justify="center" alignItems="center" >
       <GridItem xs={4} sm={4} md={4} lg={4} >
         <VsTextSearch label="Filter Team" value={filterTeam} onClear={handleTeamClear} 
@@ -1180,6 +1281,62 @@ export default function Team() {
 		open={isDrawerOpened !== ""}
 	>
 	<VsCancel align="right" onClick={() => {setIsDrawerOpened("")}} />
+	{(isDrawerOpened === "REPLACEMENT") &&
+		<div align="center">
+			<Typography style={{padding: "5px"}}>
+				<span className={gClasses.info18} >{`Original player: `}</span>
+				<span className={gClasses.info18Blue} >{`${originalPlayerRec.name}`}</span>
+			</Typography>
+			<br />
+			<Typography style={{padding: "5px"}} className={gClasses.info18} >Replacement Player:</Typography>
+			<Autocomplete
+				disablePortal
+				id="REPLAYERSELECT"
+				value={replacementPlayerRec}
+				onChange={(event, values) => setReplacementPlayerRec(values) }
+				style={{paddingTop: "10px" }}
+				getOptionLabel={(option) => option.name || ""}
+				options={playerList}
+				sx={{ width: 300 }}
+				renderInput={(params) => <TextField {...params} />}
+			/>	
+			<Grid key={`SELECTGROUPSBTNS`} className={gClasses.noPadding} container  alignItems="flex-start" >
+			<Grid style={{margin: "5px"}} item xs={12} sm={12} md={12} lg={12} />
+			<Grid item xs={6} sm={6} md={6} lg={6} >
+				<VsButton name="Select All" align="left" onClick={handleSelectAll} />
+			</Grid>	
+			<Grid item xs={6} sm={6} md={6} lg={6} >
+				<VsButton name="Deselect All" align="right" onClick={handleDeselectAll} />
+			</Grid>
+			</Grid>								
+			<Grid key={`SELECTGROUPSHDR`} className={gClasses.noPadding} container  alignItems="flex-start" >
+			<Grid style={{margin: "5px"}} item xs={12} sm={12} md={12} lg={12} />
+				<Grid item xs={8} sm={8} md={8} lg={8} >
+					<Typography align="left" style={{marginLeft: "10px"}} className={gClasses.titleBrown}>Group Name</Typography>
+				</Grid>	
+				<Grid item xs={4} sm={4} md={4} lg={4} >
+					<Typography style={{marginRight: "5px"}} className={gClasses.titleBrown}>{"Update"}</Typography>
+				</Grid>
+			</Grid>								
+			
+			{groupList.map( (g, index) => {
+				return (
+					<Grid key={`SELECTGROUPS${index}`} className={gClasses.noPadding} container  alignItems="flex-start" >
+						<Grid style={{margin: "5px"}} item xs={12} sm={12} md={12} lg={12} />
+						<Grid item xs={9} sm={9} md={9} lg={9} >
+							<Typography align="left" style={{marginLeft: "10px"}} className={gClasses.info18Blue}>{g.name}</Typography>
+						</Grid>	
+						<Grid align="center" item xs={3} sm={3} md={3} lg={3} >
+							<VsCheckBox align="center" checked={selectedGroup[index] !== 0} onClick={() => handleSelectGroup(index) }  />
+						</Grid>
+					</Grid>								
+				)}
+			)}
+			<ValidatorForm className={gClasses.form} onSubmit={handleReplaceSubmit} >
+				<VsButton type="submit" align="center" name="Replace" />
+			</ValidatorForm>
+		</div>
+	}
 	{((isDrawerOpened === "ADD") || (isDrawerOpened === "EDIT")) &&
 		<div align="center">
 		<ValidatorForm className={gClasses.form}>

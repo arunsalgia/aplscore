@@ -430,6 +430,51 @@ router.get('/setkey/:myPid/:myKey', async function(req, res, next) {
 	sendok(res, myRec); 
 });
 
+router.get('/replace/:myData', async function(req, res, next) {
+  // PlayerRes = res;
+  setHeader(res);
+  var {myData} = req.params;
+  
+	myData = JSON.parse(myData);
+	//console.log(myData);
+	
+	// first check if replace player is already purchased in auction
+	var tmp = await Auction.countDocuments({
+		pid: myData.replacementPlayer.pid,
+		cricPid: myData.replacementPlayer.cricPid,
+		gid: {$in: myData.groupList}
+	});
+	//console.log(myData.replacementPlayer.pid, myData.replacementPlayer.cricPid, myData.groupList);
+	console.log(tmp);
+	if (tmp > 0) return senderr(res, 601, 'Player already purchased');
+	
+	// Replacement player has not been purchsed by any user from the group list
+	// Now Get the list of usres which have purchased original player
+	var userList = await Auction.find({
+		pid: myData.originalPlayer.pid,
+		cricPid: myData.originalPlayer.cricPid,
+		gid: {$in: myData.groupList}
+	}, {_id: 0, uid: 1, gid: 1});
+	console.log(userList.length);
+	//console.log(myData.replacementPlayer);
+	for(var i=0; i<userList.length; ++i) {
+		var myRec = new Auction({
+			gid: userList[i].gid,
+			uid: userList[i].uid,
+			pid: myData.replacementPlayer.pid,
+			cricPid: myData.replacementPlayer.cricPid,
+			team: myData.replacementPlayer.Team,
+			role:  myData.replacementPlayer.role,
+			playerName: myData.replacementPlayer.name,
+			bidAmount: 0
+		});
+		await myRec.save();
+		//console.log(myRec);
+	}
+	
+	sendok(res, 'Done');
+});
+
 router.get('/test', async function(req, res, next) {
   // PlayerRes = res;
   setHeader(res);

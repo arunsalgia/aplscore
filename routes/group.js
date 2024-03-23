@@ -79,6 +79,19 @@ router.get('/info/:groupid', async function (req, res, next) {
 });
 
 
+
+router.get('/getgroupbytournament/:tournament', async function (req, res, next) {
+  
+  setHeader(res);
+
+  var { tournament } = req.params;
+
+	var allGroups = await IPLGroup.find({tournament: tournament}, {_id: 0, name: 1, gid: 1, }).sort({name: 1});
+	
+	sendok(res, allGroups);
+});
+
+
 router.get('/close/:groupid/:ownerid', async function (req, res, next) {
   
   setHeader(res);

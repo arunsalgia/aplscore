@@ -67,6 +67,11 @@ const globalStyles = makeStyles((theme) => ({
 		fontWeight: theme.typography.fontWeightBold,	
 		color: 'blue',
 	},
+	titleBrown: {
+		fontSize: theme.typography.pxToRem(18),
+		fontWeight: theme.typography.fontWeightBold,	
+		color: 'brown',
+	},
 	vgSpacing: {
 		padding: "10px 10px", 
 		margin: "10px 10px", 
@@ -83,6 +88,21 @@ const globalStyles = makeStyles((theme) => ({
 		margin: "none",
 	},
 	patientName: {
+		fontSize: theme.typography.pxToRem(18),
+		fontWeight: theme.typography.fontWeightBold,	
+		color: 'blue',
+	},
+	info18: {
+		fontSize: theme.typography.pxToRem(18),
+		//fontWeight: theme.typography.fontWeightBold,	
+		//color: 'blue',
+	},
+	info18Bold: {
+		fontSize: theme.typography.pxToRem(18),
+		fontWeight: theme.typography.fontWeightBold,	
+		//color: 'blue',
+	},	
+	info18Blue: {
 		fontSize: theme.typography.pxToRem(18),
 		fontWeight: theme.typography.fontWeightBold,	
 		color: 'blue',
