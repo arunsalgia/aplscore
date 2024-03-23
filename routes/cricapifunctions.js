@@ -23,6 +23,11 @@ const CricAPI_Prefix_FindPlayer = CricAPI_BasePrefix + "players" + CricApl_BaseK
 const CricAPI_PostFix_FindPlayer="&offset=0&search=";
 
 
+var testMatchId = "489be47a-7e10-4bf1-9aad-201b67f45bf8";
+var debug = false;
+
+
+
 // https://api.cricapi.com/v1/series?apikey=ef8990f6-8506-41e7-8b3a-55726f58759a&offset=0
 
 
@@ -78,9 +83,9 @@ async function cricapi_get_new_matches(tournamentSeriesId) {
 
 // https://api.cricapi.com/v1/match_info?apikey=ef8990f6-8506-41e7-8b3a-55726f58759a&id=28004108-5cdd-43f7-82f3-f530bf8b2ce9
 
-
 async function cricapi_get_score(matchId) {
   var myDataArray = [];
+	if (debug) matchId = testMatchId;
   let myURL = CricAPI_Prefix_MatchesScore + CricAPI_PostFix_NewMatches + matchId;
   console.log(myURL);
   await fetch(myURL)

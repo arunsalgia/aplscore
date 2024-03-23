@@ -1181,7 +1181,8 @@ export default function Team() {
 			catch (e) {
 				//console.log(e.response);
 				switch (e.response.status) {
-					case 601:  alert.error("Replacement player already purchased"); break;
+					case 601:  alert.error("Original player has not been purchased"); break;
+					case 602:  alert.error("Replacement player already purchased"); break;
 					default:   alert.error("Unable to update the detail"); break;
 				}
 				

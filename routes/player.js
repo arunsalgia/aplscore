@@ -438,15 +438,24 @@ router.get('/replace/:myData', async function(req, res, next) {
 	myData = JSON.parse(myData);
 	//console.log(myData);
 	
-	// first check if replace player is already purchased in auction
+	// first check if original player purchased by any member in the Group
 	var tmp = await Auction.countDocuments({
+		pid: myData.originalPlayer.pid,
+		cricPid: myData.originalPlayer.cricPid,
+		gid: {$in: myData.groupList}
+	});
+	if (tmp === 0) return senderr(res, 601, 'Original Player not purchased');
+	
+	
+	// first check if replace player is already purchased in auction
+	tmp = await Auction.countDocuments({
 		pid: myData.replacementPlayer.pid,
 		cricPid: myData.replacementPlayer.cricPid,
 		gid: {$in: myData.groupList}
 	});
 	//console.log(myData.replacementPlayer.pid, myData.replacementPlayer.cricPid, myData.groupList);
 	console.log(tmp);
-	if (tmp > 0) return senderr(res, 601, 'Player already purchased');
+	if (tmp > 0) return senderr(res, 602, 'Player already purchased');
 	
 	// Replacement player has not been purchsed by any user from the group list
 	// Now Get the list of usres which have purchased original player
