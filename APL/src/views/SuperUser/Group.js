@@ -130,6 +130,12 @@ export default function SU_Group() {
 	const [newGroup, setNewGroup] = useState(false);
   const [ownerNames, setOwnweNames] = useState([]);
 
+	const [tournamenetRec, setTournamentRec] = useState({name: ""});
+	const [onlyCurrent, setOnlyCurrent] = useState(false);
+	const [fromAuction, setFromAuction] = useState(false);
+	const [currentGroup, setCurrentGroup] = useState(null);
+	
+	
   const [groupName, setGroupName] = useState("");
   const [tournamentName, setTournamentName] = useState("");
   const [auctionStatus, setAuctionStatus] = useState(AuctionStatusList[0]);
@@ -156,12 +162,16 @@ export default function SU_Group() {
   const alert = useAlert();
 	
   useEffect(() => {
-      const a = async () => {
-        await getAllTournament();
-        await getAllGroup();
+      const a = async (tRec) => {
+        //await getAllTournament();
+        await getAllGroup(tRec.name);
         await getAllGroupOwnerNames();
       }
-		  a();
+			
+			let tRec = JSON.parse(sessionStorage.getItem("shareTournament"));
+			setTournamentRec(tRec);
+			
+		  a(tRec);
   }, [])
 
   async function getAllTournament() {
@@ -173,10 +183,16 @@ export default function SU_Group() {
 			alert.error("error fetching tournament list");
 		}
 	}
-
-  async function getAllGroup() {
+	
+	async function getTournamentPlayers(tName) {
+		
+	}
+	
+	
+  async function getAllGroup(tName) {
 		try {
-			 let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/group/list`);
+			 let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/group/getgroupbytournament/${tName}`);			
+			 //let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/group/list`);
 			 setGroupList(resp.data);
 		} catch(e) {
 			console.log(e)
@@ -622,10 +638,14 @@ export default function SU_Group() {
 		setTab(2);
 	}
 	
-	function handlePlayerInfo(t) {
-		sessionStorage.setItem("shareTournament", JSON.stringify(t));
-		setTab(6);
+	function handleAddPlayer(t) {
+		setCurrentGroup(t);
+		setOnlyCurrent(true);
+		setFromAuction(true);
+		setIsDrawerOpened("ADDPLAYER");
 	}
+	
+	
 	function handleMatch(t) {
 		sessionStorage.setItem("shareTournament", JSON.stringify(t));
 		setTab(4);
@@ -675,10 +695,10 @@ export default function SU_Group() {
 					className={classes.th} >
 					Owner
 					</TableCell>
-          <TableCell key={"TH24"} component="th" scope="row" align="center" padding="none"
+          {/*<TableCell key={"TH24"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
 					Tournamenet
-					</TableCell>
+					</TableCell>*/}
           <TableCell key={"TH25"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
 					Auct.Sts.
@@ -730,12 +750,12 @@ export default function SU_Group() {
 							{myName}
 						</Typography>
 					</TableCell>
-          <TableCell key={"TD4"+index} align="center" component="td" scope="row" align="center" padding="none"
+          {/*<TableCell key={"TD4"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
 							{t.tournament}
 						</Typography>
-					</TableCell>
+					</TableCell>*/}
           <TableCell key={"TD5"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
@@ -781,7 +801,7 @@ export default function SU_Group() {
 					<TableCell key={"TD14"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.link}>
-						<Link href="#" variant="body2" onClick={() => { handlePlayerInfo(t);}}>PlayerInfo</Link>
+						<Link href="#" variant="body2" onClick={() => { handleAddPlayer(t);}}>Add Player</Link>
 					</Typography>
 					</TableCell>					
 					<TableCell key={"TD11"+index} align="center" component="td" scope="row" align="center" padding="none"
@@ -811,7 +831,7 @@ export default function SU_Group() {
 	
   return (
   <div className={classes.paper} align="center" key="groupinfo">
-	<DisplayPageHeader headerName="Group List" groupName="" tournament=""/>
+	<DisplayPageHeader headerName={`Groups of tournament ${tournamenetRec.name}`} groupName="" tournament=""/>
 	<Container component="main" maxWidth="lg">
 	<CssBaseline />
 	<div align="right">
@@ -830,6 +850,8 @@ export default function SU_Group() {
 		variant="temporary"
 		open={isDrawerOpened !== ""}
 	>
+	<Container component="main" maxWidth="xs">	
+	<Box className={gClasses.boxStyle} borderColor="black" borderRadius={7} border={1} style={{paddingLeft: "5px", paddingRight: "5px"}} >
 	<VsCancel align="right" onClick={() => {setIsDrawerOpened("")}} />
 	{((isDrawerOpened === "ADD") || (isDrawerOpened === "EDIT")) &&
 		<div align="center">
@@ -875,6 +897,38 @@ export default function SU_Group() {
 		</ValidatorForm>
 		</div>
 	}
+	{(isDrawerOpened === "ADDPLAYER") &&
+	<div align="center">
+		<Typography className={classes.title}>Add Player</Typography>
+		<br />
+		<Grid className={gClasses.noPadding} key="ALLGROUP" container align="center">
+			<Grid item xs={5} sm={5} md={5} lg={5} >
+				<Typography style={{marginTop: "10px"  }} className={gClasses.info18}>{`All Groups`}</Typography>
+			</Grid>
+			<Grid item xs={2} sm={2} md={2} lg={2} >
+				<Switch color="primary" checked={onlyCurrent} onChange={() => setOnlyCurrent(!onlyCurrent) } />
+			</Grid>
+			<Grid item xs={5} sm={5} md={5} lg={5} >
+				<Typography style={{marginTop: "10px"  }} className={gClasses.info18}>{`Only ${currentGroup.name}`}</Typography>
+			</Grid>
+		</Grid>	
+		<br />
+		<Grid className={gClasses.noPadding} key="ALLGROUP" container align="center">
+			<Grid item xs={5} sm={5} md={5} lg={5} >
+				<Typography style={{marginTop: "10px"  }} className={gClasses.info18}>{`All Players`}</Typography>
+			</Grid>
+			<Grid item xs={2} sm={2} md={2} lg={2} >
+				<Switch color="primary" checked={fromAuction} onChange={() => setFromAuction(!fromAuction) } />
+			</Grid>
+			<Grid item xs={5} sm={5} md={5} lg={5} >
+				<Typography style={{marginTop: "10px"  }} className={gClasses.info18}>{`Only from auction`}</Typography>
+			</Grid>
+		</Grid>	
+		<br />
+	</div>
+	}
+	</Box>
+	</Container>
 	</Drawer>
 	</Container>
   </div>

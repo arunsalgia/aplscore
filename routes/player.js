@@ -436,14 +436,15 @@ router.get('/replace/:myData', async function(req, res, next) {
   var {myData} = req.params;
   
 	myData = JSON.parse(myData);
-	//console.log(myData);
+	console.log(myData);
 	
 	// first check if original player purchased by any member in the Group
 	var tmp = await Auction.countDocuments({
-		pid: myData.originalPlayer.pid,
+		//pid: myData.originalPlayer.pid,
 		cricPid: myData.originalPlayer.cricPid,
 		gid: {$in: myData.groupList}
 	});
+	console.log(tmp);
 	if (tmp === 0) return senderr(res, 601, 'Original Player not purchased');
 	
 	

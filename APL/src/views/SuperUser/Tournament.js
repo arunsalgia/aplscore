@@ -620,6 +620,11 @@ export default function SU_Tournament() {
 		setTab(2);
 	}
 	
+	function handleGroup(t) {
+		sessionStorage.setItem("shareTournament", JSON.stringify(t));
+		setTab(11);
+	}
+	
 	function handlePlayerInfo(t) {
 		sessionStorage.setItem("shareTournament", JSON.stringify(t));
 		setTab(6);
@@ -747,6 +752,12 @@ export default function SU_Tournament() {
 						className={myClass}>
 						<Typography className={classes.apptName}>
 							{t.type}
+						</Typography>
+					</TableCell>
+					<TableCell key={"TD20"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.link}>
+						<Link href="#" variant="body2" onClick={() => { handleGroup(t);}}>Group</Link>
 						</Typography>
 					</TableCell>
 					<TableCell key={"TD10"+index} align="center" component="td" scope="row" align="center" padding="none"

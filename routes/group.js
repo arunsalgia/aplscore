@@ -86,7 +86,7 @@ router.get('/getgroupbytournament/:tournament', async function (req, res, next) 
 
   var { tournament } = req.params;
 
-	var allGroups = await IPLGroup.find({tournament: tournament}, {_id: 0, name: 1, gid: 1, }).sort({name: 1});
+	var allGroups = await IPLGroup.find({tournament: tournament}).sort({name: 1});
 	
 	sendok(res, allGroups);
 });

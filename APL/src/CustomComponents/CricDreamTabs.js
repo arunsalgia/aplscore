@@ -299,7 +299,7 @@ export function CricDreamTabs() {
             </div>
           )}
 					<Button color="inherit" className={classes.dashButton} onClick={handleSuTournament}>Tournament</Button>
-					<Button color="inherit" className={classes.dashButton} onClick={handleSuGroup}>Group</Button>
+						{/*<Button color="inherit" className={classes.dashButton} onClick={handleSuGroup}>Group</Button>*/}
        </Toolbar>
       </AppBar>
       <DisplayCdItems/>
