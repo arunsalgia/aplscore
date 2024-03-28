@@ -1,4 +1,5 @@
-const CricAPI_Key="ef8990f6-8506-41e7-8b3a-55726f58759a";
+const Old_CricAPI_Key="ef8990f6-8506-41e7-8b3a-55726f58759a";
+const CricAPI_Key="653137ca-7ad7-40da-8fd5-ad6cd10518ca";
 
 const CricAPI_BasePrefix="https://api.cricapi.com/v1/";
 const CricApl_BaseKey = "?apikey=" + CricAPI_Key
@@ -95,7 +96,8 @@ async function cricapi_get_score(matchId) {
           console.log("success");
           if (data.data) {
             myDataArray = data.data;
-						//console.log(myDataArray);
+						console.log(myDataArray);
+						console.log(myDataArray);
           } 
           else {
             console.log("Errrrrrrrrrrrrrrrrrrrrrrrrrrr");
