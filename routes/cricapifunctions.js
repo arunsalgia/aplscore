@@ -96,7 +96,7 @@ async function cricapi_get_score(matchId) {
           console.log("success");
           if (data.data) {
             myDataArray = data.data;
-						console.log(myDataArray);
+						//console.log(myDataArray);
 						console.log(myDataArray);
           } 
           else {
@@ -104,7 +104,7 @@ async function cricapi_get_score(matchId) {
           }
         } 
         else {
-          console.log("Error fetching new matches");
+          console.log("Error fetching matches score ");
         }
     })
     .catch(e => console.log);

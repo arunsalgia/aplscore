@@ -880,7 +880,7 @@ export default function Match() {
 			</TableHead>
 			<TableBody>  
 			{newMatchList.map( (t, index) => {
-        console.log(t.matchType.toUpperCase(), t.startTime.toString() );
+        //console.log(t.matchType.toUpperCase(), t.startTime.toString() );
         if (t.matchType.toUpperCase() !== tournamentType) return null;
         //console.log(t, t.matchType, tournamentType);
         let tmp = matchList.find(x => x.cricMid === t.id);
@@ -945,6 +945,7 @@ export default function Match() {
       let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/match/newmatches/${tournamentSeriesId}`);
       alert.show("Successfully added matches of "+tournamentName);
       let dataArray = resp.data.newMatches;
+			console.log(dataArray);
       dataArray = sortBy(dataArray, 'dateTimeGMT');
       for(var i=0; i<dataArray.length; ++i) {
         var tmp = new Date(dataArray[i].dateTimeGMT);

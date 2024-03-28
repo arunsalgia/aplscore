@@ -409,7 +409,11 @@ router.get('/fetchscore/:cricMid', async function(req, res) {
     if (myMatchData.scorecard[sc].catching) {
     for (var fldrIdx = 0;  fldrIdx < myMatchData.scorecard[sc].catching.length; ++fldrIdx) {
       var fielderCricRec = myMatchData.scorecard[sc].catching[fldrIdx];
-      //console.log(fielderCricRec);
+      console.log(fielderCricRec);
+			// In IPL 2024 did not get id of fielder
+			if (!fielderCricRec.catcher) continue;
+			if (!fielderCricRec.catcher.id) continue;
+			
       var cricPid = fielderCricRec.catcher.id;
       var fielderStatRec = null;
       var tmp = allStats.find(x => x.cricPid === cricPid);
