@@ -87,7 +87,142 @@ router.get('/score/:tournamentName/:mid', async function(req, res) {
   sendok(res, matchScore);
 });
 
-router.get('/setscore/:tournamentName/:mid/:matchType/:scoreList', async function(req, res) {
+async function setScoreOfSite(tournamentName, mid, matchType, scoreList) {
+	tournamentName = tournamentName.toUpperCase();
+	mid = Number(mid);
+  //console.log(tournamentName, mid, matchType);
+
+	// declare as started
+	let myMatch = await CricapiMatch.findOne({mid: mid});
+	console.log(myMatch)
+	myMatch.matchStarted = true;
+	myMatch.save();
+
+	// now update player statistics
+	let matchStat = mongoose.model(tournamentName, StatSchema);
+	
+	scoreList = JSON.parse(scoreList);
+	//console.log(scoreList);
+
+	
+	let pidList = _.map(scoreList, 'pid');
+	pidList = _.uniqBy(pidList);
+	console.log(pidList);
+
+		
+	/*
+	    mid: 12110171,
+    pid: 9968001,
+    playerName: 'Aqib Ilyas',
+    run: 0,
+    four: 0,
+    six: 0,
+    duck: 0,
+    wicket: 0,
+    maiden: 0,
+    economy: 0,
+    runout: 0,
+    stumped: 0,
+    catch: 0,
+    manOfTheMatch: false
+
+	*/
+	
+	// Delete all the record. Not just the pids.
+	await matchStat.deleteMany({mid: mid, pid: {$in: pidList } });
+	//await matchStat.deleteMany({mid: mid});
+	//let newScore = [];
+	for(let scr=0; scr<scoreList.length; ++scr) {
+		let s = scoreList[scr];
+		let myRec = getBlankStatRecord(matchStat);
+		myRec.mid = s.mid;
+		myRec.pid = s.pid;
+		myRec.inning = 1;
+		myRec.playerName = s.playerName;
+		// batting details
+		myRec.run = s.run;
+		myRec.four = s.four;
+		myRec.six = s.six;
+		// bowling details
+		myRec.wicket = s.wicket;
+		myRec.ballsPlayed = s.ballsPlayed;
+		myRec.hattrick = s.hattrick;
+		myRec.maiden = s.maiden;
+		myRec.oversBowled = s.oversBowled;
+		// fielding details
+		myRec.runout = s.runout;
+		myRec.stumped = s.stumped;
+		myRec.catch = s.catch;
+		myRec.catch3 = (s.catch >= 3) ? 1 : 0;
+		myRec.duck = s.duck;
+		// overall performance
+		myRec.manOfTheMatch = s.manOfTheMatch;
+		
+		
+
+		// update for century, 
+		var dataRange = BonusRunRange.find( x => x.matchType === matchType).range;
+		for(i=0; i<dataRange.length; ++i) {
+			//console.log("data: ", s.run, dataRange[i].runs, dataRange[i].field);
+			if (s.run >= dataRange[i].runs) {
+				myRec[dataRange[i].field] = 1;
+				break;
+			}
+		}
+		
+		
+		if (myRec.hattrick === 0) {
+		var dataRange = BonusWicketRange.find( x => x.matchType === matchType).range;
+			for(i=0; i<dataRange.length; ++i) {
+				//console.log("data: ", s.run, dataRange[i].runs, dataRange[i].field);
+				if (s.wicket >= dataRange[i].wickets) {
+					myRec[dataRange[i].field] = 1;
+					break;
+				}
+			}
+		}
+
+		// now update economy value and economy points
+		myRec.economyValue = s.economyValue;
+		myRec.economy = 0;
+		if (myRec.oversBowled >= MinOvers[matchType]) {
+			var dataRange = BonusEconomyRange.find( x => x.matchType === matchType).range;
+			for(var i=0; i<dataRange.length; ++i) {
+				if (myRec.economyValue <= dataRange[i].economyValue) {
+					myRec.economy = dataRange[i].points;
+					break;
+				}
+			}
+		} 
+
+		// now update the strike rate and strike rate points
+		myRec.strikeRateValue = s.strikeRateValue
+		myRec.strikeRate = 0;
+		//console.log("Start", myRec, "end");
+		if (myRec.ballsPlayed >= MinBallsPlayed[matchType]) {
+			//console.log("Calculating SR points for ", myRec.strikeRateValue);
+			var dataRange = BonusStrikeRateRange.find(x => x.matchType === matchType).range;
+			for(var i=0; i<dataRange.length; ++i) {
+				//console.log(dataRange[i].strikeRate);
+				if (myRec.strikeRateValue >= dataRange[i].strikeRate) {
+					myRec.strikeRate = dataRange[i].points;
+					break;
+				}
+			}
+		} 
+		
+		
+		//console.log(matchType);
+		//console.log("about to call cal score");
+		myRec.score = calculateScore(myRec, matchType);
+		await myRec.save();
+	};
+	
+	await calculateBrief(tournamentName);
+	return true;
+}
+
+router.get('/orig_setscore/:tournamentName/:mid/:matchType/:scoreList', async function(req, res) {
   setHeader(res);
   var {tournamentName, mid, matchType, scoreList} = req.params;
 	tournamentName = tournamentName.toUpperCase();
@@ -221,6 +356,14 @@ router.get('/setscore/:tournamentName/:mid/:matchType/:scoreList', async functio
   sendok(res, "Done");
 });
 
+
+router.get('/setscore/:tournamentName/:mid/:matchType/:scoreList', async function(req, res) {
+  setHeader(res);
+  var {tournamentName, mid, matchType, scoreList} = req.params;
+	await setScoreOfSite(tournamentName, mid, matchType, scoreList);
+  sendok(res, "Done");
+});
+
 router.get('/deleteplayerscore/:tournamentName/:mid/:pid', async function(req, res) {
   setHeader(res);
   var {tournamentName, mid, pid} = req.params;
@@ -240,8 +383,217 @@ router.get('/deleteplayerscore/:tournamentName/:mid/:pid', async function(req, r
 
 });
 
+async function fetchScoreFromSite(cricMid) {
+  let myMatch = await CricapiMatch.findOne({cricMid: cricMid});
+  if (!myMatch) return {status: 601};
+  
+	console.log(cricMid);
+	
+  var tournamentName = myMatch.tournament;
+	var matchType = myMatch.type;
+  
+  // get match score from cricdata
+  var myMatchData = await cricapi_get_score(myMatch.cricMid);
+  if (!myMatchData) return {status: 602}
+  
+	var cbList = []; 
+	// now prepare for player statistics
+	let matchStat = mongoose.model(tournamentName, StatSchema);
+	
+  var testpid = 9999999900;
+  var allStats = [];
+  //console.log(myMatchData);
+  if (myMatchData.scorecard)
+  for(var sc = 0; sc < myMatchData.scorecard.length; ++sc) {
+    // update batting information
+    if (myMatchData.scorecard[sc].batting) {
+    for (var batIdx = 0;  batIdx < myMatchData.scorecard[sc].batting.length; ++ batIdx) {
+      var batsmanCricRec = myMatchData.scorecard[sc].batting[batIdx];
+      var cricPid = batsmanCricRec.batsman.id;
+      var batsmanStatRec = null;
+      var tmp = allStats.find(x => x.cricPid === cricPid);
+      if (tmp) {
+        batsmanStatRec = tmp.record;
+      }
+      else {
+        batsmanStatRec = getBlankStatRecord(matchStat);
+        allStats.push({cricPid: cricPid, record: batsmanStatRec});
+        if (!testing) {
+          var playerInfo = await Player.findOne({tournament: tournamentName, cricPid: cricPid});
+					if (! playerInfo) {
+						console.log("player", cricPid, batsmanCricRec.batsman.name, " not found");
+						continue;
+					}
+          batsmanStatRec.pid = playerInfo.pid;
+          batsmanStatRec.playerName = playerInfo.name;
+        } 
+        else {
+          batsmanStatRec.pid = ++testpid;
+          batsmanStatRec.playerName = batsmanCricRec.batsman.name;          
+        }
+        batsmanStatRec.mid = myMatch.mid;
+        batsmanStatRec.inning = 1;
+      }
+			// if catch taken then make an entry in cbList
+			if (batsmanCricRec.dismissal == "cb")
+				cbList.push(batsmanCricRec.bowler.id)
+			
+      batsmanStatRec.run = batsmanCricRec.r;
+      batsmanStatRec.four = batsmanCricRec["4s"];
+      batsmanStatRec.six = batsmanCricRec["6s"];
+      batsmanStatRec.ballsPlayed = batsmanCricRec["b"];
+      
+      // if non-zero balls played and zero run and out then duck 
+      //console.log(batsmanCricRec);
+			// duck not for bowler.
+			//console.log(batsmanCricRec["dismissal-text"]);
+			if (playerInfo.role.toLowerCase() != "bowler")
+      if ( (batsmanStatRec.run === 0) && (batsmanStatRec.ballsPlayed > 0)  && (!batsmanCricRec["dismissal-text"].includes("batting")) ) {
+          batsmanStatRec.duck = 1;
+      }
+      
+      // update bonus for 50, 100, 150, 200 
+      var dataRange = BonusRunRange.find( x => x.matchType === matchType).range;
+      for(var i=0; i<dataRange.length; ++i) {
+        //console.log("data: ", s.run, dataRange[i].runs, dataRange[i].field);
+        if (batsmanStatRec.run >= dataRange[i].runs) {
+          batsmanStatRec[dataRange[i].field] = 1;
+          break;
+        }
+      }
+    
+      // update strike rate and its bonus
+      batsmanStatRec.strikeRateValue = batsmanCricRec["sr"];
+      batsmanStatRec.strikeRate = 0;
+      if (batsmanStatRec.ballsPlayed >= MinBallsPlayed[matchType]) {
+        //console.log("Calculating SR points for "+batsmanStatRec.strikeRateValue);
+        var dataRange = BonusStrikeRateRange.find(x => x.matchType === matchType).range;
+        for(var i=0; i<dataRange.length; ++i) {
+          //console.log(dataRange[i].strikeRate);
+          if (batsmanStatRec.strikeRateValue >= dataRange[i].strikeRate) {
+            batsmanStatRec.strikeRate = dataRange[i].points;
+            break;
+          }
+        }
+      } 
+		
+    }}
+    
+    // update bowling information
+    if (myMatchData.scorecard[sc].bowling) {
+    for (var bowlIdx = 0;  bowlIdx < myMatchData.scorecard[sc].bowling.length; ++ bowlIdx) {
+      var bowlerCricRec = myMatchData.scorecard[sc].bowling[bowlIdx];
+      var cricPid = bowlerCricRec.bowler.id;
+      var bowlerStatRec = null;
+      var tmp = allStats.find(x => x.cricPid === cricPid);
+      if (tmp) {
+        bowlerStatRec = tmp.record;
+      }
+      else {
+        bowlerStatRec = getBlankStatRecord(matchStat);
+        allStats.push({cricPid: cricPid, record: bowlerStatRec});
+        if (!testing) {
+          var playerInfo = await Player.findOne({tournament: tournamentName, cricPid: cricPid});
+					if (! playerInfo) {
+						console.log("player", cricPid, bowlerCricRec.bowler.name, " not found");
+						continue;
+					}
+          bowlerStatRec.pid = playerInfo.pid;
+          bowlerStatRec.playerName = playerInfo.name;        
+        }
+        else {
+          bowlerStatRec.pid = ++testpid;
+          bowlerStatRec.playerName = bowlerCricRec.bowler.name;          
+        }
+        bowlerStatRec.inning = 1;
+        bowlerStatRec.mid = myMatch.mid;
+      }
+      bowlerStatRec.wicket = bowlerCricRec["w"];
+      bowlerStatRec.maiden = bowlerCricRec["m"];
+      bowlerStatRec.oversBowled = bowlerCricRec["o"];
+      bowlerStatRec.hattrick = 0;
+      
+			// add catch count of caught and bowlder
+			var tmpRecs = cbList.filter(x => x === bowlerCricRec.bowler.id)
+			bowlerStatRec.catch = tmpRecs.length;
+			bowlerStatRec.catch3 = (bowlerStatRec.catch >= 3) ? 1 : 0;
+      /*
+      DO not do Bonus for wickets here. It will be done after hat trick information is updated in APLSCORE
+      if (bowlerStatRec.hattrick === 0) {
+        var dataRange = BonusWicketRange.find( x => x.matchType === matchType).range;
+        for(var i=0; i<dataRange.length; ++i) {
+          //console.log("data: ", s.run, dataRange[i].runs, dataRange[i].field);
+          if (bowlerStatRec.wicket >= dataRange[i].wickets) {
+            bowlerStatRec[dataRange[i].field] = 1;
+            break;
+          }
+        }
+      }
+      */
+      
+      // now update economy value and economy bonus
+      bowlerStatRec.economyValue = bowlerCricRec["eco"];
+      bowlerStatRec.economy = 0;
+      if (bowlerStatRec.oversBowled >= MinOvers[matchType]) {
+        var dataRange = BonusEconomyRange.find( x => x.matchType === matchType).range;
+        for(var i=0; i<dataRange.length; ++i) {
+          if (bowlerStatRec.economyValue <= dataRange[i].economyValue) {
+            bowlerStatRec.economy = dataRange[i].points;
+            break;
+          }
+        }
+      } 
+      
+    }}
+  
+    // update fielding information
+    if (myMatchData.scorecard[sc].catching) {
+    for (var fldrIdx = 0;  fldrIdx < myMatchData.scorecard[sc].catching.length; ++fldrIdx) {
+      var fielderCricRec = myMatchData.scorecard[sc].catching[fldrIdx];
+      //console.log(fielderCricRec);
+			// In IPL 2024 did not get id of fielder
+			if (!fielderCricRec.catcher) continue;
+			if (!fielderCricRec.catcher.id) continue;
+			
+      var cricPid = fielderCricRec.catcher.id;
+      var fielderStatRec = null;
+      var tmp = allStats.find(x => x.cricPid === cricPid);
+      if (tmp) {
+        fielderStatRec = tmp.record;
+      }
+      else {
+        fielderStatRec = getBlankStatRecord(matchStat);
+        allStats.push({cricPid: cricPid, record: fielderStatRec});
+        if (!testing) {
+          var playerInfo = await Player.findOne({tournament: tournamentName, cricPid: cricPid});
+					if (! playerInfo) {
+						console.log("player", cricPid, fielderCricRec.catcher.name, " not found");
+						continue;
+					}
+          fielderStatRec.pid = playerInfo.pid;
+          fielderStatRec.playerName = playerInfo.name;        
+        }
+        else {
+          fielderStatRec.pid = ++testpid;
+          fielderStatRec.playerName = fielderCricRec.catcher.name;          
+        }        
+        fielderStatRec.mid = myMatch.mid;
+        fielderStatRec.inning = 1;
+      }
+      fielderStatRec.runout = fielderCricRec.runout;
+      fielderStatRec.stumped = fielderCricRec.stumped;
+      fielderStatRec.catch += fielderCricRec.catch;
+      fielderStatRec.catch3 = (fielderCricRec.catch >= 3) ? 1 : 0;
+      
+    }}
+  }
+	
+	// All success
+	return {status: 0, playerScores: allStats, matchEnded: myMatchData.matchEnded }
+}
 
-router.get('/fetchscore/:cricMid', async function(req, res) {
+
+router.get('/org_fetchscore/:cricMid', async function(req, res) {
   setHeader(res);
   var {cricMid} = req.params;
 	cbList = [];  // list of caiught and bold
@@ -448,6 +800,150 @@ router.get('/fetchscore/:cricMid', async function(req, res) {
   }
 	//console.log(allStats);
   sendok(res, {playerScores: allStats, matchEnded: myMatchData.matchEnded }  );
+  return;
+  
+	await matchStat.deleteMany({mid: mid, pid: {$in: pidList } });
+	//let newScore = [];
+	for(let scr=0; scr<scoreList.length; ++scr) {
+		let s = scoreList[scr];
+		let myRec = getBlankStatRecord(matchStat);
+		myRec.mid = s.mid;
+		myRec.pid = s.pid;
+		myRec.inning = 1;
+		myRec.playerName = s.playerName;
+		// batting details
+		myRec.run = s.run;
+		myRec.four = s.four;
+		myRec.six = s.six;
+		// bowling details
+		myRec.wicket = s.wicket;
+		myRec.ballsPlayed = s.ballsPlayed;
+		myRec.hattrick = s.hattrick;
+		myRec.maiden = s.maiden;
+		myRec.oversBowled = s.oversBowled;
+		// fielding details
+		myRec.runout = s.runout;
+		myRec.stumped = s.stumped;
+		myRec.catch = s.catch;
+		myRec.catch3 = (s.catch >= 3) ? 1 : 0;
+		myRec.duck = s.duck;
+		// overall performance
+		myRec.manOfTheMatch = s.manOfTheMatch;
+		
+		
+
+		// update for century, 
+		var dataRange = BonusRunRange.find( x => x.matchType === matchType).range;
+		for(i=0; i<dataRange.length; ++i) {
+			//console.log("data: ", s.run, dataRange[i].runs, dataRange[i].field);
+			if (s.run >= dataRange[i].runs) {
+				myRec[dataRange[i].field] = 1;
+				break;
+			}
+		}
+		
+		
+		if (myRec.hattrick === 0) {
+		var dataRange = BonusWicketRange.find( x => x.matchType === matchType).range;
+			for(var i=0; i<dataRange.length; ++i) {
+				//console.log("data: ", s.run, dataRange[i].runs, dataRange[i].field);
+				if (s.wicket >= dataRange[i].wickets) {
+					myRec[dataRange[i].field] = 1;
+					break;
+				}
+			}
+		}
+
+		// now update economy value and economy points
+		myRec.economyValue = s.economyValue;
+		myRec.economy = 0;
+		if (myRec.oversBowled >= MinOvers[matchType]) {
+			var dataRange = BonusEconomyRange.find( x => x.matchType === matchType).range;
+			for(var i=0; i<dataRange.length; ++i) {
+				if (myRec.economyValue <= dataRange[i].economyValue) {
+					myRec.economy = dataRange[i].points;
+					break;
+				}
+			}
+		} 
+
+		// now update the strike rate and strike rate points
+		myRec.strikeRateValue = s.strikeRateValue
+		myRec.strikeRate = 0;
+		if (myRec.ballsPlayed >= MinBallsPlayed[matchType]) {
+			console.log("Calculating SR points for "+myRec.strikeRateValue);
+			var dataRange = BonusStrikeRateRange.find(x => x.matchType === matchType).range;
+			for(var i=0; i<dataRange.length; ++i) {
+				console.log(dataRange[i].strikeRate);
+				if (myRec.strikeRateValue >= dataRange[i].strikeRate) {
+					myRec.strikeRate = dataRange[i].points;
+					break;
+				}
+			}
+		} 
+		
+		
+		//console.log(matchType);
+		//console.log(myRec);
+		myRec.score = calculateScore(myRec, matchType);
+		await myRec.save();
+	};
+	
+	await calculateBrief(tournamentName);
+  sendok(res, "Done");
+});
+
+
+router.get('/updatescore', async function(req, res) {
+  setHeader(res);
+
+	var currTime = new Date();
+	var openMatches =  await CricapiMatch.find({matchStartTime: {$lte: currTime}, matchEndTime: {$gte: currTime} });
+
+	var matchesAlldone = true;
+	for (var i=0; i < openMatches.length; ++i) {
+		console.log(`Fetching score of match ${openMatches[i].mid}`);
+		var result = await fetchScoreFromSite(openMatches[i].cricMid);
+		//console.log(`Result: ${result.status}`);
+		if (result.status === 0) {
+			//sendok(res, {playerScores: result.playerScores, matchEnded: result.matchEnded }  );
+			
+			await setScoreOfSite(openMatches[i].tournament,
+										openMatches[i].mid, 
+										openMatches[i].type, 
+										JSON.stringify(_.map(result.playerScores, 'record'))
+						);
+			if (result.matchEnded) {
+				openMatches[i].matchEnded = true;
+				await openMatches[i].save();
+			}
+			else
+				matchesAlldone = false;
+				
+		}
+	}
+	sendok(res, {status: matchesAlldone }  );
+  return;
+	
+		var result = await fetchScoreFromSite(cricMid);
+	if (result.status != 0)
+		senderr(res, result.status, 'Error found');
+	else
+		sendok(res, {playerScores: result.playerScores, matchEnded: result.matchEnded }  );
+  return;
+
+});
+
+router.get('/fetchscore/:cricMid', async function(req, res) {
+  setHeader(res);
+  var {cricMid} = req.params;
+	cbList = [];  // list of caiught and bold
+	
+	var result = await fetchScoreFromSite(cricMid);
+	if (result.status != 0)
+		senderr(res, result.status, 'Error found');
+	else
+		sendok(res, {playerScores: result.playerScores, matchEnded: result.matchEnded }  );
   return;
   
 	await matchStat.deleteMany({mid: mid, pid: {$in: pidList } });
