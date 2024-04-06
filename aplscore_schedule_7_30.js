@@ -39,16 +39,21 @@ async function process_Score() {
 const SLEEPTIMEMIN = 5;
 const SLEEPTIMEMS = SLEEPTIMEMIN*60*1000;
 const MAXTIMEMIN = 270;
-
+const MINTRYCOUNT = 1;
 (async () => {
 
+	var count = 0;
 	var stopTime = new Date();
 	stopTime.setMinutes(stopTime.getMinutes()+MAXTIMEMIN);
 	console.log(stopTime.toString());
 	var allDone = false;
 	while (!allDone) {
 		allDone = await process_Score();
-		console.log(allDone);
+		console.log("Before Count ",count, allDone);
+		count = count + 1;
+		if (count <= MINTRYCOUNT) 
+			allDone = false;
+		console.log("After Count ",allDone);
 		var tmp = new Date();
 		console.log(tmp.getTime(), stopTime.getTime());
 		if (tmp.getTime() > stopTime.getTime()) 
@@ -56,11 +61,13 @@ const MAXTIMEMIN = 270;
 			console.log("Time over breaking."); 
 			break; 
 		}
-		if (!allDone) {
+		console.log("Checking for sleep");
+		if (!allDone)  {
 			console.log(`Sleeping for ${SLEEPTIMEMIN} minutes`);
 			await sleep(SLEEPTIMEMS);
 			console.log(`Awake`);
 		}
+		console.log("Sleep task done");
 	}
 	
 	ProgramExit();
