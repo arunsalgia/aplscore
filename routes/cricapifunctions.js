@@ -1,4 +1,6 @@
-const CricAPI_Key="ef8990f6-8506-41e7-8b3a-55726f58759a";
+const Free_CricAPI_Key="ef8990f6-8506-41e7-8b3a-55726f58759a";
+const Paid_CricAPI_Key="b8d671a6-3b23-4d7b-b563-74e83f947741";
+const CricAPI_Key=Paid_CricAPI_Key;
 
 const CricAPI_BasePrefix="https://api.cricapi.com/v1/";
 const CricApl_BaseKey = "?apikey=" + CricAPI_Key
