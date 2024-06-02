@@ -11,7 +11,7 @@ const RETRYCOUNT = 3;
 
 const URL = `https://aplscore.herokuapp.com`;
 const DEBUG_URL = `http://localhost:4000`;
-const DEBUG_MODE = true;
+const DEBUG_MODE = false;
 
 
 const SLEEPTIMEMIN = 5;
