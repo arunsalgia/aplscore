@@ -898,7 +898,8 @@ router.get('/updatescore', async function(req, res) {
   setHeader(res);
 
 	var currTime = new Date();
-	var openMatches =  await CricapiMatch.find({matchStartTime: {$lte: currTime}, matchEndTime: {$gte: currTime} });
+	//var openMatches =  await CricapiMatch.find({matchStartTime: {$lte: currTime}, matchEndTime: {$gte: currTime} });
+	var openMatches =  await CricapiMatch.find({matchStartTime: {$lte: currTime}, matchEnded: false });
 
 	var matchesAlldone = true;
 	for (var i=0; i < openMatches.length; ++i) {
