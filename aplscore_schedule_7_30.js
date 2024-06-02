@@ -9,7 +9,15 @@ axios = require('axios');
 const RETRYCOUNT = 3;
 /// make mongoose connection
 
+const URL = `https://aplscore.herokuapp.com`;
+const DEBUG_URL = `http://localhost:4000`;
+const DEBUG_MODE = true;
 
+
+const SLEEPTIMEMIN = 5;
+const SLEEPTIMEMS = SLEEPTIMEMIN*60*1000;
+const MAXTIMEMIN = 330;
+const MINTRYCOUNT = 1;
 
 // If the Node process ends, close the Mongoose connection 
 process.on('SIGINT', function () {
@@ -24,7 +32,7 @@ async function process_Score() {
 	var status = false;
 	for(let i=0; i < RETRYCOUNT; ++i) { 
 		try {
-			let myUrl = `https://aplscore.herokuapp.com/match/updatescore`;
+			let myUrl = (DEBUG_MODE ? DEBUG_URL : URL ) + `/match/updatescore/${MAXTIMEMIN}`;
 			console.log(myUrl);
 			var result = await axios.get(myUrl);
 			status = result.data.status;
@@ -36,10 +44,6 @@ async function process_Score() {
 	return status;
 }
 
-const SLEEPTIMEMIN = 5;
-const SLEEPTIMEMS = SLEEPTIMEMIN*60*1000;
-const MAXTIMEMIN = 270;
-const MINTRYCOUNT = 1;
 (async () => {
 
 	var count = 0;

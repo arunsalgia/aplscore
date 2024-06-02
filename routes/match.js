@@ -894,12 +894,19 @@ router.get('/org_fetchscore/:cricMid', async function(req, res) {
 });
 
 
-router.get('/updatescore', async function(req, res) {
+router.get('/updatescore/:timeinmins', async function(req, res) {
   setHeader(res);
 
+	var { timeinmins } = req.params;
+	timeinmins = Number(timeinmins);
+	console.log(timeinmins);
+	
 	var currTime = new Date();
-	var openMatches =  await CricapiMatch.find({matchStartTime: {$lte: currTime}, matchEndTime: {$gte: currTime} });
-
+	currTime.setMinutes(currTime.getMinutes()+timeinmins);
+		
+	//var openMatches =  await CricapiMatch.find({matchStartTime: {$lte: currTime}, matchEndTime: {$gte: currTime} });
+	var openMatches =  await CricapiMatch.find({matchStartTime: {$lte: currTime}, matchEnded: false });
+	
 	var matchesAlldone = true;
 	for (var i=0; i < openMatches.length; ++i) {
 		console.log(`Fetching score of match ${openMatches[i].mid}`);
@@ -922,6 +929,7 @@ router.get('/updatescore', async function(req, res) {
 				
 		}
 	}
+	//console.log("return Status:-------------------- ", matchesAlldone);
 	sendok(res, {status: matchesAlldone }  );
   return;
 	
