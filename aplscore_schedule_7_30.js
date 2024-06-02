@@ -38,7 +38,7 @@ async function process_Score() {
 
 const SLEEPTIMEMIN = 5;
 const SLEEPTIMEMS = SLEEPTIMEMIN*60*1000;
-const MAXTIMEMIN = 270;
+const MAXTIMEMIN = 330;
 const MINTRYCOUNT = 1;
 (async () => {
 
