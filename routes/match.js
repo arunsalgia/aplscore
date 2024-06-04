@@ -447,6 +447,9 @@ async function fetchScoreFromSite(cricMid) {
       //console.log(batsmanCricRec);
 			// duck not for bowler.
 			//console.log(batsmanCricRec["dismissal-text"]);
+			console.log(playerInfo);
+			if (playerInfo)
+			if (playerInfo.role)
 			if (playerInfo.role.toLowerCase() != "bowler")
       if ( (batsmanStatRec.run === 0) && (batsmanStatRec.ballsPlayed > 0)  && (!batsmanCricRec["dismissal-text"].includes("batting")) ) {
           batsmanStatRec.duck = 1;
