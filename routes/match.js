@@ -214,8 +214,10 @@ async function setScoreOfSite(tournamentName, mid, matchType, scoreList) {
 		
 		//console.log(matchType);
 		//console.log("about to call cal score");
+
 		myRec.score = calculateScore(myRec, matchType);
 		await myRec.save();
+
 	};
 	
 	await calculateBrief(tournamentName);
@@ -590,7 +592,11 @@ async function fetchScoreFromSite(cricMid) {
       
     }}
   }
-	
+	//console.log("About to filter");
+	//console.log(allStats.length);
+	allStats = allStats.filter(x => x.record.playerName != "");
+	//console.log(allStats.length);
+	//console.log(finalStats);
 	// All success
 	return {status: 0, playerScores: allStats, matchEnded: myMatchData.matchEnded }
 }
@@ -1036,12 +1042,14 @@ router.get('/fetchscore/:cricMid', async function(req, res) {
 				}
 			}
 		} 
-		
+
 		
 		//console.log(matchType);
-		//console.log(myRec);
-		myRec.score = calculateScore(myRec, matchType);
-		await myRec.save();
+		console.log("PIS is ",myRec.pid, myRec.playerName);
+		if ((myRec.pid !== 0) && (myRec.playerName !== "")) {
+			myRec.score = calculateScore(myRec, matchType);
+			await myRec.save();
+		}
 	};
 	
 	await calculateBrief(tournamentName);
