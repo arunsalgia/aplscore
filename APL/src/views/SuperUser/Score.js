@@ -927,6 +927,7 @@ export default function Score() {
 				tmp.push(resp.data.playerScores[i].record);
 			}
 			setScoreList(tmp);
+			alert.success(`Score fetch success`);
 		} catch(e) {
 			console.log(e)
 			alert.error("error updating score list of match"+cricMid);
@@ -938,6 +939,7 @@ export default function Score() {
 		try {
 			let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/match/setclose/${tournamentName}/${mid}`);
 			console.log("Match close success");
+			alert.success(`Match close success`);
 		} catch(e) {
 			console.log(e)
 			alert.error("error updating score list of match"+mid);
