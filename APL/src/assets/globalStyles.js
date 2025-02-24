@@ -9,6 +9,14 @@ import { makeStyles } from '@material-ui/core/styles';
 
 
 const globalStyles = makeStyles((theme) => ({
+	normalAccordian: {
+    backgroundColor: '#FFCCBC',
+    //borderRadius: 25,
+  },
+  selectedAccordian: {
+    backgroundColor: '#B2EBF2',
+    //borderRadius: 25,
+  },
   noPadding: {
     padding: "none", 
   },

@@ -91,9 +91,76 @@ router.get('/getgroupbytournament/:tournament', async function (req, res, next) 
 	sendok(res, allGroups);
 });
 
+router.get('/acutionunautioanplayers/:tournamentName/:groupid', async function (req, res, next) {
+  
+  setHeader(res);
+
+  var { tournamentName, groupid } = req.params;
+	
+	var temp = await Auction.find({gid: groupid}).sort({playerName: 1});
+	var auctionPids = _.map(temp, 'cricPid');
+	
+	var soldPlayers = [];
+	for(var i=0; i<temp.length; ++i) {
+		soldPlayers.push({name: temp[i].playerName, cricPid: temp[i].cricPid })
+	}
+
+	var temp = await Player.find({tournament: tournamentName, cricPid: {$nin: auctionPids }}).sort({fullName: 1});
+	var unsoldPlayers = [];
+	for(var i=0; i<temp.length; ++i) {
+		unsoldPlayers.push({name: temp[i].fullName, cricPid: temp[i].cricPid })
+	}
+	sendok(res, {soldPlayers: soldPlayers, unsoldPlayers: unsoldPlayers});
+});
+
+router.get('/addplayer/:tournamentName/:groupid/:cricPid/:uidList', async function (req, res, next) {
+  
+  setHeader(res);
+
+  var {tournamentName, groupid, cricPid, uidList } = req.params;
+	groupid = Number(groupid);
+	
+	var myPlayer = await Player.findOne({tournament: tournamentName, cricPid: cricPid} );
+	console.log(myPlayer);
+	
+	var myUids = uidList.split(",");
+	console.log(myUids);
+	sendok(res, "AllOkay");
+	
+	for(var i=0; i< myUids.length; ++i) {
+		var tmp = await Auction.findOne({gid: groupid, uid: myUids[i], cricPid: cricPid} );
+		if (!tmp) {
+			var bidrec = new Auction({ 
+				uid: Number(myUids[i]),
+				pid: myPlayer.pid,
+				cricPid: myPlayer.cricPid,
+				playerName: myPlayer.name,
+				team: myPlayer.Team,
+				role: myPlayer.role,
+				gid: groupid,
+				bidAmount: 100
+			});
+			console.log(bidrec);
+			//bidrec.save();		}
+		}
+		else {
+		  console.log("Player already added to user " + 	myUids[i]);
+		}
+	}
+});
+
+
+router.get('/groupmembers/:groupid', async function (req, res, next) {
+  
+  setHeader(res);
+
+  var {  groupid } = req.params;
+	
+	var memberList = await GroupMember.find({gid: groupid}).sort({userName: 1});
+	sendok(res, memberList);
+});
 
 router.get('/close/:groupid/:ownerid', async function (req, res, next) {
-  
   setHeader(res);
 
   var { groupid, ownerid } = req.params;

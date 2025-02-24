@@ -3,6 +3,7 @@ import axios from "axios";
 import { makeStyles } from '@material-ui/core/styles';
 import Switch from "@material-ui/core/Switch";
 import Container from '@material-ui/core/Container';
+import Autocomplete from '@material-ui/lab/Autocomplete';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import { ValidatorForm, TextValidator} from 'react-material-ui-form-validator';
 import Select from "@material-ui/core/Select";
@@ -40,6 +41,8 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
 import CloseIcon from '@material-ui/icons/Close';
+
+import VsCheckBox from "CustomComponents/VsCheckBox";
 
 // import CardAvatar from "components/Card/CardAvatar.js";
 // import { useHistory } from "react-router-dom";
@@ -132,7 +135,7 @@ export default function SU_Group() {
 
 	const [tournamenetRec, setTournamentRec] = useState({name: ""});
 	const [onlyCurrent, setOnlyCurrent] = useState(false);
-	const [fromAuction, setFromAuction] = useState(false);
+	const [unsoldPlayerType, setSoldPlayerType] = useState(true);
 	const [currentGroup, setCurrentGroup] = useState(null);
 	
 	
@@ -152,6 +155,23 @@ export default function SU_Group() {
   const [registerStatus, setRegisterStatus] = useState(0);
   const [labelNumber, setLabelNumber] = useState(0);
   const [newTeamList, setNewTeamList] = useState([]);
+	
+	const [soldPlayers, setSoldPlayers] = useState([]);
+	const [unsoldPlayers, setUnsoldPlayers] = useState([]);
+	const [playerList, setPlayerList] = useState([]);
+	const [playerType, setPlayerType] = useState("UNSOLDPLAYERS");
+	const [playerRec, setPlayerRec] = useState({name: ""});
+	const [memberRec, setMemberRec] = useState({});
+	const [memberList, setMemberList] = useState([]);
+	const [cbArray, setCbArray] = useState(Array(100).fill(""));
+	const [selectedFranchisee, setSelectedFranchisee] = useState("");
+		// show in accordion
+	const [expandedPanel, setExpandedPanel] = useState("");
+	const handleAccordionChange = (panel) => (event, isExpanded) => {
+    setExpandedPanel(isExpanded ? panel : false);
+  };
+	
+	
     // {label: "TEAM1", existingTeam: true, name: "INDIA"},
     // {label: "TEAM2", existingTeam: true, name: "ENGLAND"},
     // // {label: "TEAM3", existingTeam: false, name: ""},
@@ -227,11 +247,6 @@ export default function SU_Group() {
     return `TEAM${newNum}`;
   }
   
-  const [expandedPanel, setExpandedPanel] = useState(false);
-  const handleAccordionChange = (panel) => (event, isExpanded) => {
-    // console.log({ event, isExpanded });
-    setExpandedPanel(isExpanded ? panel : false);
-  };
   
   function ShowTeamImage(props) {
     let myTeam = getImageName(props.teamName);
@@ -377,7 +392,7 @@ export default function SU_Group() {
     return (newTeamList.map(team =>
     <Accordion expanded={expandedPanel === team.label} onChange={handleAccordionChange(team.label)}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content" id="panel1a-header">
-        <Grid container justify="center" alignItems="center" >
+        <Grid container justifyContent="center" alignItems="center" >
             <GridItem xs={9} sm={9} md={9} lg={9} >
             <Typography className={classes.heading}>{team.name}</Typography>
             </GridItem>
@@ -393,59 +408,74 @@ export default function SU_Group() {
     ));
   }
   
+ function ShowRegisterStatus() {
+    //console.log(`Status is ${registerStatus}`);
+    let myMsg;
+    let errmsg = true;
+    switch (registerStatus) {
+      case 1001:
+        myMsg = 'Player not selected';
+        break;
+      case 1002:
+        myMsg = 'no franchisee(s) selected';
+        break;
+      case 1003:
+        myMsg = 'Error adding player';
+        break;
+       case 0:
+        myMsg = ``;
+        errmsg = false;
+        break;      
+      default:
+        myMsg = `Unknown error code ${registerStatus}`;
+        break;
+    }
+    let myClass = (errmsg) ? classes.error : classes.root;
+    return(
+      <div>
+        <Typography className={myClass}>{myMsg}</Typography>
+      </div>
+    );
+  }
+
       
   async function handleSubmit() {
-    let tmp;
-    console.log("Submit Clicked");
-    let errCode = 0;
-    if (tournamentName.length === 0) {
-      setRegisterStatus(2001);
-      return;
-    }
-    if (tournamentType.length === 0) {
-      setRegisterStatus(2002);
-      return;
-    } 
-    if (newTeamList.length <= 1) {
-      setRegisterStatus(2003);
-      return;
-    } 
-    tmp = newTeamList.filter(x => x.name === "");
-    if (tmp.length > 0) {
-      setRegisterStatus(2004);
-      return;
-    } 
-    let i;
-    for (i=0; i<newTeamList.length; ++i) {
-      let  tmp = newTeamList.find(x => x.name === newTeamList[i].name);
-      if (tmp.length > 1) {
-        setRegisterStatus(2005);
-        return;
-      }
-    }
-    try {
-      // add tournament
-      await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/update/${tournamentName}/${tournamentDesc}/${tournamentType}`);
-    } catch {
-      setRegisterStatus(2006);  // duplicate tournament name
-      return;
-    }
-    try {
-      await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/team/tournamentdelete/${tournamentName}`);
-      // add all teams 1 by 1 
-      let i;
-      for(i=0; i<newTeamList.length; ++i) {
-        let tm = newTeamList[i];
-        //console.log(`Now setting team ${tm.name}`)
-        await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/team/add/${tournamentName}/${tm.name}`);
-        //console.log(`done team ${tm.name}`)
-      };
-      setRegisterStatus(2000);  
-    } catch {
-      setRegisterStatus(2007);
-    }
-    console.log(`All done `)
-  }
+		console.log("Hello");
+		console.log(playerRec);
+		if (!playerRec) {
+			setRegisterStatus(1001);
+			return;
+		}
+		
+		if (playerRec.name == "") {
+			setRegisterStatus(1001);
+			return;
+		}
+
+		if (selectedFranchisee === "") {
+			setRegisterStatus(1002);
+			return;
+		}
+		
+		console.log("All fine");
+		
+		let tmpArray = [];
+		for (var i=0; i< cbArray.length; ++i) {
+			console.log(memberRec[i]);
+			if (cbArray[i] !== "")  tmpArray.push(memberList[i].uid.toString());
+		}
+		let myUrl = `${process.env.REACT_APP_AXIOS_BASEPATH}/group/addplayer/${tournamenetRec.name}/${currentGroup.gid}/${playerRec.cricPid}/${tmpArray}`
+		console.log(myUrl);
+		tmpArray = cbArray.filter(x => x !== "");
+		try {
+			await axios.get(myUrl);
+			setIsDrawerOpened("");
+			alert.success(`Successfully added player  ${playerRec.name} to franchisee ${tmpArray.join(", ")}`);
+		}
+		catch(e) {
+		  setRegisterStatus(1003);	
+		}
+	}
 
   function ShowResisterStatus() {
     //console.log(`Status is ${registerStatus}`);
@@ -633,16 +663,58 @@ export default function SU_Group() {
 
 	}
 	
+	
+	async function getGroupPlayers(t) {
+		try {
+			// get
+			let myUrl = `${process.env.REACT_APP_AXIOS_BASEPATH}/group/groupmembers/${t.gid}`
+			let resp = await axios.get(myUrl);
+			setMemberList(resp.data);
+			console.log(resp.data);
+			myUrl = `${process.env.REACT_APP_AXIOS_BASEPATH}/group/acutionunautioanplayers/${tournamenetRec.name}/${t.gid}`
+			//console.log(myUrl);
+			resp = await axios.get(myUrl);
+			setUnsoldPlayers(resp.data.soldPlayers);
+			setSoldPlayers(resp.data.unsoldPlayers);
+			setPlayerType("UNSOLDPLAYERS");
+			setPlayerList(resp.data.unsoldPlayers);
+			setPlayerRec({name: ""});
+			setMemberRec({});
+		} catch {
+			alert.error("Error fetching group players");
+		}
+	}
+
+	
+	function changePlayerType(ptype) {
+		var myPlayers = [];
+		if (ptype === "SOLDPLAYERS") {
+		  ptype = "UNSOLDPLAYERS";
+			myPlayers = [].concat(unsoldPlayers);
+		}
+		else {
+			ptype = "SOLDPLAYERS";
+			myPlayers = [].concat(soldPlayers);
+		}
+	  setPlayerType(ptype);	
+		setPlayerRec({name: ""});
+		setPlayerList(myPlayers);
+	}
+	
 	function handleTeam(t) {
 		sessionStorage.setItem("shareTournament", JSON.stringify(t));
 		setTab(2);
 	}
 	
 	function handleAddPlayer(t) {
+		//setOnlyCurrent(true);
+		getGroupPlayers(t);
 		setCurrentGroup(t);
-		setOnlyCurrent(true);
-		setFromAuction(true);
+		setSoldPlayerType(true);
 		setIsDrawerOpened("ADDPLAYER");
+		setCbArray(Array(100).fill(""));
+		setSelectedFranchisee("");
+		setRegisterStatus(0);
 	}
 	
 	
@@ -676,13 +748,13 @@ export default function SU_Group() {
 			<TableContainer>
 			<Table style={{ width: '100%' }}>
 			<TableHead>
-				<TableRow align="center">
+				<TableRow key="THHHHH1" align="center">
 					<TableCell key={"TH1"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} colSpan={colCount}>
 					{"Group List"}
 					</TableCell>
 				</TableRow>
-				<TableRow align="center">
+				<TableRow key="THHHHH2" align="center">
 					<TableCell key={"TH21"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
 					GID
@@ -711,15 +783,15 @@ export default function SU_Group() {
 					className={classes.th} >
 					Fee
 					</TableCell>
-          <TableCell key={"TH27"} component="th" scope="row" align="center" padding="none"
+          <TableCell key={"TH28"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
 					Bid Amt.
 					</TableCell>
-          <TableCell key={"TH27"} component="th" scope="row" align="center" padding="none"
+          <TableCell key={"TH29"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
 					MaxPrize
 					</TableCell>
-					<TableCell key={"TH31"} component="th" colSpan={5} scope="row" align="center" padding="none"
+					<TableCell key={"TH30"} component="th" colSpan={5} scope="row" align="center" padding="none"
 					className={classes.th} >
 					cmds
 					</TableCell>
@@ -829,13 +901,27 @@ export default function SU_Group() {
 		setTab(1);
 	}
 	
+	function handleSelectMemberCb(idx) {
+		var tmpArray = [].concat(cbArray);
+		if (tmpArray[idx] === "") {
+			tmpArray[idx] = memberList[idx].userName;
+		}
+		else
+			tmpArray[idx] = "";
+		setCbArray(tmpArray);
+		
+		tmpArray = tmpArray.filter( x => x != "");
+		setSelectedFranchisee(tmpArray.join(", "));
+	}
+	
+
   return (
   <div className={classes.paper} align="center" key="groupinfo">
 	<DisplayPageHeader headerName={`Groups of tournament ${tournamenetRec.name}`} groupName="" tournament=""/>
 	<Container component="main" maxWidth="lg">
 	<CssBaseline />
 	<div align="right">
-		<Grid container justify="center" alignItems="center" >
+		<Grid container justifyContent="center" alignItems="center" >
 			<GridItem xs={6} sm={6} md={6} lg={6} >
 				<VsButton name="Back" align="left" onClick={handleBack} />
 			</GridItem>
@@ -856,7 +942,7 @@ export default function SU_Group() {
 	{((isDrawerOpened === "ADD") || (isDrawerOpened === "EDIT")) &&
 		<div align="center">
 		<ValidatorForm className={gClasses.form} onSubmit={addEditTournamentSubmit}>
-		<Grid key="ADDEDIT" container justify="center" alignItems="center" >
+		<Grid key="ADDEDIT" container justifyContent="center" alignItems="center" >
 		<Grid item xs={12} sm={12} md={12} lg={12} >
 		<Typography className={classes.title}>{(isDrawerOpened === "ADD") ?"New Tournament" : "Edit Tournament"}</Typography>
 		</Grid>
@@ -899,32 +985,72 @@ export default function SU_Group() {
 	}
 	{(isDrawerOpened === "ADDPLAYER") &&
 	<div align="center">
-		<Typography className={classes.title}>Add Player</Typography>
+		<Typography className={classes.title}>Add Player to Franchisee</Typography>
+		<Typography className={classes.title}>(Group: {currentGroup.name})</Typography>
 		<br />
+		<Accordion expanded={expandedPanel === "selectplayer"} onChange={handleAccordionChange("selectplayer")}>
+			<Box align="right" className={(expandedPanel === "selectplayer") ? gClasses.selectedAccordian : gClasses.normalAccordian} borderColor="black" borderRadius={7} border={1} >
+			<AccordionSummary aria-controls="panel1a-content" id="panel1a-header" expandIcon={<ExpandMoreIcon />}>
+				<Typography align="left" >{"Player to be added " + ((playerRec) ? playerRec.name : "")}</Typography>
+			</AccordionSummary>
+			</Box>
 		<Grid className={gClasses.noPadding} key="ALLGROUP" container align="center">
 			<Grid item xs={5} sm={5} md={5} lg={5} >
-				<Typography style={{marginTop: "10px"  }} className={gClasses.info18}>{`All Groups`}</Typography>
+				<Typography style={{marginTop: "10px"  }} className={gClasses.info18}>{`Sold Players`}</Typography>
 			</Grid>
 			<Grid item xs={2} sm={2} md={2} lg={2} >
-				<Switch color="primary" checked={onlyCurrent} onChange={() => setOnlyCurrent(!onlyCurrent) } />
+				<Switch color="primary" checked={playerType === "UNSOLDPLAYERS"} onChange={() => changePlayerType(playerType)} />
 			</Grid>
 			<Grid item xs={5} sm={5} md={5} lg={5} >
-				<Typography style={{marginTop: "10px"  }} className={gClasses.info18}>{`Only ${currentGroup.name}`}</Typography>
+				<Typography style={{marginTop: "10px"  }} className={gClasses.info18}>{`Unsold Players`}</Typography>
 			</Grid>
+			<br />
+			<br />
+			<Grid item xs={3} sm={3} md={3} lg={3} >
+				<Typography style={{marginTop: "10px"  }} className={gClasses.info18}>Player</Typography>
+			</Grid>			
+			<Grid item xs={9} sm={9} md={9} lg={9} >
+				<Autocomplete
+					disablePortal
+					id="PLAYERREC"
+					onChange={(event, values) => setPlayerRec(values) }
+					style={{paddingTop: "10px" }}
+					getOptionLabel={(option) => option.name || ""}
+					options={(playerType !== "SOLDPLAYERS") ? soldPlayers : unsoldPlayers}
+					sx={{ width: 300 }}
+					renderInput={(params) => <TextField {...params} />}
+				/>
+			</Grid>
+			<Grid style={{marginTop: "20px"}} item xs={12} sm={12} md={12} lg={12} />
 		</Grid>	
+		</Accordion>
 		<br />
-		<Grid className={gClasses.noPadding} key="ALLGROUP" container align="center">
-			<Grid item xs={5} sm={5} md={5} lg={5} >
-				<Typography style={{marginTop: "10px"  }} className={gClasses.info18}>{`All Players`}</Typography>
-			</Grid>
-			<Grid item xs={2} sm={2} md={2} lg={2} >
-				<Switch color="primary" checked={fromAuction} onChange={() => setFromAuction(!fromAuction) } />
-			</Grid>
-			<Grid item xs={5} sm={5} md={5} lg={5} >
-				<Typography style={{marginTop: "10px"  }} className={gClasses.info18}>{`Only from auction`}</Typography>
-			</Grid>
-		</Grid>	
 		<br />
+		<Accordion expanded={expandedPanel === "selectfranchisee"} onChange={handleAccordionChange("selectfranchisee")}>
+			<Box align="right" className={(expandedPanel === "selectfranchisee") ? gClasses.selectedAccordian : gClasses.normalAccordian} borderColor="black" borderRadius={7} border={1} >
+			<AccordionSummary aria-controls="panel1a-content" id="panel1a-header" expandIcon={<ExpandMoreIcon />}>
+				<Typography align="left" >{"Selected franchisee "+selectedFranchisee}</Typography>
+			</AccordionSummary>
+			</Box>
+			{memberList.map( (m, index) => {
+				return (
+					<Grid key={"SELECTMEMBERS"+index} className={gClasses.noPadding} container  alignItems="flex-start" >
+					<Grid style={{marginTop: "10px"}}  item xs={8} sm={8} md={8} lg={8} >
+						<Typography style={{marginLeft: "10px"}} className={gClasses.title}>{m.userName}</Typography>
+					</Grid>	
+					<Grid item xs={2} sm={2} md={2} lg={2} >
+						<VsCheckBox checked={cbArray[index] !== ""} onClick={() => handleSelectMemberCb(index) }  />
+					</Grid>
+					</Grid>	
+				)}
+			)}
+		</Accordion>
+		<br />
+		<ShowRegisterStatus />
+		<br />
+		<br />
+		<VsButton align="center" name="Submit" onClick={handleSubmit} />
+		
 	</div>
 	}
 	</Box>
