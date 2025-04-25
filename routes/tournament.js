@@ -247,6 +247,39 @@ router.get('/add/:tournamentName/:tournamentDesc/:tournamentType/:tournamentId',
         myrec.cricTid = tournamentId;
         myrec.over = false;
 				myrec.enabled = true;
+				myrec.special = false;
+        myrec.save();
+        sendok(res, myrec);
+    } else
+        senderr(res, 742,`Tournament ${tournamentName} already exists`);
+});
+
+router.get('/addspecial/:tournamentName/:tournamentDesc/:tournamentType', async function(req, res, next) {
+    // TournamentRes = res;
+    setHeader(res);
+    if (!db_connection) { senderr(res, DBERROR, ERR_NODB); return; }
+
+    var {tournamentName, tournamentDesc, tournamentType} = req.params;
+		tournamentType = tournamentType.toUpperCase();
+		tournamentName = tournamentName.toUpperCase();
+		//return senderr(res, 751,`Tournament ${tournamentName} already exists`);
+
+    if (!["TEST", "ODI", "T20", "OTHER"].includes(tournamentType)) {
+      senderr(res, 743, `Invalid tournament type ${tournamentType}. Has be be either TEST, ODI or T20`);
+      return;
+    }
+    
+    var myrec = await Tournament.findOne({name: tournamentName});
+    if (!myrec) {
+        myrec = new Tournament();
+        myrec.name = tournamentName;
+        myrec.desc = tournamentDesc;
+        myrec.type = tournamentType;
+				myrec.started = false;
+        myrec.cricTid = tournamentName;
+        myrec.over = false;
+				myrec.enabled = true;
+				myrec.special = true;
         myrec.save();
         sendok(res, myrec);
     } else
@@ -393,16 +426,17 @@ router.get('/tournament', async function(req, res, next) {
   sendok(res, matchesOfTournament);
 });
 
-router.get('/arun/:tournamentName', async function(req, res, next) {
+router.get('/arun', async function(req, res, next) {
   // TournamentRes = res;
   setHeader(res);
   if (!db_connection) { senderr(res, DBERROR, ERR_NODB); return; }
 
-  var {tournamentName} = req.params;
 
-  let myTournament = await Tournament.findOne({name: tournamentName})
-  if (!myTournament) { senderr(res, 601, "Invalid tournament"); return; };
-  checkTournamentOver(tournamentName);
+  let tournamentList = await Tournament.find({})
+  for(var i=0; i<tournamentList.length; ++i) {
+	   tournamentList[i].special = false;
+     await 		 tournamentList[i].save();
+	}
   sendok(res, "Checking done");
 });
 

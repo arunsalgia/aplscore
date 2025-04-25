@@ -574,6 +574,7 @@ export default function Team() {
 	}
 	
 	async function handleEdit(t) {
+		setCricPlayerId(t.cricPid);
 		setPid(t.pid);
 		setPlayerName(t.name);
 		setRole(t.role);
@@ -596,7 +597,34 @@ export default function Team() {
 	
 	async function addEditTeamSubmit() {
 		//console.log("In addEditTeamSubmit");
-		if (isDrawerOpened === "ADD") {
+		// if new player is for special type of tournament then
+		if ((cricPlayerId === "NEWSPECIAL") && (isDrawerOpened === "ADD")){
+			try {
+				let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/addspecial/${pid}/${playerName}/${tournamentName}/${teamName}/${role}/${battingStyle}/${bowlingStyle}`);
+				alert.show("Successfully added special Player "+playerName);
+				let tmpArray = [resp.data].concat(playerList);
+				tmpArray = sortBy(tmpArray, 'name');
+				setPlayerList(tmpArray);
+				setIsDrawerOpened("")
+			} catch {
+				alert.error("Error adding special player "+playerName);
+			}
+		} 
+		else if (isDrawerOpened === "EDIT") {
+			try {
+				let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/update/${pid}/${playerName}/${tournamentName}/${teamName}/${role}/${battingStyle}/${bowlingStyle}`);
+				alert.show("Successfully update Player "+pid);
+				let tmpArray = playerList.filter(x => x.pid !== pid)
+				tmpArray = [resp.data].concat(tmpArray);
+				tmpArray = sortBy(tmpArray, 'name');
+				setPlayerList(tmpArray);
+				setIsDrawerOpened("")
+			} catch {
+				alert.error("Error updating details of tournament "+tournamentName);
+			}
+		 	
+		}
+		else if (isDrawerOpened === "ADD") {
 			try {
 				// add tournament
 				let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/add/${pid}/${playerName}/${tournamentName}/${teamName}/${role}/${battingStyle}/${bowlingStyle}/${cricPlayerId}`);
@@ -608,7 +636,8 @@ export default function Team() {
 			} catch {
 				alert.error("Error adding player "+playerName);
 			}
-		} else if (isDrawerOpened === "EDIT") {
+		} 
+		else if (isDrawerOpened === "EDIT") {
 			try {
 				let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/update/${pid}/${playerName}/${tournamentName}/${teamName}/${role}/${battingStyle}/${bowlingStyle}`);
 				alert.show("Successfully update Player "+pid);
@@ -1079,6 +1108,17 @@ export default function Team() {
 		setIsListDrawer("PLAYERLIST");
 		console.log("In select")
 	}
+	
+	function selectNewPlayer() {
+		setCricPlayerId("NEWSPECIAL");
+		setPid(0);
+		setPlayerName("");
+		setRole("AllRounder");
+		setBowlingStyle("NA");
+		setBattingStyle("NA")
+		setIsDrawerOpened("ADD");
+	}
+	
 
 	function DisplayFilter() {
 	return (
@@ -1227,7 +1267,10 @@ export default function Team() {
 			<GridItem xs={6} sm={6} md={6} lg={6} >
 				<VsButton name="Back" align="left" onClick={handleBack} />
 			</GridItem>
-			<GridItem xs={6} sm={6} md={6} lg={6} >
+			<GridItem xs={3} sm={3} md={3} lg={3} >
+	      <VsButton align="right" name="Add New Special Player" onClick={selectNewPlayer} />
+			</GridItem>
+			<GridItem xs={3} sm={3} md={3} lg={3} >
 				{/*<VsButton align="right" name="Add new Player" onClick={handleAdd} />*/} 
         <VsButton align="right" name="Add Player from DB" onClick={selectExistingPlayer} />
 			</GridItem>

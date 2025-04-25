@@ -237,6 +237,50 @@ router.get('/add/:pid/:name/:tournamentName/:teamName/:role/:batStyle/:bowlStyle
   sendok(res, pRec);
 });
 
+router.get('/addspecial/:pid/:name/:tournamentName/:teamName/:role/:batStyle/:bowlStyle', async function(req, res, next) {
+  // PlayerRes = res;
+  setHeader(res);
+  var {pid, name, tournamentName, teamName, 
+      role, batStyle, bowlStyle
+    }=req.params;
+  console.log(name);
+  console.log(tournamentName);
+  console.log(teamName);
+  console.log(role);
+  console.log(batStyle);
+  console.log(bowlStyle);
+  tournamentName = tournamentName.toUpperCase();
+  teamName = teamName.toUpperCase();
+  let pRec = await Player.findOne({pid: pid, tournament: tournamentName, Team: teamName});
+	if (pRec) return senderr(res, 601, "Duplicate player");
+	
+	console.log("New Player");
+	pRec = new Player();
+	var tmp = new Date();
+	var newPid = tmp.getFullYear();
+	newPid = newPid*100 + tmp.getMonth()+ 1;
+	newPid = newPid*100 + tmp.getDate();
+	newPid = newPid*100 + tmp.getHours() ;
+	newPid = newPid*100 + tmp.getMinutes();
+	newPid = newPid*100 + tmp.getSeconds();
+	console.log(newPid);
+	//return senderr(res, 601, "Duplicate player");
+
+  pRec.cricPid = tournamentName + "-" + newPid.toString();
+	pRec.pid = newPid;
+	pRec.tournament = tournamentName;
+	pRec.Team = teamName;
+
+  console.log(pRec);
+  pRec.name = name;
+  pRec.fullName = name;
+  pRec.role = role;
+  pRec.battingStyle = batStyle;
+  pRec.bowlingStyle = bowlStyle;
+  pRec.save();
+  sendok(res, pRec);
+});
+
 // delete all the players of the team (of given tournament)
 router.get('/add/:pid/:name/:tournamentName/:teamName/:role/:batStyle/:bowlStyle/:cricPid', async function(req, res, next) {
   // PlayerRes = res;
@@ -500,7 +544,7 @@ router.get('/test', async function(req, res, next) {
 
 async function publish_players(res, filter_players)
 {
-	//console.log("About to publish");
+	console.log("About to publish");
   //console.log(filter_players);
   var plist = await Player.find(filter_players).sort({'name': 1});
   //console.log("Players count", plist);

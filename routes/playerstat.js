@@ -137,13 +137,18 @@ router.get(`/tournamentover/:tournamentName`, async function(req, res, next) {
   if (matchesNotOver.length > 0) return senderr(res, 602, "All matches not over");
 
   await updateTournamentMaxRunWicket(tournamentName);
-
+	console.log("Max done");
+	
   await updateAllGroupRankScore(tournamentName);
-
+  console.log("Group rank done");
+	
   await awardRankPrize(tournamentName);
+	console.log("Rank prize done");
+	
   tournamentRec.over = true;
   await tournamentRec.save();
 
+	console.log("Set tou close");
 
   sendok(res, matchesNotOver.length.toString());
 })

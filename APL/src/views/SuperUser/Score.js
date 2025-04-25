@@ -216,6 +216,7 @@ export default function Score() {
 	const gClasses = globalStyles();
 	
   const alert = useAlert();
+	//console.log("in SCORE");
 	
   useEffect(() => {
 		const tournament = async () => {
@@ -243,18 +244,20 @@ export default function Score() {
 	
 	async function getAllPlayers(myTournament, myTeam1, myTeam2) {
 		let myPlayers=[];
+		//console.log("Get players");
 		try {
 			let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/auction/${myTournament}/${myTeam1}`);
 			myPlayers = myPlayers.concat(resp.data);
 			resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/auction/${myTournament}/${myTeam2}`);			 
 			myPlayers = myPlayers.concat(resp.data);
-			
+			//console.log(myPlayers);
 		} catch(e) {
 			console.log(e)
 			alert.error("error fetching team list of "+myTeam1+" and "+myTeam2);
 		}
-		//console.log(myPlayers);
+		//console.log("now sorting");
 		setPlayerList(_.sortBy(myPlayers, 'name'));
+		//console.log("sorting over");
 	}
 
 	async function getScore(myTournament, mid) {

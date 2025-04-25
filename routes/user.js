@@ -30,6 +30,15 @@ router.get('/', function (req, res, next) {
     next('route');
 });
 
+router.get('/brieflist', async function (req, res, next) {
+  // CricRes = res;
+  setHeader(res);
+
+  let allUserRecs = await User.find({status: true}).sort({displayName: 1});
+  sendok(res, allUserRecs);
+});
+
+
 router.get('/xxxxalluser', async function (req, res, next) {
   // CricRes = res;
   setHeader(res);

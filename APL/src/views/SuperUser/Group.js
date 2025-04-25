@@ -90,7 +90,7 @@ const useStyles = makeStyles((theme) => ({
         color: blue[700],
     },     
     header: {
-        color: '#D84315',
+        color: '#D812315',
     }, 
     error:  {
       // right: 0,
@@ -101,12 +101,12 @@ const useStyles = makeStyles((theme) => ({
       marginTop: '0px',
   },    
     messageText: {
-          color: '#4CC417',
+          color: '#12CC1217',
           fontSize: 12,
           // backgroundColor: green[700],
     },
     symbolText: {
-        color: '#4CC417',
+        color: '#12CC1217',
         // backgroundColor: green[700],
     },
     button: {
@@ -126,6 +126,8 @@ const useStyles = makeStyles((theme) => ({
 
 const AuctionStatusList = ['PENDING', 'OVER'];
 
+const BlankStyle={marginTop: "15px"};
+
 export default function SU_Group() {
 	const [isDrawerOpened, setIsDrawerOpened] = useState("");
   const [tournamentList, setTournamentList] = useState([]);
@@ -140,13 +142,15 @@ export default function SU_Group() {
 	
 	
   const [groupName, setGroupName] = useState("");
+	const [groupGid, setGroupGid] = useState(0);
   const [tournamentName, setTournamentName] = useState("");
   const [auctionStatus, setAuctionStatus] = useState(AuctionStatusList[0]);
-  const [memberCount, setMemberCount] = useState(2);
+  const [memberCount, setMemberCount] = useState(6);
   const [memberFee, setMemberFee] = useState(500);
-  const [bidAmount, setBidAmount] = useState(1000);
+  const [bidAmount, setBidAmount] = useState("200");
   const [prizeCount, setPrizeCount] = useState(1);
-
+	const [maxAutionPlayers, setMaxAutionPlayers] = useState(25);
+	const [maxAutionCoins, setMaxAutionCoins] = useState(2000);
 
   const [tournamentType, setTournamentType] = useState("T20");
   const [tournamentDesc, setTournamentDesc] = useState("");
@@ -194,25 +198,11 @@ export default function SU_Group() {
 		  a(tRec);
   }, [])
 
-  async function getAllTournament() {
-		try {
-			 let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/list`);
-			 setTournamentList(resp.data);
-		} catch(e) {
-			console.log(e)
-			alert.error("error fetching tournament list");
-		}
-	}
-	
-	async function getTournamentPlayers(tName) {
-		
-	}
-	
-	
+
   async function getAllGroup(tName) {
 		try {
 			 let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/group/getgroupbytournament/${tName}`);			
-			 //let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/group/list`);
+			 console.log(resp.data);
 			 setGroupList(resp.data);
 		} catch(e) {
 			console.log(e)
@@ -230,24 +220,7 @@ export default function SU_Group() {
 		}
 	}
 	
-	async function getTournamentTeams(myName) {
-		try {
-			 let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/team/tournament/${myName}`);
-			 setGroupList(resp.data);
-			 alert.status("Fetched teams of tournament "+tournamentName);
-		} catch(e) {
-			console.log(e)
-			alert.error("error fetching tournament list");
-		}
-	}
-	
-  function getNewTeamLabel() {
-    let newNum = labelNumber + 1;
-    setLabelNumber(newNum);
-    return `TEAM${newNum}`;
-  }
-  
-  
+
   function ShowTeamImage(props) {
     let myTeam = getImageName(props.teamName);
     return(
@@ -264,150 +237,7 @@ export default function SU_Group() {
     setNewTeamList(clone);
   }
 
-  function handleTeamSelect(label, newName) {
-    // console.log(`${label}  ${newName}`)
-    if (newName === "") {
-      setRegisterStatus(1001);
-      return;
-    } 
-    let clone = [].concat(newTeamList);
-    let tmp = clone.find(x => x.name === newName);
-    if ((tmp) && (tmp.label !== label)) {
-      setRegisterStatus(1002);
-    } else {
-      setRegisterStatus(0);
-    }
-    tmp = clone.find(x => x.label === label);
-    tmp.name = newName;
-    setNewTeamList(clone);
-  }
 
-  function handleTeamValidator(label, newName) {
-    // console.log(`${label}  ${newName}`)
-    let clone = [].concat(newTeamList);
-    let tmp = clone.find(x => x.label === label);
-    tmp.name = newName.toUpper();
-    setNewTeamList(clone);
-  }
-
-  function setTeamName(label) {
-    //console.log(`${label}`);
-    let chkstr = document.getElementById(`LABEL_${label}`).value.toUpperCase();
-    //setfilterString(chkstr);
-    if (chkstr.length === 0) {
-      setRegisterStatus(1001);
-      return;
-    }
-    //console.log(chkstr);
-    let clone = [].concat(newTeamList);
-    let tmp = clone.find(x => x.name === chkstr);
-    if ((tmp) && (tmp.label !== label)) {
-      setRegisterStatus(1002);
-      return;
-    }
-    tmp = clone.find(x => x.label === label);
-    tmp.name = chkstr;
-    setNewTeamList(clone);
-    setRegisterStatus(0);
-  }
-
-  function GetTeam(props) {
-    // console.log("Get Team");
-    let myLabel=`LABEL_${props.myTeam.label}`;
-    if (props.myTeam.existingTeam) {
-      // let tmp = teamList.find(x => x.name === props.myTeam.name)
-      // if (!tmp) props.myTeam.name = "";
-      return(
-        <Select labelId='team' id='team'
-        variant="outlined"
-        required
-        fullWidth
-        label="Team"
-        name="Team"
-        id="Team"
-        value={props.myTeam.name}
-        //displayEmpty 
-        onChange={(event) => handleTeamSelect(props.myTeam.label, event.target.value)}
-        >
-        {teamList.map(x =>
-        <MenuItem key={x.name} value={x.name}>{x.name}</MenuItem>)}
-      </Select>
-      )      
-    } else {
-      return (
-      //   <TextValidator
-      //   key={props.myTeam.label}
-      //   variant="outlined"
-      //   required
-      //   fullWidth      
-      //   label="Team Name"
-      //   onChange={(event) => handleTeamSelect(props.myTeam.label, event.target.value)}
-      //   name="teamname"
-      //   // type=""
-      //   value={props.myTeam.name}
-      // />
-      <div className={classes.filter} align="center">
-      <TextField className={classes.filter} 
-        variant="outlined"
-        id={myLabel} margin="none" size="small" defaultValue={props.myTeam.name}/>        
-      <Button key="filterbtn" variant="contained" color="primary" size="small"
-        className={classes.button} onClick={(event) => setTeamName(props.myTeam.label)}>Submit
-      </Button>
-      </div>
-      )
-    }
-  }
-
-  function handleDelete(t) {
-    let clone = newTeamList.filter(x => x.label !== t);
-    setNewTeamList(clone);
-  }
-
-  function TeamDetails(props) {
-  // console.log(props.myTeam.existingTeam);
-  return (
-      <div key="TeamInfo">
-        <Card profile>                    
-          <CardBody profile>
-          <Typography component="div">New Team
-          <Switch 
-            color="primary"
-            checked={props.myTeam.existingTeam} 
-            onClick={() => handleSwitch(props.myTeam.label)}
-          />
-          Existing Team
-          </Typography>
-          <GetTeam myTeam={props.myTeam} />
-          <ShowResisterStatus  />
-          <Button variant="contained" color="primary" size="small"
-            onClick={() => { handleDelete(props.myTeam.label) }}
-            className={classes.button}>Delete
-          </Button>
-          </CardBody>
-        </Card>
-      </div>
-  )}
-
-  function DisplayTeam() {
-    return (newTeamList.map(team =>
-    <Accordion expanded={expandedPanel === team.label} onChange={handleAccordionChange(team.label)}>
-      <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content" id="panel1a-header">
-        <Grid container justifyContent="center" alignItems="center" >
-            <GridItem xs={9} sm={9} md={9} lg={9} >
-            <Typography className={classes.heading}>{team.name}</Typography>
-            </GridItem>
-            <GridItem xs={3} sm={3} md={3} lg={3} >
-              <ShowTeamImage teamName={team.name} />
-            </GridItem>
-        </Grid>
-      </AccordionSummary>
-      <AccordionDetails>
-        <TeamDetails myTeam={team} />
-      </AccordionDetails>
-    </Accordion>
-    ));
-  }
-  
  function ShowRegisterStatus() {
     //console.log(`Status is ${registerStatus}`);
     let myMsg;
@@ -477,104 +307,6 @@ export default function SU_Group() {
 		}
 	}
 
-  function ShowResisterStatus() {
-    //console.log(`Status is ${registerStatus}`);
-    let myMsg;
-    let errmsg = true;
-    switch (registerStatus) {
-      case 1001:
-        myMsg = 'Team name cannot be blank';
-        break;
-      case 1002:
-        myMsg = 'Dupliacte Team name';
-        break;
-      case 2000:
-        myMsg = 'Successfully updated Tournament with teams.';
-        errmsg = false;
-        break;
-      case 2001:
-        myMsg = 'Tournament name cannot be blank';
-        break;
-      case 2002:
-        myMsg = 'Tournament Type cannot be blank';
-        break;
-      case 2003:
-        myMsg = 'Minimum 2 teams required for tournament';
-        break;
-      case 2004:
-        myMsg = 'Team name cannot be blank';
-        break;
-      case 2005:
-        myMsg = 'DUplicate Team name';
-        break;
-      case 2006:
-        myMsg = 'DUplicate Tournamenet name';
-        break;
-      case 2007:
-        myMsg = 'Error updating team name';
-        break;
-      case 0:
-        myMsg = ``;
-        errmsg = false;
-        break;      
-      default:
-        myMsg = `Unknown error code ${registerStatus}`;
-        break;
-    }
-    let myClass = (errmsg) ? classes.error : classes.root;
-    return(
-      <div>
-        <Typography className={myClass}>{myMsg}</Typography>
-      </div>
-    );
-  }
-
-
-  function handleAddNewTeam() {
-    let clone = [].concat(newTeamList);  
-    let tmp = {label: "", existingTeam: true, name: ""}
-    tmp.label = getNewTeamLabel();
-    clone.push(tmp);
-    setNewTeamList(clone);
-  }
-
-  
-  async function handleTournament() {
-    console.log("get tournament");
-    if (tournamentName.length === 0) return;
-    try {
-      // let myURL = `${process.env.REACT_APP_AXIOS_BASEPATH}/player/tteam/${tournamentName}/${currTeam}`
-      let myURL = `${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/info/${tournamentName}`
-      let resp = await axios.get(myURL);
-      let tmp = resp.data;
-      if (tmp.length === 0) {
-        setTournamentName("");
-        setTournamentDesc("");
-        setTournamentType("");
-        setNewTeamList([]);
-        return;
-      }
-      setTournamentDesc(tmp[0].desc);
-      setTournamentType(tmp[0].type);
-
-      // not get all the teams
-      myURL = `${process.env.REACT_APP_AXIOS_BASEPATH}/team/tournament/${tournamentName}`
-      resp = await axios.get(myURL);
-      let clone = [];  
-      let newNum = labelNumber + 1;
-      var i;
-      for(i=0; i<resp.data.length; ++i) {
-        clone.push({label: `TEAM${newNum}`, existingTeam: true, name: resp.data[i].name});
-        ++newNum;
-      }
-      setLabelNumber(newNum);
-      setNewTeamList(clone);
-      //console.log(clone);
-    } catch(e) {
-      console.log("In error")
-    }
-  }
-
   async function handleFilter(label) {
     setNewTeamList([]);
     let chkstr = document.getElementById(label).value.toUpperCase();
@@ -598,151 +330,59 @@ export default function SU_Group() {
     // }      
   }
 
-	async function addnewGroup() {
+	async function addEditgroupSubmit() {
+		console.log("in Create edit group");
 		try {
       // add tournament
-      await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/add/${tournamentName}/${tournamentName}/${tournamentType}`);
-			alert.show("Successfully added tournamenet "+tournamentName);
+      var resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/group/${(isDrawerOpened == "ADD") ? "createspecial" : "updatespecial"}/${groupGid}/${tournamenetRec.name}/${groupName}/${memberCount}/${maxAutionCoins}/${maxAutionPlayers}`);
+			let tmp = [].concat(groupList);
+			if (isDrawerOpened != "ADD")
+				tmp = tmp.filter(x => x.gid != groupGid);
+			console.log(tmp);
+			console.log(resp.data);
+			// now add group returnsd from backend
+			tmp = [resp.data].concat(tmp);
+			console.log(tmp);
+			setGroupList(sortBy(tmp, 'name'));
+			alert.show("Successfully added/updated group "+groupName);
     } catch {
-			alert.error("Error adding tournamenet "+tournamentName);
+			alert.error("Error adding group "+groupName);
     }
-		getAllGroup();
-		setTournamentName("");
+		setIsDrawerOpened("");
 	}
 	
-	async function handleTournamentSelect(tName)
-	{
-		alert.show(tName);
-		setTournamentName(tName);
-		getTournamentTeams(tName)
-		
-	}
+
 
 	async function handleAdd() {
-		setTournamentName("");
-		setTournamentDesc("")
-		setTournamentType("")
+		setGroupName("");
+		setGroupGid(0);
 		setIsDrawerOpened("ADD");
 	}
 	
 	async function handleEdit(t) {
-		setTournamentName(t.name);
-		setTournamentDesc(t.desc)
-		setTournamentType(t.type)
+		//console.log(t);
+		setGroupGid(t.gid);
+		setGroupName(t.name);
+		setMemberCount(t.memberCount)
+		setMaxAutionCoins(t.maxBidAmount)
+		setMaxAutionPlayers(t.maxPlayers)
 		setIsDrawerOpened("EDIT");
 	}
 	
-	async function addEditTournamentSubmit() {
-		if (isDrawerOpened === "ADD") {
-			try {
-				// add tournament
-				let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/add/${tournamentName}/${tournamentDesc}/${tournamentType}`);
-				alert.show("Successfully added tournament "+tournamentName);
-				let tmpArray = [resp.data].concat(groupList);
-				tmpArray = sortBy(tmpArray, 'name');
-				setGroupList(tmpArray);
-				setIsDrawerOpened("")
-			} catch {
-				alert.error("Error adding tournament "+tournamentName);
-			}
-		} else if (isDrawerOpened === "EDIT") {
-			try {
-				// add tournament
-				let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/update/${tournamentName}/${tournamentDesc}/${tournamentType}`);
-				alert.show("Successfully updated details of tournament "+tournamentName);
-	
-				let tmpArray = groupList.filter(x => x.name !== resp.data.name);
-				tmpArray.push(resp.data);
-				tmpArray = sortBy(tmpArray, 'name');
-				setGroupList(tmpArray);
-				setIsDrawerOpened("")
-			} catch {
-				alert.error("Error updating details of tournament "+tournamentName);
-			}
-		}
 
-	}
-	
-	
-	async function getGroupPlayers(t) {
-		try {
-			// get
-			let myUrl = `${process.env.REACT_APP_AXIOS_BASEPATH}/group/groupmembers/${t.gid}`
-			let resp = await axios.get(myUrl);
-			setMemberList(resp.data);
-			console.log(resp.data);
-			myUrl = `${process.env.REACT_APP_AXIOS_BASEPATH}/group/acutionunautioanplayers/${tournamenetRec.name}/${t.gid}`
-			//console.log(myUrl);
-			resp = await axios.get(myUrl);
-			setUnsoldPlayers(resp.data.soldPlayers);
-			setSoldPlayers(resp.data.unsoldPlayers);
-			setPlayerType("UNSOLDPLAYERS");
-			setPlayerList(resp.data.unsoldPlayers);
-			setPlayerRec({name: ""});
-			setMemberRec({});
-		} catch {
-			alert.error("Error fetching group players");
-		}
-	}
 
-	
-	function changePlayerType(ptype) {
-		var myPlayers = [];
-		if (ptype === "SOLDPLAYERS") {
-		  ptype = "UNSOLDPLAYERS";
-			myPlayers = [].concat(unsoldPlayers);
-		}
-		else {
-			ptype = "SOLDPLAYERS";
-			myPlayers = [].concat(soldPlayers);
-		}
-	  setPlayerType(ptype);	
-		setPlayerRec({name: ""});
-		setPlayerList(myPlayers);
-	}
-	
-	function handleTeam(t) {
-		sessionStorage.setItem("shareTournament", JSON.stringify(t));
-		setTab(2);
-	}
-	
-	function handleAddPlayer(t) {
-		//setOnlyCurrent(true);
-		getGroupPlayers(t);
-		setCurrentGroup(t);
-		setSoldPlayerType(true);
-		setIsDrawerOpened("ADDPLAYER");
-		setCbArray(Array(100).fill(""));
-		setSelectedFranchisee("");
-		setRegisterStatus(0);
-	}
-	
-	
-	function handleMatch(t) {
-		sessionStorage.setItem("shareTournament", JSON.stringify(t));
-		setTab(4);
-	}
-	
-	async function handleCancel(t) {
+	async function handleDeleteGroup(t) {
 		try {
-			// add tournament
-			let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/team/count/tournament/${t.name}`);
-			if (resp.data.count > 0) {
-				alert.error("Cannot delete tournament "+t.name+". Delete teams first");
-				return;
-			}
-			// nor delete
-			resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/delete/${t.name}`);
-			alert.success("Successfully removed tournament "+t.name);
-			let tmpArray = groupList.filter(x => x.name !== t.name);
-			setGroupList(tmpArray);
+			let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/group/deletespecial/${t.gid}`);
+			alert.success("Successfully removed group " + t.name);
+			setGroupList(groupList.filter(x => x.name !== t.name));
 		} catch {
-			alert.error("Error adding tournament "+tournamentName);
+			alert.error("Error deleting group "+t.name);
 		}
 	}
 	
 	function DisplayGroupList() {
-	let colCount = 14;
+	let colCount = 112;
 	return (
 		<Box className={classes.allAppt} border={1} width="100%">
 			<TableContainer>
@@ -767,7 +407,7 @@ export default function SU_Group() {
 					className={classes.th} >
 					Owner
 					</TableCell>
-          {/*<TableCell key={"TH24"} component="th" scope="row" align="center" padding="none"
+          {/*<TableCell key={"TH212"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
 					Tournamenet
 					</TableCell>*/}
@@ -785,13 +425,17 @@ export default function SU_Group() {
 					</TableCell>
           <TableCell key={"TH28"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
-					Bid Amt.
+					Auc. coins
+					</TableCell>
+          <TableCell key={"TH41"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Auc. players
 					</TableCell>
           <TableCell key={"TH29"} component="th" scope="row" align="center" padding="none"
 					className={classes.th} >
 					MaxPrize
 					</TableCell>
-					<TableCell key={"TH30"} component="th" colSpan={5} scope="row" align="center" padding="none"
+					<TableCell key={"TH30"} component="th" colSpan={3} scope="row" align="center" padding="none"
 					className={classes.th} >
 					cmds
 					</TableCell>
@@ -801,7 +445,7 @@ export default function SU_Group() {
 			{groupList.map( (t, index) => {
 				let myClass = classes.tdPending;
         let tmp = ownerNames.find(x => x.uid === t.owner);
-        let myName = (tmp != null) ? tmp.displayName : "Err";
+        let myName = (tmp != null) ? tmp.displayName : "---";
 				return(
 					<TableRow key={"TROW"+index}>
 					<TableCell key={"TD1"+index} align="center" component="td" scope="row" align="center" padding="none"
@@ -822,7 +466,7 @@ export default function SU_Group() {
 							{myName}
 						</Typography>
 					</TableCell>
-          {/*<TableCell key={"TD4"+index} align="center" component="td" scope="row" align="center" padding="none"
+          {/*<TableCell key={"TD12"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
 							{t.tournament}
@@ -852,28 +496,22 @@ export default function SU_Group() {
 							{t.maxBidAmount}
 						</Typography>
 					</TableCell>
-          <TableCell key={"TD9"+index} align="center" component="td" scope="row" align="center" padding="none"
+           <TableCell key={"TD114"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{t.maxPlayers}
+						</Typography>
+					</TableCell>
+         <TableCell key={"TD9"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.apptName}>
 							{t.prizeCount}
 						</Typography>
 					</TableCell>
-					<TableCell key={"TD10"+index} align="center" component="td" scope="row" align="center" padding="none"
+					<TableCell key={"TD112"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
 						<Typography className={classes.link}>
-						<Link href="#" variant="body2" onClick={() => { handleTeam(t);}}>Team</Link>
-						</Typography>
-					</TableCell>
-					<TableCell key={"TD13"+index} align="center" component="td" scope="row" align="center" padding="none"
-						className={myClass}>
-						<Typography className={classes.link}>
-						<Link href="#" variant="body2" onClick={() => { handleMatch(t);}}>Match</Link>
-					</Typography>
-					</TableCell>	
-					<TableCell key={"TD14"+index} align="center" component="td" scope="row" align="center" padding="none"
-						className={myClass}>
-						<Typography className={classes.link}>
-						<Link href="#" variant="body2" onClick={() => { handleAddPlayer(t);}}>Add Player</Link>
+						<Link href="#" variant="body2" onClick={() => { handleGroupMember(t);}}>Members</Link>
 					</Typography>
 					</TableCell>					
 					<TableCell key={"TD11"+index} align="center" component="td" scope="row" align="center" padding="none"
@@ -884,7 +522,7 @@ export default function SU_Group() {
 					</TableCell>
 					<TableCell key={"TD12"+index} align="center" component="td" scope="row" align="center" padding="none"
 						className={myClass}>
-						<VsCancel onClick={() => { handleCancel(t) } } />
+						<VsCancel onClick={() => { handleDeleteGroup(t) } } />
 					</TableCell>
 					</TableRow>
 				)}
@@ -898,7 +536,13 @@ export default function SU_Group() {
 
 	function handleBack() {
 		//sessionStorage.setItem("shareTournament", JSON.stringify(t));
-		setTab(1);
+		console.log("back to group");
+		setTab(11);
+	}
+	
+	function handleGroupMember(grpRec) {
+		sessionStorage.setItem("shareGroup", JSON.stringify(grpRec));
+		setTab(12);
 	}
 	
 	function handleSelectMemberCb(idx) {
@@ -913,6 +557,7 @@ export default function SU_Group() {
 		tmpArray = tmpArray.filter( x => x != "");
 		setSelectedFranchisee(tmpArray.join(", "));
 	}
+	
 	
 
   return (
@@ -932,7 +577,7 @@ export default function SU_Group() {
 	</div>
 	<DisplayGroupList />
 	<Drawer className={classes.drawer}
-		anchor="top"
+		anchor="right"
 		variant="temporary"
 		open={isDrawerOpened !== ""}
 	>
@@ -941,41 +586,57 @@ export default function SU_Group() {
 	<VsCancel align="right" onClick={() => {setIsDrawerOpened("")}} />
 	{((isDrawerOpened === "ADD") || (isDrawerOpened === "EDIT")) &&
 		<div align="center">
-		<ValidatorForm className={gClasses.form} onSubmit={addEditTournamentSubmit}>
+		<ValidatorForm className={gClasses.form} onSubmit={addEditgroupSubmit}>
 		<Grid key="ADDEDIT" container justifyContent="center" alignItems="center" >
 		<Grid item xs={12} sm={12} md={12} lg={12} >
-		<Typography className={classes.title}>{(isDrawerOpened === "ADD") ?"New Tournament" : "Edit Tournament"}</Typography>
+		<Typography className={classes.title}>{(isDrawerOpened === "ADD") ?"New Group" : "Edit Group"}</Typography>
 		</Grid>
-		<Grid item xs={4} sm={4} md={4} lg={4} >
+		<Grid item xs={12} sm={12} md={12} lg={12} >
 		<TextValidator fullWidth  required className={gClasses.vgSpacing}
 			label="Tournament Name" 
-			value={tournamentName}
-			disabled={isDrawerOpened === "EDIT"}
+			defaultValue={tournamenetRec.name}
+			disabled={true}
 			onChange={() => { setTournamentName(event.target.value) }}
-			validators={['noSpecialCharacters']}
-			errorMessages={['Special characters not permitted', ]}
 		/>
 		</Grid>
-		<Grid item xs={4} sm={4} md={4} lg={4} >
+		<Grid style={BlankStyle} item xs={12} sm={12} md={12} lg={12} />
+		<Grid item xs={12} sm={12} md={12} lg={12} >
 		<TextValidator fullWidth  required className={gClasses.vgSpacing}
-			label="Tournament description" 
-			value={tournamentDesc}
-			onChange={() => { setTournamentDesc(event.target.value) }}
-			validators={['noSpecialCharacters']}
-			errorMessages={['Special characters not permitted', ]}
+			label="Group name" 
+			value={groupName}
+			onChange={() => { setGroupName(event.target.value) }}
 		/>
 		</Grid>
-		<Grid item xs={3} sm={3} md={3} lg={3} >
-			<Select labelId='team' id='team' variant="outlined" required fullWidth label="Tournament type"
-        value={tournamentType}
-        onChange={(event) => setTournamentType(event.target.value)}
-			>
-			{tournamentData.map(x =>
-        <MenuItem key={x} value={x}>{x}</MenuItem>)
-			}
-      </Select>
+		<Grid style={BlankStyle} item xs={12} sm={12} md={12} lg={12} />
+		<Grid item xs={12} sm={12} md={12} lg={12} >
+		<TextValidator fullWidth  required className={gClasses.vgSpacing} type="number"
+			label="Number of members in group" 
+			value={memberCount}
+			onChange={() => { setMemberCount(event.target.value) }}
+		/>
 		</Grid>
-		<Grid item xs={1} sm={1} md={1} lg={1} >
+		<Grid style={BlankStyle} item xs={12} sm={12} md={12} lg={12} />
+		
+		<Grid item xs={12} sm={12} md={12} lg={12} >
+		<TextValidator fullWidth  required className={gClasses.vgSpacing} type="number"
+			label="Auction Coins available" 
+			value={maxAutionCoins}
+			onChange={() => { setMaxAutionCoins(event.target.value) }}
+		/>
+		</Grid>
+		<Grid style={BlankStyle} item xs={12} sm={12} md={12} lg={12} />
+
+		<Grid item xs={12} sm={12} md={12} lg={12} >
+		<TextValidator fullWidth  required className={gClasses.vgSpacing} type="number"
+			label="Maximum players available in Auction" 
+			value={maxAutionPlayers}
+			onChange={() => { setMaxAutionPlayers(event.target.value) }}
+		/>
+		</Grid>
+		<Grid style={BlankStyle} item xs={12} sm={12} md={12} lg={12} />
+
+		<br />
+		<Grid item xs={12} sm={12} md={12} lg={12} >
 			<VsButton type="submit" name={(isDrawerOpened === "ADD") ? "Add" : "Update"} />
 		</Grid>
 		</Grid>
@@ -1028,6 +689,28 @@ export default function SU_Group() {
 		<br />
 		<Accordion expanded={expandedPanel === "selectfranchisee"} onChange={handleAccordionChange("selectfranchisee")}>
 			<Box align="right" className={(expandedPanel === "selectfranchisee") ? gClasses.selectedAccordian : gClasses.normalAccordian} borderColor="black" borderRadius={7} border={1} >
+			<AccordionSummary aria-controls="panel1a-content" id="panel1a-header" expandIcon={<ExpandMoreIcon />}>
+				<Typography align="left" >{"Bid amount "+bidAmount}</Typography>
+			</AccordionSummary>
+			</Box>
+			<Grid className={gClasses.noPadding} key="ALLGROUP" container align="center">
+				<Grid style={{marginTop: "20px"}} item xs={12} sm={12} md={12} lg={12} />				
+				<Grid item xs={3} sm={3} md={3} lg={3} >
+					<Typography style={{marginTop: "10px"  }} className={gClasses.info18}>Bid Amount</Typography>
+				</Grid>		
+				<Grid item xs={3} sm={3} md={3} lg={3} />				
+				<Grid item xs={5} sm={5} md={5} lg={5} >
+					<TextField  fullWidth className={gClasses.vgSpacing}
+						value={bidAmount} onChange={(event) => { setBidAmount(event.target.value) }}			
+					/>
+				</Grid>
+				<Grid style={{marginTop: "20px"}} item xs={12} sm={12} md={12} lg={12} />
+			</Grid>	
+		</Accordion>
+		<br />
+		<br />
+		<Accordion expanded={expandedPanel === "selectbidamount"} onChange={handleAccordionChange("selectbidamount")}>
+			<Box align="right" className={(expandedPanel === "selectbidamount") ? gClasses.selectedAccordian : gClasses.normalAccordian} borderColor="black" borderRadius={7} border={1} >
 			<AccordionSummary aria-controls="panel1a-content" id="panel1a-header" expandIcon={<ExpandMoreIcon />}>
 				<Typography align="left" >{"Selected franchisee "+selectedFranchisee}</Typography>
 			</AccordionSummary>

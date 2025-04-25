@@ -393,9 +393,12 @@ async function fetchScoreFromSite(cricMid) {
 	
   var tournamentName = myMatch.tournament;
 	var matchType = myMatch.type;
+	
   
   // get match score from cricdata
   var myMatchData = await cricapi_get_score(myMatch.cricMid);
+	//console.log(myMatchData);
+	console.log(tournamentName);
   if (!myMatchData) return {status: 602}
   
 	var cbList = []; 
@@ -411,6 +414,7 @@ async function fetchScoreFromSite(cricMid) {
     if (myMatchData.scorecard[sc].batting) {
     for (var batIdx = 0;  batIdx < myMatchData.scorecard[sc].batting.length; ++ batIdx) {
       var batsmanCricRec = myMatchData.scorecard[sc].batting[batIdx];
+			console.log(batsmanCricRec.batsman.id, batsmanCricRec.batsman.name);
       var cricPid = batsmanCricRec.batsman.id;
       var batsmanStatRec = null;
       var tmp = allStats.find(x => x.cricPid === cricPid);
@@ -449,7 +453,7 @@ async function fetchScoreFromSite(cricMid) {
       //console.log(batsmanCricRec);
 			// duck not for bowler.
 			//console.log(batsmanCricRec["dismissal-text"]);
-			console.log(playerInfo);
+			//console.log(playerInfo);
 			if (playerInfo)
 			if (playerInfo.role)
 			if (playerInfo.role.toLowerCase() != "bowler")

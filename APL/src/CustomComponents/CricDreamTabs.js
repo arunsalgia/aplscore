@@ -32,6 +32,7 @@ import Score from "views/SuperUser/Score.js"
 import PlayerInfo from "views/SuperUser/PlayerInfo.js" 
 
 import SU_Group from "views/SuperUser/Group";
+import SU_GroupMember  from "views/SuperUser/GroupMember";
 
 import Modal from 'react-modal';
 // import download from 'js-file-downloader';
@@ -220,6 +221,7 @@ export function CricDreamTabs() {
 	const handlePlayerInfo = () => { setMenuValue(6) };
 
   const handleSuGroup = () => { setMenuValue(11); }
+	const handleSuGroupMember = () => { setMenuValue(12); }
 	
   const handleLogout = () => {
     handleClose();
@@ -238,6 +240,7 @@ export function CricDreamTabs() {
 			case 6: return <PlayerInfo />;
 
       case 11: return <SU_Group />;
+			case 12: return <SU_GroupMember />;
       default: return  null;
     }
   }

@@ -174,6 +174,7 @@ export default function Match() {
 	
   const alert = useAlert();
 	
+	console.log("In match");
   useEffect(() => {
 		const tournament = async () => {
 			try {

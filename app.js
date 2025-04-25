@@ -240,6 +240,7 @@ IPLGroupSchema = mongoose.Schema({
   memberCount: Number,
   memberFee: Number,
   prizeCount: Number,
+	maxPlayers: Number,
   enable: Boolean
 });
 
@@ -310,6 +311,7 @@ TournamentSchema = mongoose.Schema({
   started: Boolean,
   over: Boolean,
   cricTid: String,
+	special: Boolean,
   enabled: Boolean
 })
 

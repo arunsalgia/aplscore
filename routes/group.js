@@ -157,6 +157,7 @@ router.get('/groupmembers/:groupid', async function (req, res, next) {
   var {  groupid } = req.params;
 	
 	var memberList = await GroupMember.find({gid: groupid}).sort({userName: 1});
+	console.log(memberList);
 	sendok(res, memberList);
 });
 
@@ -608,7 +609,137 @@ router.get('/create/:groupName/:ownerid/:maxbid/:mytournament/:membercount/:wall
 
 }); // end of get
 
+router.get('/createspecial/:gid/:mytournament/:groupName/:membercount/:maxAuctionCoins/:maxAuctionPlayers', async function (req, res, next) {
+  
+  setHeader(res);
 
+  var { gid, mytournament, groupName, membercount, maxAuctionCoins, maxAuctionPlayers} = req.params;
+	
+  //walletFee = Number(walletFee);
+  //bonusFee = Number(bonusFee);
+  //console.log(walletFee, bonusFee);
+
+  let memberfee = 1000;		//walletFee + bonusFee;
+  mytournament = mytournament.toUpperCase();
+
+  //var tmp = await IPLGroup.find({});
+  //var tmp = _.filter(tmp, x => x.name.toUpperCase() === groupName.toUpperCase());
+  let tmp = await IPLGroup.find({ 'name' : new RegExp('^' + groupName + '$', 'i') });
+  if (tmp.length > 0) { senderr(res,601, `Duplicate Group name ${groupName}`); return; }
+
+  //if (isNaN(maxbid)) { senderr(res,602, `Invalid max bid amount ${maxbid}`); return; }
+  //let imaxbid = parseInt(maxbid);
+
+  //var ownerRec = await User.findOne({uid: ownerid});
+  //if (!ownerRec) { senderr(res,603, `Invalid owner ${ownerid}`); return; }
+
+  
+  //var tournamentRec = await Tournament.findOne({ name: mytournament })
+  //if (!tournamentRec) { senderr(res,604, `Invalid tournament ${mytournament}`); return; }
+
+  // ****Balance will now be checked by client itself
+  //let myBal = await WalletBalance(ownerid);
+  //if (myBal < memberfee) { senderr(res,605, `Insufficient Balance`); return; }
+
+  // ALl seems to be create. Assign gid for this group
+  //Goods.find({}).sort({ price: 1 }).limit(1).then(goods => goods[0].price);
+  var maxGid = await IPLGroup.find({}).sort({ gid: -1 }).limit(1);
+
+  // gid: Number,
+  // name: String,
+  // owner: Number,
+  // maxBidAmount: Number,
+  // tournament: String,
+  // auctionStatus: String,
+  // auctionPlayer: Number,
+  // auctionBid: Number,
+  // currentBidUid: Number,
+  // currentBidUser: String,
+  // memberCount: Number,
+  // memberFee: Number,
+  // prizeCount: Number,
+  // enable: Boolean
+
+  var myRec = new IPLGroup();
+  myRec.gid = maxGid[0].gid + 1;
+  myRec.name = groupName;
+  myRec.owner = 0;		//ownerRec.uid;
+  myRec.maxBidAmount = Number(maxAuctionCoins);
+	myRec.maxPlayers = Number(maxAuctionPlayers);
+  myRec.tournament = mytournament;
+  myRec.auctionStatus = "PENDING";
+  myRec.auctionPlayer = 0;
+  myRec.auctionBid = 0;
+  myRec.currentBidUid = 0;
+  myRec.currentBidUser = "";
+  myRec.enable = true;
+  // new fields set default prize count as 1
+  myRec.memberCount = Number(membercount);
+  myRec.memberFee = memberfee;
+  myRec.prizeCount = 1;
+  myRec.save();
+  akshuUpdGroup(myRec);
+
+  // now save and say okay to user
+  sendok(res,myRec);
+
+}); // end of get
+
+router.get('/updatespecial/:gid/:mytournament/:groupName/:membercount/:maxAuctionCoins/:maxAuctionPlayers', async function (req, res, next) {
+  
+  setHeader(res);
+
+  var { gid, mytournament, groupName, membercount, maxAuctionCoins, maxAuctionPlayers} = req.params;
+	
+	 var myRec = await IPLGroup.findOne({gid: gid});
+	 if (!myRec) return senderr(res, 601, "Invalid Gid)");
+	 
+
+
+  myRec.name = groupName;
+  //myRec.owner = 0;		//ownerRec.uid;
+  myRec.maxBidAmount = Number(maxAuctionCoins);
+	myRec.maxPlayers = Number(maxAuctionPlayers);
+  //myRec.tournament = mytournament;
+  //myRec.auctionStatus = "PENDING";
+  //myRec.auctionPlayer = 0;
+  //myRec.auctionBid = 0;
+  //myRec.currentBidUid = 0;
+  //myRec.currentBidUser = "";
+  myRec.enable = true;
+  myRec.memberCount = Number(membercount);
+  //myRec.memberFee = memberfee;
+  myRec.save();
+  akshuUpdGroup(myRec);
+
+  // now save and say okay to user
+  sendok(res,myRec);
+
+}); // end of get
+
+router.get('/deletespecial/:groupid', async function (req, res, next) {
+  
+  setHeader(res);
+
+  var { groupid } = req.params;
+
+  //var gdoc = await IPLGroup.findOne({gid: groupid});
+	var gmCount = await GroupMember.count({ gid: groupid });
+	if (gmCount > 0) return senderr(res, 601, "Members in group");
+
+	//return senderr(res, 699, "Check");
+	
+  await IPLGroup.deleteOne({ gid: groupid})
+
+  sendok(res,`Deleted Group ${groupid}`);
+}); 
+
+router.get('/owner', function (req, res, next) {
+  
+  setHeader(res);
+
+  owneradmin(res);
+});
 router.get('/updatewithoutfee/:groupId/:ownerId/:membercount', async function (req, res, next) {
   
   setHeader(res);
@@ -1126,9 +1257,106 @@ async function tournament_started(mygroup) {
 }
 
 router.get('/list', async function(req, res, next) {  
+	setHeader(res);
 
   let myGroup = await IPLGroup.find({enable: true}).sort({gid: -1});
   sendok(res, myGroup);
+});
+
+router.get('/addgroupmember/:gid/:uid/:fname/:owner', async function(req, res, next) {  
+	setHeader(res);
+  var {gid, uid, fname, owner }=req.params;
+	
+	var groupRec = await IPLGroup.findOne({gid: gid});
+	if (!groupRec) return senderr(res, 601, "No Group");
+	
+	var userRec = await User.findOne({uid: uid});
+	if (!userRec) return senderr(res, 602, "No User");
+	
+	console.log(groupRec);
+	console.log(userRec);
+	console.log(fname);
+	console.log(owner);
+	
+	var grpMemRec = await GroupMember.findOne({gid: gid, uid: uid});
+	if (grpMemRec) return senderr(res, 603, "User already added");
+	
+	var memCount = await GroupMember.count({gid: gid}); 
+	if (memCount >= groupRec.memberCount)  return senderr(res, 604, "No member space left");
+	
+	grpMemRec = new GroupMember();
+	grpMemRec.gid =  groupRec.gid;
+	grpMemRec.uid = userRec.uid;
+	grpMemRec.displayName = fname;
+	grpMemRec.userName = userRec.displayName;
+	grpMemRec.score = 0;
+	grpMemRec.rank = 0;
+	grpMemRec.prize = 0;
+	grpMemRec.walletFee = 0;
+	grpMemRec.bonusFee = 0;
+	grpMemRec.enable = true;
+	grpMemRec.balanceAmount = groupRec.maxBidAmount;
+	await grpMemRec.save();
+	
+	if (owner == "true") {
+		groupRec.owner = userRec.uid;
+		await groupRec.save();
+	}
+	
+  sendok(res, grpMemRec);
+});
+
+
+router.get('/updategroupmember/:gid/:uid/:fname/:owner', async function(req, res, next) {  
+	setHeader(res);
+  var {gid, uid, fname, owner }=req.params;
+	
+	var groupRec = await IPLGroup.findOne({gid: gid});
+	if (!groupRec) return senderr(res, 601, "No Group");
+	
+	var userRec = await User.findOne({uid: uid});
+	if (!userRec) return senderr(res, 602, "No User");
+	
+	console.log(groupRec);
+	console.log(userRec);
+	console.log(fname);
+	console.log(owner);
+	
+	var grpMemRec = await GroupMember.findOne({gid: gid, uid: uid});
+	if (!grpMemRec) return senderr(res, 603, "User already added");
+
+	grpMemRec.displayName = fname;
+	await grpMemRec.save();
+	
+	if (owner == "true") {
+		groupRec.owner = userRec.uid;
+		await groupRec.save();
+	}
+	else if (groupRec.owner == userRec.uid) {
+		groupRec.owner = 0;
+		await groupRec.save();	
+	}
+	
+	
+  sendok(res, grpMemRec);
+});
+
+router.get('/deletegroupmember/:gid/:uid', async function(req, res, next) {  
+	setHeader(res);
+  var {gid, uid}=req.params;
+
+	var grpMemRec = await GroupMember.findOne({gid: gid, uid: uid});
+	if (!grpMemRec) return senderr(res, 601, "User not found");
+	
+	await GroupMember.deleteOne({gid: gid, uid: uid});
+	
+	var groupRec = await IPLGroup.findOne({gid: gid});
+	if (groupRec.owner == grpMemRec.uid) {
+		groupRec.owner = 0;
+		await groupRec.save();
+	}
+
+  sendok(res, grpMemRec);
 });
 
 router.get('/ownernames', async function(req, res, next) {  

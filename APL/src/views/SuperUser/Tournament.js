@@ -129,7 +129,7 @@ export default function SU_Tournament() {
   const [tournamentType, setTournamentType] = useState("T20");
   const [tournamentDesc, setTournamentDesc] = useState("");
   const [tournamentId, setTournamentId] = useState("");
-  const [tournamentData, setTournamentData] = useState(["T20", "ODI", "TEST"]);
+  const [tournamentData, setTournamentData] = useState(["T20", "ODI", "TEST", "OTHER"]);
   const [teamList, setTeamList] = useState([]);
   const [registerStatus, setRegisterStatus] = useState(0);
   const [labelNumber, setLabelNumber] = useState(0);
@@ -545,12 +545,14 @@ export default function SU_Tournament() {
 		
 	}
 
-	async function handleAdd() {
+	async function handleAddSpecial() {
+		console.log("Start");
     setTournamentId("");
 		setTournamentName("");
 		setTournamentDesc("")
 		setTournamentType("")
-		setIsDrawerOpened("ADD");
+		setIsDrawerOpened("ADDSPECIAL");
+		console.log("End");
 	}
 	
   async function handleAddNewTournament(idx) {
@@ -570,10 +572,10 @@ export default function SU_Tournament() {
 	}
 	
 	async function addEditTournamentSubmit() {
-		if (isDrawerOpened === "ADD") {
+		if (isDrawerOpened === "ADDSPECIAL") {
 			try {
 				// add tournament
-				let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/add/${tournamentName}/${tournamentDesc}/${tournamentType}`);
+				let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/tournament/addspecial/${tournamentName}/${tournamentDesc}/${tournamentType}`);
 				alert.show("Successfully added tournament "+tournamentName);
 				let tmpArray = [resp.data].concat(tournamentList);
 				tmpArray = sortBy(tmpArray, 'name');
@@ -698,7 +700,7 @@ export default function SU_Tournament() {
 	}
 	
 	function DisplayTournamentList() {
-	let colCount = 8;
+	let colCount = 10;
 	return (
 		<Box className={classes.allAppt} border={1} width="100%">
 			<TableContainer>
@@ -723,7 +725,11 @@ export default function SU_Tournament() {
 					className={classes.th} >
 					Type
 					</TableCell>
-					<TableCell key={"TH31"} component="th" colSpan={5} scope="row" align="center" padding="none"
+					<TableCell key={"TH24"} component="th" scope="row" align="center" padding="none"
+					className={classes.th} >
+					Spec
+					</TableCell>
+					<TableCell key={"TH31"} component="th" colSpan={6} scope="row" align="center" padding="none"
 					className={classes.th} >
 					cmds
 					</TableCell>
@@ -752,6 +758,12 @@ export default function SU_Tournament() {
 						className={myClass}>
 						<Typography className={classes.apptName}>
 							{t.type}
+						</Typography>
+					</TableCell>
+					<TableCell key={"TD4"+index} align="center" component="td" scope="row" align="center" padding="none"
+						className={myClass}>
+						<Typography className={classes.apptName}>
+							{(t.special) ? "YES" : "NO"}
 						</Typography>
 					</TableCell>
 					<TableCell key={"TD20"+index} align="center" component="td" scope="row" align="center" padding="none"
@@ -930,7 +942,7 @@ export default function SU_Tournament() {
 	<DisplayPageHeader headerName="Tournament List" groupName="" tournament=""/>
 	<Container component="main" maxWidth="lg">
 	<CssBaseline />
-	{/*<VsButton name="Add new tournament" align="right" onClick={handleAdd} />*/}
+	<VsButton name="Add special tournament" align="right" onClick={handleAddSpecial} />
 	<DisplayTournamentList />
   <br />
   <VsButton name="Fetch new tournament" align="right" onClick={handlefetch} />
@@ -938,20 +950,20 @@ export default function SU_Tournament() {
 	<Drawer className={classes.drawer}
 		anchor="right"
 		variant="temporary"
-		open={isDrawerOpened === "EDIT"}
+		open={(isDrawerOpened === "EDIT") || (isDrawerOpened === "ADDSPECIAL") }
 	>
 	<VsCancel align="right" onClick={() => {setIsDrawerOpened("")}} />
-	{((isDrawerOpened === "ADD") || (isDrawerOpened === "EDIT")) &&
+	{((isDrawerOpened === "ADDSPECIAL") || (isDrawerOpened === "EDIT")) &&
 		<div align="center" style={{margin: "20px" }}>
 		<ValidatorForm className={gClasses.form} onSubmit={addEditTournamentSubmit}>
-		<Typography className={classes.title}>{(isDrawerOpened === "ADD") ?"New Tournament" : "Edit Tournament"}</Typography>
+		<Typography className={classes.title}>{(isDrawerOpened === "ADDSPECIAL") ?"New Special Tournament" : "Edit Tournament"}</Typography>
     <br />
-		<TextValidator fullWidth  required className={gClasses.vgSpacing}
+		{/*<TextValidator fullWidth  required className={gClasses.vgSpacing}
 			label="Tournament Id" 
 			value={tournamentId}
 			disabled={true}
 		/>
-    <br />
+    <br />*/}
 		<TextValidator fullWidth  required className={gClasses.vgSpacing}
 			label="Tournament Name" 
 			value={tournamentName}
@@ -978,7 +990,7 @@ export default function SU_Tournament() {
     }
     </Select>
     <br />
-    <VsButton type="submit" name={(isDrawerOpened === "ADD") ? "Add" : "Update"} />
+    <VsButton type="submit" name={(isDrawerOpened === "ADDSPECIAL") ? "Add" : "Update"} />
 		<ValidComp />
 		</ValidatorForm>
 		</div>
