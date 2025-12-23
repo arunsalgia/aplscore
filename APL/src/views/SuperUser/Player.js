@@ -601,13 +601,13 @@ export default function Team() {
 		if ((cricPlayerId === "NEWSPECIAL") && (isDrawerOpened === "ADD")){
 			try {
 				let resp = await axios.get(`${process.env.REACT_APP_AXIOS_BASEPATH}/player/addspecial/${pid}/${playerName}/${tournamentName}/${teamName}/${role}/${battingStyle}/${bowlingStyle}`);
-				alert.show("Successfully added special Player "+playerName);
+				alert.show("Successfully added new Player "+playerName);
 				let tmpArray = [resp.data].concat(playerList);
 				tmpArray = sortBy(tmpArray, 'name');
 				setPlayerList(tmpArray);
 				setIsDrawerOpened("")
 			} catch {
-				alert.error("Error adding special player "+playerName);
+				alert.error("Error adding new player "+playerName);
 			}
 		} 
 		else if (isDrawerOpened === "EDIT") {
@@ -1268,7 +1268,7 @@ export default function Team() {
 				<VsButton name="Back" align="left" onClick={handleBack} />
 			</GridItem>
 			<GridItem xs={3} sm={3} md={3} lg={3} >
-	      <VsButton align="right" name="Add New Special Player" onClick={selectNewPlayer} />
+	      <VsButton align="right" name="Add New Player" onClick={selectNewPlayer} />
 			</GridItem>
 			<GridItem xs={3} sm={3} md={3} lg={3} >
 				{/*<VsButton align="right" name="Add new Player" onClick={handleAdd} />*/} 

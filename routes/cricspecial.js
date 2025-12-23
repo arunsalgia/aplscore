@@ -79,13 +79,23 @@ const getLoginName = (name) => {
   }
   
 const getDisplayName = (name) => {
+    //console.log('Orig:', name)
+    var newName = '';
     var xxx = name.split(" ");
-    xxx.forEach( x => { 
-      x = x.trim()
-      x = x.substr(0,1).toUpperCase() +
-        (x.length > 1) ? x.substr(1, x.length-1).toLowerCase() : "";
-    });
-    return xxx.join(" ");
+    //console.log(xxx);
+    for(var i=0; i<xxx.length; ++i) {
+      var nnn = xxx[i].trim();
+      if (nnn.length === 0) continue;
+      var mmm = nnn.substr(0,1).toUpperCase();
+      if (nnn.length > 1)
+        mmm += nnn.substr(1, nnn.length-1).toLowerCase();
+      //xxx[i] = mmm;
+      if (newName.length > 0)
+        newName += ' ';
+     newName += mmm;
+    }
+    //console.log(newName);
+    return newName;        //xxx.join(" ");
   }
 
 const svrToDbText = (text) => {

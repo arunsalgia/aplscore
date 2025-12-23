@@ -5,6 +5,10 @@ const {
   cricapi_find_palyers,
 } = require('./cricapifunctions'); 
 
+const { getDisplayName,
+} = require('./cricspecial'); 
+
+
 // var PlayerRes;
 
 /* GET users listing. */
@@ -243,12 +247,13 @@ router.get('/addspecial/:pid/:name/:tournamentName/:teamName/:role/:batStyle/:bo
   var {pid, name, tournamentName, teamName, 
       role, batStyle, bowlStyle
     }=req.params;
-  console.log(name);
-  console.log(tournamentName);
-  console.log(teamName);
-  console.log(role);
-  console.log(batStyle);
-  console.log(bowlStyle);
+  myname = getDisplayName(name);
+  //console.log(myname);
+  //console.log(tournamentName);
+  //console.log(teamName);
+  //console.log(role);
+  //console.log(batStyle);
+  //console.log(bowlStyle);
   tournamentName = tournamentName.toUpperCase();
   teamName = teamName.toUpperCase();
   let pRec = await Player.findOne({pid: pid, tournament: tournamentName, Team: teamName});
@@ -271,9 +276,9 @@ router.get('/addspecial/:pid/:name/:tournamentName/:teamName/:role/:batStyle/:bo
 	pRec.tournament = tournamentName;
 	pRec.Team = teamName;
 
-  console.log(pRec);
-  pRec.name = name;
-  pRec.fullName = name;
+  //console.log(pRec);
+  pRec.name = myname;
+  pRec.fullName = myname;
   pRec.role = role;
   pRec.battingStyle = batStyle;
   pRec.bowlingStyle = bowlStyle;
@@ -324,7 +329,8 @@ router.get('/update/:pid/:name/:tournamentName/:teamName/:role/:batStyle/:bowlSt
   var {pid, name, tournamentName, teamName, 
       role, batStyle, bowlStyle
     }=req.params;
-  console.log(name);
+  myname = getDisplayName(name);
+  console.log(myname);
   console.log(tournamentName);
   console.log(teamName);
   console.log(role);
@@ -336,8 +342,8 @@ router.get('/update/:pid/:name/:tournamentName/:teamName/:role/:batStyle/:bowlSt
 	if (!pRec) return senderr(res, 601, "player not found");
 	
 	console.log("Update Player");
-  pRec.name = name;
-  pRec.fullName = name;
+  pRec.name = myname;
+  pRec.fullName = myname;
   pRec.role = role;
   pRec.battingStyle = batStyle;
   pRec.bowlingStyle = bowlStyle;
