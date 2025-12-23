@@ -268,18 +268,33 @@ router.get('/addspecial/:tournamentName/:tournamentDesc/:tournamentType', async 
       senderr(res, 743, `Invalid tournament type ${tournamentType}. Has be be either TEST, ODI or T20`);
       return;
     }
-    
+    /*
+    name: String,
+  desc: String,
+  type: String,
+  started: Boolean,
+  over: Boolean,
+  cricTid: String,
+  special: Boolean,
+  sports: String,
+  seriesId: String,
+  tournamentType: String,
+  cricTid: String,
+  enabled: Boolean
+    */
     var myrec = await Tournament.findOne({name: tournamentName});
     if (!myrec) {
         myrec = new Tournament();
         myrec.name = tournamentName;
         myrec.desc = tournamentDesc;
         myrec.type = tournamentType;
-				myrec.started = false;
+		  myrec.started = false;
         myrec.cricTid = tournamentName;
         myrec.over = false;
-				myrec.enabled = true;
-				myrec.special = true;
+		  myrec.enabled = true;
+		  myrec.special = false;
+        myrec.sports = 'Cricket';
+        myrec.tournamentType = 'Cricket';
         myrec.save();
         sendok(res, myrec);
     } else

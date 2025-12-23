@@ -660,7 +660,12 @@ export default function SU_Tournament() {
 			alert.info("Successfully closed tournament " + t.name);	
 		}
 		catch (e) {
-			alert.error("error updating tournament open close");
+         if (e.response.status == 601)
+            alert.error("Invalid tournament name");
+         else if (e.response.status == 602)
+            alert.error("All matches need to be over to close tournament");
+         else
+            alert.error("error updating tournament open close");
 		}
 		//console.log(t.name, t.started, t.over);
 		
@@ -942,7 +947,7 @@ export default function SU_Tournament() {
 	<DisplayPageHeader headerName="Tournament List" groupName="" tournament=""/>
 	<Container component="main" maxWidth="lg">
 	<CssBaseline />
-	<VsButton name="Add special tournament" align="right" onClick={handleAddSpecial} />
+	<VsButton name="Add tournament" align="right" onClick={handleAddSpecial} />
 	<DisplayTournamentList />
   <br />
   <VsButton name="Fetch new tournament" align="right" onClick={handlefetch} />
@@ -956,7 +961,7 @@ export default function SU_Tournament() {
 	{((isDrawerOpened === "ADDSPECIAL") || (isDrawerOpened === "EDIT")) &&
 		<div align="center" style={{margin: "20px" }}>
 		<ValidatorForm className={gClasses.form} onSubmit={addEditTournamentSubmit}>
-		<Typography className={classes.title}>{(isDrawerOpened === "ADDSPECIAL") ?"New Special Tournament" : "Edit Tournament"}</Typography>
+		<Typography className={classes.title}>{(isDrawerOpened === "ADDSPECIAL") ?"New Tournament" : "Edit Tournament"}</Typography>
     <br />
 		{/*<TextValidator fullWidth  required className={gClasses.vgSpacing}
 			label="Tournament Id" 

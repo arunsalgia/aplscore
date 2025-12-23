@@ -311,7 +311,11 @@ TournamentSchema = mongoose.Schema({
   started: Boolean,
   over: Boolean,
   cricTid: String,
-	special: Boolean,
+  special: Boolean,
+  sports: String,
+  seriesId: String,
+  tournamentType: String,
+  cricTid: String,
   enabled: Boolean
 })
 
