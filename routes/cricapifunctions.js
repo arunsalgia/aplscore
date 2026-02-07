@@ -1,6 +1,6 @@
 //const Free_CricAPI_Key="ef8990f6-8506-41e7-8b3a-55726f58759a";  //Arun Salgia
-//const Free_CricAPI_Key="c67d41fe-5cab-4a1c-9aa4-781a72fcef7a";  //Ankit Salgia
-const Free_CricAPI_Key="9050dc0d-32d1-46dc-8a60-70e45749edfb";  //Arpana Salgia
+const Free_CricAPI_Key="c67d41fe-5cab-4a1c-9aa4-781a72fcef7a";  //Ankit Salgia
+//const Free_CricAPI_Key="9050dc0d-32d1-46dc-8a60-70e45749edfb";  //Arpana Salgia
 
 const Paid_CricAPI_Key="b8d671a6-3b23-4d7b-b563-74e83f947741";
 const CricAPI_Key=Free_CricAPI_Key;
